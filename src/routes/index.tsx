@@ -1,4 +1,4 @@
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, Link } from "@tanstack/react-router";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 
@@ -37,8 +37,8 @@ function Index() {
               EduSmart <span className="text-muted-foreground">SchoolOS</span>
             </span>
           </div>
-          <Button variant="outline" size="sm" disabled>
-            Sign in
+          <Button variant="outline" size="sm" asChild>
+            <Link to="/auth">Sign in</Link>
           </Button>
         </div>
       </header>
