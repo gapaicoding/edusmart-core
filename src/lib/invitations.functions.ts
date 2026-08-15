@@ -26,7 +26,7 @@ export type CreateInvitationInput = {
 export const createInvitation = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((input: CreateInvitationInput) => {
-    if (!input?.email?.includes("@")) throw new Error("A valid email is required");
+    const email = emailSchema.parse(input?.email ?? "");
     if (!input.organizationId) throw new Error("organizationId is required");
     if (!input.roleId) throw new Error("roleId is required");
     if (!input.scopeType) throw new Error("scopeType is required");

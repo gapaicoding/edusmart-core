@@ -75,7 +75,7 @@ function AcceptInvitePage() {
       return;
     }
 
-    const { error } = await supabase.auth.signInWithPassword({ email, password });
+    const { error } = await supabase.auth.signInWithPassword({ email: parsed.email, password });
     setAuthBusy(false);
     if (error) setAuthError(error.message);
   }
