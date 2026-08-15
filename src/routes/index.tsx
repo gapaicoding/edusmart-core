@@ -38,7 +38,7 @@ function Index() {
             </span>
           </div>
           <Button variant="outline" size="sm" asChild>
-            Sign in
+            <Link to="/auth">Sign in</Link>
           </Button>
         </div>
       </header>
