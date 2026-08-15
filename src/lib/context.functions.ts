@@ -46,7 +46,8 @@ export const getSessionContext = createServerFn({ method: "GET" })
       .maybeSingle();
 
     if (profileError) throw new Error(`Unable to load authenticated profile: ${profileError.message}`);
-    if (profile && profile.id !== userId) {
+    if (!profile) throw new Error("No application profile exists for the authenticated user");
+    if (profile.id !== userId) {
       throw new Error("Authenticated profile does not match the server-validated user identity");
     }
 
@@ -102,7 +103,7 @@ export const getSessionContext = createServerFn({ method: "GET" })
 
     const schoolsRes = schoolIds.length
       ? await supabase.from("schools").select("id, organization_id, code, name").in("id", schoolIds)
-      : { data: [] };
+      : { data: [], error: null };
     const rolesRes = roleIds.length
       ? await supabase.from("roles").select("id, code, name").in("id", roleIds)
       : { data: [], error: null };
@@ -110,7 +111,7 @@ export const getSessionContext = createServerFn({ method: "GET" })
       ? await supabase.from("role_permissions").select("role_id, permissions(code)").in("role_id", roleIds)
       : { data: [], error: null };
 
-    if ("error" in schoolsRes && schoolsRes.error) {
+    if (schoolsRes.error) {
       throw new Error(`Unable to load accessible schools: ${schoolsRes.error.message}`);
     }
     if (rolesRes.error) throw new Error(`Unable to load roles: ${rolesRes.error.message}`);

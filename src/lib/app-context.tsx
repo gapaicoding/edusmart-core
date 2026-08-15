@@ -141,7 +141,7 @@ export function AppContextProvider({ children }: { children: ReactNode }) {
     const scoped = terms.filter((t) => t.academicYearId === academicYearId);
     const stored = termId ?? readStored(STORAGE_KEYS.term);
     const valid = scoped.find((t) => t.id === stored);
-    const next = valid?.id ?? scoped.find((t) => t.status === "ACTIVE")?.id ?? scoped[0]?.id ?? null;
+    const next = valid?.id ?? scoped.find((t) => t.status === "active")?.id ?? scoped[0]?.id ?? null;
     if (next !== termId) {
       setTermId(next);
       writeStored(STORAGE_KEYS.term, next);
