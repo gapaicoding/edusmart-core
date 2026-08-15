@@ -1,5 +1,6 @@
 import { createServerFn } from "@tanstack/react-start";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
+import { emailSchema } from "@/lib/email";
 
 /**
  * Invitation flow (Batch 0).
