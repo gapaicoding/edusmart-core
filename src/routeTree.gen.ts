@@ -10,6 +10,7 @@
 
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as AcceptInviteRouteImport } from './routes/accept-invite'
 import { Route as AuthRouteImport } from './routes/auth'
 import { Route as ForgotPasswordRouteImport } from './routes/forgot-password'
 import { Route as ResetPasswordRouteImport } from './routes/reset-password'
@@ -17,6 +18,11 @@ import { Route as ResetPasswordRouteImport } from './routes/reset-password'
 const IndexRoute = IndexRouteImport.update({
   id: '/',
   path: '/',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AcceptInviteRoute = AcceptInviteRouteImport.update({
+  id: '/accept-invite',
+  path: '/accept-invite',
   getParentRoute: () => rootRouteImport,
 } as any)
 const AuthRoute = AuthRouteImport.update({
@@ -37,12 +43,14 @@ const ResetPasswordRoute = ResetPasswordRouteImport.update({
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
+  '/accept-invite': typeof AcceptInviteRoute
   '/auth': typeof AuthRoute
   '/forgot-password': typeof ForgotPasswordRoute
   '/reset-password': typeof ResetPasswordRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
+  '/accept-invite': typeof AcceptInviteRoute
   '/auth': typeof AuthRoute
   '/forgot-password': typeof ForgotPasswordRoute
   '/reset-password': typeof ResetPasswordRoute
@@ -50,20 +58,29 @@ export interface FileRoutesByTo {
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
+  '/accept-invite': typeof AcceptInviteRoute
   '/auth': typeof AuthRoute
   '/forgot-password': typeof ForgotPasswordRoute
   '/reset-password': typeof ResetPasswordRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/' | '/auth' | '/forgot-password' | '/reset-password'
+  fullPaths:
+    '/' | '/accept-invite' | '/auth' | '/forgot-password' | '/reset-password'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/auth' | '/forgot-password' | '/reset-password'
-  id: '__root__' | '/' | '/auth' | '/forgot-password' | '/reset-password'
+  to: '/' | '/accept-invite' | '/auth' | '/forgot-password' | '/reset-password'
+  id:
+    | '__root__'
+    | '/'
+    | '/accept-invite'
+    | '/auth'
+    | '/forgot-password'
+    | '/reset-password'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
+  AcceptInviteRoute: typeof AcceptInviteRoute
   AuthRoute: typeof AuthRoute
   ForgotPasswordRoute: typeof ForgotPasswordRoute
   ResetPasswordRoute: typeof ResetPasswordRoute
@@ -76,6 +93,13 @@ declare module '@tanstack/react-router' {
       path: '/'
       fullPath: '/'
       preLoaderRoute: typeof IndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/accept-invite': {
+      id: '/accept-invite'
+      path: '/accept-invite'
+      fullPath: '/accept-invite'
+      preLoaderRoute: typeof AcceptInviteRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/auth': {
@@ -104,6 +128,7 @@ declare module '@tanstack/react-router' {
 
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
+  AcceptInviteRoute: AcceptInviteRoute,
   AuthRoute: AuthRoute,
   ForgotPasswordRoute: ForgotPasswordRoute,
   ResetPasswordRoute: ResetPasswordRoute,

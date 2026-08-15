@@ -12,7 +12,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Skeleton } from "@/components/ui/skeleton";
 
-type InviteSearch = { token?: string };
+type InviteSearch = { token?: string | undefined };
 
 export const Route = createFileRoute("/accept-invite")({
   ssr: false,
