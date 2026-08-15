@@ -31,7 +31,7 @@ export const createInvitation = createServerFn({ method: "POST" })
     if (!input.organizationId) throw new Error("organizationId is required");
     if (!input.roleId) throw new Error("roleId is required");
     if (!input.scopeType) throw new Error("scopeType is required");
-    return input;
+    return { ...input, email };
   })
   .handler(async ({ data, context }) => {
     const { supabase, userId } = context;
