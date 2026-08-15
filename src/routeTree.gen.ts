@@ -17,6 +17,7 @@ import { Route as ForgotPasswordRouteImport } from './routes/forgot-password'
 import { Route as ResetPasswordRouteImport } from './routes/reset-password'
 import { Route as AuthenticatedAccessPendingRouteImport } from './routes/_authenticated/access-pending'
 import { Route as AuthenticatedDashboardRouteImport } from './routes/_authenticated/dashboard'
+import { Route as AuthenticatedSelectOrganizationRouteImport } from './routes/_authenticated/select-organization'
 
 const IndexRoute = IndexRouteImport.update({
   id: '/',
@@ -58,6 +59,12 @@ const AuthenticatedDashboardRoute = AuthenticatedDashboardRouteImport.update({
   path: '/dashboard',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
+const AuthenticatedSelectOrganizationRoute =
+  AuthenticatedSelectOrganizationRouteImport.update({
+    id: '/select-organization',
+    path: '/select-organization',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
@@ -67,6 +74,7 @@ export interface FileRoutesByFullPath {
   '/reset-password': typeof ResetPasswordRoute
   '/access-pending': typeof AuthenticatedAccessPendingRoute
   '/dashboard': typeof AuthenticatedDashboardRoute
+  '/select-organization': typeof AuthenticatedSelectOrganizationRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -76,6 +84,7 @@ export interface FileRoutesByTo {
   '/reset-password': typeof ResetPasswordRoute
   '/access-pending': typeof AuthenticatedAccessPendingRoute
   '/dashboard': typeof AuthenticatedDashboardRoute
+  '/select-organization': typeof AuthenticatedSelectOrganizationRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -87,6 +96,7 @@ export interface FileRoutesById {
   '/reset-password': typeof ResetPasswordRoute
   '/_authenticated/access-pending': typeof AuthenticatedAccessPendingRoute
   '/_authenticated/dashboard': typeof AuthenticatedDashboardRoute
+  '/_authenticated/select-organization': typeof AuthenticatedSelectOrganizationRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -98,6 +108,7 @@ export interface FileRouteTypes {
     | '/reset-password'
     | '/access-pending'
     | '/dashboard'
+    | '/select-organization'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -107,6 +118,7 @@ export interface FileRouteTypes {
     | '/reset-password'
     | '/access-pending'
     | '/dashboard'
+    | '/select-organization'
   id:
     | '__root__'
     | '/'
@@ -117,6 +129,7 @@ export interface FileRouteTypes {
     | '/reset-password'
     | '/_authenticated/access-pending'
     | '/_authenticated/dashboard'
+    | '/_authenticated/select-organization'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -186,17 +199,26 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedDashboardRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+    '/_authenticated/select-organization': {
+      id: '/_authenticated/select-organization'
+      path: '/select-organization'
+      fullPath: '/select-organization'
+      preLoaderRoute: typeof AuthenticatedSelectOrganizationRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
   }
 }
 
 interface AuthenticatedRouteRouteChildren {
   AuthenticatedAccessPendingRoute: typeof AuthenticatedAccessPendingRoute
   AuthenticatedDashboardRoute: typeof AuthenticatedDashboardRoute
+  AuthenticatedSelectOrganizationRoute: typeof AuthenticatedSelectOrganizationRoute
 }
 
 const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedAccessPendingRoute: AuthenticatedAccessPendingRoute,
   AuthenticatedDashboardRoute: AuthenticatedDashboardRoute,
+  AuthenticatedSelectOrganizationRoute: AuthenticatedSelectOrganizationRoute,
 }
 
 const AuthenticatedRouteRouteWithChildren =
