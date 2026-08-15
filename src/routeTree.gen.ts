@@ -18,6 +18,7 @@ import { Route as ResetPasswordRouteImport } from './routes/reset-password'
 import { Route as AuthenticatedAccessPendingRouteImport } from './routes/_authenticated/access-pending'
 import { Route as AuthenticatedDashboardRouteImport } from './routes/_authenticated/dashboard'
 import { Route as AuthenticatedSelectOrganizationRouteImport } from './routes/_authenticated/select-organization'
+import { Route as AuthenticatedSelectSchoolRouteImport } from './routes/_authenticated/select-school'
 
 const IndexRoute = IndexRouteImport.update({
   id: '/',
@@ -65,6 +66,12 @@ const AuthenticatedSelectOrganizationRoute =
     path: '/select-organization',
     getParentRoute: () => AuthenticatedRouteRoute,
   } as any)
+const AuthenticatedSelectSchoolRoute =
+  AuthenticatedSelectSchoolRouteImport.update({
+    id: '/select-school',
+    path: '/select-school',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
@@ -75,6 +82,7 @@ export interface FileRoutesByFullPath {
   '/access-pending': typeof AuthenticatedAccessPendingRoute
   '/dashboard': typeof AuthenticatedDashboardRoute
   '/select-organization': typeof AuthenticatedSelectOrganizationRoute
+  '/select-school': typeof AuthenticatedSelectSchoolRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -85,6 +93,7 @@ export interface FileRoutesByTo {
   '/access-pending': typeof AuthenticatedAccessPendingRoute
   '/dashboard': typeof AuthenticatedDashboardRoute
   '/select-organization': typeof AuthenticatedSelectOrganizationRoute
+  '/select-school': typeof AuthenticatedSelectSchoolRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -97,6 +106,7 @@ export interface FileRoutesById {
   '/_authenticated/access-pending': typeof AuthenticatedAccessPendingRoute
   '/_authenticated/dashboard': typeof AuthenticatedDashboardRoute
   '/_authenticated/select-organization': typeof AuthenticatedSelectOrganizationRoute
+  '/_authenticated/select-school': typeof AuthenticatedSelectSchoolRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -109,6 +119,7 @@ export interface FileRouteTypes {
     | '/access-pending'
     | '/dashboard'
     | '/select-organization'
+    | '/select-school'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -119,6 +130,7 @@ export interface FileRouteTypes {
     | '/access-pending'
     | '/dashboard'
     | '/select-organization'
+    | '/select-school'
   id:
     | '__root__'
     | '/'
@@ -130,6 +142,7 @@ export interface FileRouteTypes {
     | '/_authenticated/access-pending'
     | '/_authenticated/dashboard'
     | '/_authenticated/select-organization'
+    | '/_authenticated/select-school'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -206,6 +219,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedSelectOrganizationRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+    '/_authenticated/select-school': {
+      id: '/_authenticated/select-school'
+      path: '/select-school'
+      fullPath: '/select-school'
+      preLoaderRoute: typeof AuthenticatedSelectSchoolRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
   }
 }
 
@@ -213,12 +233,14 @@ interface AuthenticatedRouteRouteChildren {
   AuthenticatedAccessPendingRoute: typeof AuthenticatedAccessPendingRoute
   AuthenticatedDashboardRoute: typeof AuthenticatedDashboardRoute
   AuthenticatedSelectOrganizationRoute: typeof AuthenticatedSelectOrganizationRoute
+  AuthenticatedSelectSchoolRoute: typeof AuthenticatedSelectSchoolRoute
 }
 
 const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedAccessPendingRoute: AuthenticatedAccessPendingRoute,
   AuthenticatedDashboardRoute: AuthenticatedDashboardRoute,
   AuthenticatedSelectOrganizationRoute: AuthenticatedSelectOrganizationRoute,
+  AuthenticatedSelectSchoolRoute: AuthenticatedSelectSchoolRoute,
 }
 
 const AuthenticatedRouteRouteWithChildren =
