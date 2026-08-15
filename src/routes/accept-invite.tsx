@@ -57,7 +57,7 @@ function AcceptInvitePage() {
     setAuthError(null);
     setSignupNotice(false);
     const parsed = parseEmail(email);
-    if (parsed.error) {
+    if (!parsed.ok) {
       setAuthError(parsed.error);
       return;
     }

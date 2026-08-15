@@ -41,7 +41,7 @@ function SignInPage() {
     event.preventDefault();
     setError(null);
     const parsed = parseEmail(email);
-    if (parsed.error) {
+    if (!parsed.ok) {
       setError(parsed.error);
       return;
     }
