@@ -1,3 +1,4 @@
+import { useEffect } from "react";
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
@@ -22,9 +23,15 @@ export const Route = createFileRoute("/_authenticated/access-pending")({
 });
 
 function AccessPendingPage() {
-  const { isLoading, snapshot, organizations, refetch } = useAppContext();
+  const { isLoading, error, snapshot, organizations, refetch } = useAppContext();
   const navigate = useNavigate();
   const queryClient = useQueryClient();
+
+  useEffect(() => {
+    if (!isLoading && !error && organizations.length > 0) {
+      navigate({ to: "/dashboard", replace: true });
+    }
+  }, [isLoading, error, organizations, navigate]);
 
   async function handleSignOut() {
     await queryClient.cancelQueries();
@@ -45,7 +52,11 @@ function AccessPendingPage() {
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
-          {isLoading ? (
+          {error ? (
+            <p className="text-sm text-destructive">
+              We couldn't verify your organization access: {error.message}
+            </p>
+          ) : isLoading ? (
             <Skeleton className="h-16 w-full" />
           ) : (
             <p className="text-sm text-muted-foreground">
@@ -59,7 +70,6 @@ function AccessPendingPage() {
               variant="outline"
               onClick={() => {
                 refetch();
-                if (organizations.length > 0) navigate({ to: "/dashboard", replace: true });
               }}
             >
               Check again

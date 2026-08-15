@@ -29,6 +29,7 @@ export type OrganizationContext = {
 };
 
 export type SessionContext = {
+  authUserId: string;
   profile: { id: string; fullName: string; status: string } | null;
   organizations: OrganizationContext[];
 };
@@ -38,11 +39,17 @@ export const getSessionContext = createServerFn({ method: "GET" })
   .handler(async ({ context }): Promise<SessionContext> => {
     const { supabase, userId } = context;
 
-    const { data: profile } = await supabase
+    const { data: profile, error: profileError } = await supabase
       .from("profiles")
       .select("id, full_name, status")
       .eq("id", userId)
       .maybeSingle();
+
+    if (profileError) throw new Error(`Unable to load authenticated profile: ${profileError.message}`);
+    if (!profile) throw new Error("No application profile exists for the authenticated user");
+    if (profile.id !== userId) {
+      throw new Error("Authenticated profile does not match the server-validated user identity");
+    }
 
     const profileDto = profile
       ? { id: profile.id, fullName: profile.full_name, status: profile.status }
@@ -51,12 +58,20 @@ export const getSessionContext = createServerFn({ method: "GET" })
     const { data: memberships, error: membershipError } = await supabase
       .from("organization_memberships")
       .select("id, organization_id, status")
-      .eq("profile_id", userId);
+      .eq("profile_id", userId)
+      .eq("status", "active");
 
-    if (membershipError) throw new Error(membershipError.message);
+    if (membershipError) {
+      throw new Error(`Unable to load organization memberships: ${membershipError.message}`);
+    }
 
-    const active = (memberships ?? []).filter((m) => m.status === "ACTIVE");
-    if (active.length === 0) return { profile: profileDto, organizations: [] };
+    const active = memberships ?? [];
+    console.info("[EduSmart context] Authenticated identity resolved", {
+      authUserId: userId,
+      profileId: profile?.id ?? null,
+      activeMembershipCount: active.length,
+    });
+    if (active.length === 0) return { authUserId: userId, profile: profileDto, organizations: [] };
 
     const membershipIds = active.map((m) => m.id);
     const orgIds = Array.from(new Set(active.map((m) => m.organization_id)));
@@ -66,14 +81,19 @@ export const getSessionContext = createServerFn({ method: "GET" })
       supabase
         .from("membership_school_access")
         .select("membership_id, school_id, status")
-        .in("membership_id", membershipIds),
+        .in("membership_id", membershipIds)
+        .eq("status", "active"),
       supabase
         .from("membership_roles")
         .select("membership_id, role_id, scope_type, scope_id, ends_at")
         .in("membership_id", membershipIds),
     ]);
 
-    const activeAccess = (accessRes.data ?? []).filter((a) => a.status === "ACTIVE");
+    if (orgsRes.error) throw new Error(`Unable to load organizations: ${orgsRes.error.message}`);
+    if (accessRes.error) throw new Error(`Unable to load school access: ${accessRes.error.message}`);
+    if (grantsRes.error) throw new Error(`Unable to load role grants: ${grantsRes.error.message}`);
+
+    const activeAccess = accessRes.data ?? [];
     const schoolIds = Array.from(new Set(activeAccess.map((a) => a.school_id)));
 
     const activeGrants = (grantsRes.data ?? []).filter(
@@ -83,13 +103,19 @@ export const getSessionContext = createServerFn({ method: "GET" })
 
     const schoolsRes = schoolIds.length
       ? await supabase.from("schools").select("id, organization_id, code, name").in("id", schoolIds)
-      : { data: [] };
+      : { data: [], error: null };
     const rolesRes = roleIds.length
       ? await supabase.from("roles").select("id, code, name").in("id", roleIds)
-      : { data: [] };
+      : { data: [], error: null };
     const rolePermsRes = roleIds.length
       ? await supabase.from("role_permissions").select("role_id, permissions(code)").in("role_id", roleIds)
-      : { data: [] };
+      : { data: [], error: null };
+
+    if (schoolsRes.error) {
+      throw new Error(`Unable to load accessible schools: ${schoolsRes.error.message}`);
+    }
+    if (rolesRes.error) throw new Error(`Unable to load roles: ${rolesRes.error.message}`);
+    if (rolePermsRes.error) throw new Error(`Unable to load permissions: ${rolePermsRes.error.message}`);
 
     const roleById = new Map(
       ((rolesRes.data ?? []) as { id: string; code: string; name: string }[]).map((r) => [r.id, r]),
@@ -149,7 +175,7 @@ export const getSessionContext = createServerFn({ method: "GET" })
       };
     });
 
-    return { profile: profileDto, organizations };
+    return { authUserId: userId, profile: profileDto, organizations };
   });
 
 export type AcademicYearSummary = {
@@ -204,7 +230,9 @@ export const getAcademicContext = createServerFn({ method: "GET" })
           .select("id, academic_year_id, code, name, status, sequence")
           .in("academic_year_id", yearIds)
           .order("sequence", { ascending: true })
-      : { data: [] };
+      : { data: [], error: null };
+
+    if (termsRes.error) throw new Error(`Unable to load academic terms: ${termsRes.error.message}`);
 
     return {
       academicYears: (years ?? []).map((y) => ({

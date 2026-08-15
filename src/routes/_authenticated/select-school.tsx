@@ -1,3 +1,4 @@
+import { useEffect } from "react";
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { School } from "lucide-react";
 import { useAppContext } from "@/lib/app-context";
@@ -21,9 +22,16 @@ export const Route = createFileRoute("/_authenticated/select-school")({
 });
 
 function SelectSchoolPage() {
-  const { isLoading, activeOrganization, setSchool } = useAppContext();
+  const { isLoading, error, organizations, activeOrganization, activeSchool, setSchool } = useAppContext();
   const navigate = useNavigate();
   const schools = activeOrganization?.schools ?? [];
+
+  useEffect(() => {
+    if (isLoading || error) return;
+    if (organizations.length === 0) navigate({ to: "/access-pending", replace: true });
+    else if (!activeOrganization) navigate({ to: "/select-organization", replace: true });
+    else if (activeSchool) navigate({ to: "/dashboard", replace: true });
+  }, [isLoading, error, organizations, activeOrganization, activeSchool, navigate]);
 
   return (
     <div className="flex min-h-screen items-center justify-center bg-muted/30 px-4 py-10">
@@ -37,7 +45,9 @@ function SelectSchoolPage() {
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-3">
-          {isLoading ? (
+          {error ? (
+            <p className="text-sm text-destructive">We couldn't load your school access: {error.message}</p>
+          ) : isLoading ? (
             <>
               <Skeleton className="h-14 w-full" />
               <Skeleton className="h-14 w-full" />
