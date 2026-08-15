@@ -112,7 +112,10 @@ export function AppContextProvider({ children }: { children: ReactNode }) {
 
   const academicQuery = useQuery({
     queryKey: ["academic-context", schoolId],
-    queryFn: () => fetchAcademicContext({ data: { schoolId: schoolId! } }),
+    queryFn: () => {
+      if (!schoolId) throw new Error("A valid school must be selected before loading academic context");
+      return fetchAcademicContext({ data: { schoolId } });
+    },
     enabled: Boolean(schoolId),
     staleTime: 60_000,
   });
@@ -149,7 +152,7 @@ export function AppContextProvider({ children }: { children: ReactNode }) {
 
   const value: AppContextValue = {
     isLoading: sessionQuery.isLoading,
-    error: (sessionQuery.error as Error | null) ?? null,
+    error: ((sessionQuery.error ?? academicQuery.error) as Error | null) ?? null,
     refetch: () => void sessionQuery.refetch(),
     snapshot: sessionQuery.data,
     organizations,

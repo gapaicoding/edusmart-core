@@ -1,3 +1,4 @@
+import { useEffect } from "react";
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { Building2 } from "lucide-react";
 import { useAppContext } from "@/lib/app-context";
@@ -22,8 +23,14 @@ export const Route = createFileRoute("/_authenticated/select-organization")({
 });
 
 function SelectOrganizationPage() {
-  const { isLoading, organizations, setOrganization } = useAppContext();
+  const { isLoading, error, organizations, activeOrganization, setOrganization } = useAppContext();
   const navigate = useNavigate();
+
+  useEffect(() => {
+    if (isLoading || error) return;
+    if (organizations.length === 0) navigate({ to: "/access-pending", replace: true });
+    else if (activeOrganization) navigate({ to: "/dashboard", replace: true });
+  }, [isLoading, error, organizations, activeOrganization, navigate]);
 
   return (
     <div className="flex min-h-screen items-center justify-center bg-muted/30 px-4 py-10">
@@ -33,7 +40,9 @@ function SelectOrganizationPage() {
           <CardDescription>Only organizations with an active membership are listed.</CardDescription>
         </CardHeader>
         <CardContent className="space-y-3">
-          {isLoading ? (
+          {error ? (
+            <p className="text-sm text-destructive">We couldn't load your organizations: {error.message}</p>
+          ) : isLoading ? (
             <>
               <Skeleton className="h-16 w-full" />
               <Skeleton className="h-16 w-full" />
