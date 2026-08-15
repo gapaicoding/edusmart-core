@@ -16,11 +16,19 @@ export const emailSchema = z
   .max(255, { message: "Email must be less than 255 characters" })
   .email({ message: "Enter a valid email address" });
 
+export type ParsedEmail =
+  | { ok: true; email: string; error: null }
+  | { ok: false; email: null; error: string };
+
 /** Returns the normalized email, or an error message when invalid. */
-export function parseEmail(value: string): { email: string; error: null } | { email: null; error: string } {
+export function parseEmail(value: string): ParsedEmail {
   const result = emailSchema.safeParse(value ?? "");
   if (!result.success) {
-    return { email: null, error: result.error.issues[0]?.message ?? "Enter a valid email address" };
+    return {
+      ok: false,
+      email: null,
+      error: result.error.issues[0]?.message ?? "Enter a valid email address",
+    };
   }
-  return { email: result.data, error: null };
+  return { ok: true, email: result.data, error: null };
 }
