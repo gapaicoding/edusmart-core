@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { supabase } from "@/integrations/supabase/client";
+import { parseEmail } from "@/lib/email";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -31,9 +32,14 @@ function ForgotPasswordPage() {
 
   async function handleSubmit(event: React.FormEvent) {
     event.preventDefault();
-    setSubmitting(true);
     setError(null);
-    const { error: resetError } = await supabase.auth.resetPasswordForEmail(email, {
+    const parsed = parseEmail(email);
+    if (!parsed.ok) {
+      setError(parsed.error);
+      return;
+    }
+    setSubmitting(true);
+    const { error: resetError } = await supabase.auth.resetPasswordForEmail(parsed.email, {
       redirectTo: `${window.location.origin}/reset-password`,
     });
     setSubmitting(false);

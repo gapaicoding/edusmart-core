@@ -5,6 +5,7 @@ import { useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useSession } from "@/hooks/use-session";
 import { acceptInvitation } from "@/lib/invitations.functions";
+import { parseEmail } from "@/lib/email";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -53,13 +54,18 @@ function AcceptInvitePage() {
 
   async function handleAuth(event: React.FormEvent) {
     event.preventDefault();
-    setAuthBusy(true);
     setAuthError(null);
     setSignupNotice(false);
+    const parsed = parseEmail(email);
+    if (!parsed.ok) {
+      setAuthError(parsed.error);
+      return;
+    }
+    setAuthBusy(true);
 
     if (mode === "signup") {
       const { data, error } = await supabase.auth.signUp({
-        email,
+        email: parsed.email,
         password,
         options: { emailRedirectTo: `${window.location.origin}/accept-invite?token=${token ?? ""}` },
       });
@@ -69,7 +75,7 @@ function AcceptInvitePage() {
       return;
     }
 
-    const { error } = await supabase.auth.signInWithPassword({ email, password });
+    const { error } = await supabase.auth.signInWithPassword({ email: parsed.email, password });
     setAuthBusy(false);
     if (error) setAuthError(error.message);
   }
