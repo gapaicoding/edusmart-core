@@ -42,7 +42,7 @@ export const createInvitation = createServerFn({ method: "POST" })
     const { data: allowed, error: permError } = await supabase.rpc("has_permission", {
       p_permission_code: "membership.invite",
       p_organization_id: data.organizationId,
-      p_school_id: data.schoolId ?? undefined,
+      ...(data.schoolId ? { p_school_id: data.schoolId } : {}),
     });
     if (permError) throw new Error(permError.message);
     if (!allowed) throw new Error("Forbidden: membership.invite is required");
