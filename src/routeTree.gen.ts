@@ -26,6 +26,7 @@ import { Route as AuthenticatedAcademicGradeLevelsRouteImport } from './routes/_
 import { Route as AuthenticatedAcademicSubjectsRouteImport } from './routes/_authenticated/academic/subjects'
 import { Route as AuthenticatedAcademicTermsRouteImport } from './routes/_authenticated/academic/terms'
 import { Route as AuthenticatedAcademicYearsRouteImport } from './routes/_authenticated/academic/years'
+import { Route as AuthenticatedStudentsIndexRouteImport } from './routes/_authenticated/students/index'
 
 const IndexRoute = IndexRouteImport.update({
   id: '/',
@@ -121,6 +122,12 @@ const AuthenticatedAcademicYearsRoute =
     path: '/academic/years',
     getParentRoute: () => AuthenticatedRouteRoute,
   } as any)
+const AuthenticatedStudentsIndexRoute =
+  AuthenticatedStudentsIndexRouteImport.update({
+    id: '/students/',
+    path: '/students/',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
@@ -139,6 +146,7 @@ export interface FileRoutesByFullPath {
   '/academic/subjects': typeof AuthenticatedAcademicSubjectsRoute
   '/academic/terms': typeof AuthenticatedAcademicTermsRoute
   '/academic/years': typeof AuthenticatedAcademicYearsRoute
+  '/students/': typeof AuthenticatedStudentsIndexRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -157,6 +165,7 @@ export interface FileRoutesByTo {
   '/academic/subjects': typeof AuthenticatedAcademicSubjectsRoute
   '/academic/terms': typeof AuthenticatedAcademicTermsRoute
   '/academic/years': typeof AuthenticatedAcademicYearsRoute
+  '/students': typeof AuthenticatedStudentsIndexRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -177,6 +186,7 @@ export interface FileRoutesById {
   '/_authenticated/academic/subjects': typeof AuthenticatedAcademicSubjectsRoute
   '/_authenticated/academic/terms': typeof AuthenticatedAcademicTermsRoute
   '/_authenticated/academic/years': typeof AuthenticatedAcademicYearsRoute
+  '/_authenticated/students/': typeof AuthenticatedStudentsIndexRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -197,6 +207,7 @@ export interface FileRouteTypes {
     | '/academic/subjects'
     | '/academic/terms'
     | '/academic/years'
+    | '/students/'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -215,6 +226,7 @@ export interface FileRouteTypes {
     | '/academic/subjects'
     | '/academic/terms'
     | '/academic/years'
+    | '/students'
   id:
     | '__root__'
     | '/'
@@ -234,6 +246,7 @@ export interface FileRouteTypes {
     | '/_authenticated/academic/subjects'
     | '/_authenticated/academic/terms'
     | '/_authenticated/academic/years'
+    | '/_authenticated/students/'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -366,6 +379,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedAcademicYearsRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+    '/_authenticated/students/': {
+      id: '/_authenticated/students/'
+      path: '/students'
+      fullPath: '/students/'
+      preLoaderRoute: typeof AuthenticatedStudentsIndexRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
   }
 }
 
@@ -381,6 +401,7 @@ interface AuthenticatedRouteRouteChildren {
   AuthenticatedAcademicSubjectsRoute: typeof AuthenticatedAcademicSubjectsRoute
   AuthenticatedAcademicTermsRoute: typeof AuthenticatedAcademicTermsRoute
   AuthenticatedAcademicYearsRoute: typeof AuthenticatedAcademicYearsRoute
+  AuthenticatedStudentsIndexRoute: typeof AuthenticatedStudentsIndexRoute
 }
 
 const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
@@ -395,6 +416,7 @@ const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedAcademicSubjectsRoute: AuthenticatedAcademicSubjectsRoute,
   AuthenticatedAcademicTermsRoute: AuthenticatedAcademicTermsRoute,
   AuthenticatedAcademicYearsRoute: AuthenticatedAcademicYearsRoute,
+  AuthenticatedStudentsIndexRoute: AuthenticatedStudentsIndexRoute,
 }
 
 const AuthenticatedRouteRouteWithChildren =
