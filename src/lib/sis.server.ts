@@ -133,11 +133,15 @@ export async function loadEnrollmentContext(
 /**
  * Classroom placement integrity.
  *
- * The database composite FK only guarantees the classroom shares the
- * organization + school of the enrolment. Academic-year and grade-level
- * agreement is NOT guaranteed by any live constraint or trigger (reported as
- * finding B2-F01), so the check runs here, on the server, under the caller's
- * RLS-scoped client.
+ * Already authoritative in the database:
+ *   - composite FK: classroom shares organization + school with the enrolment
+ *   - trigger validate_class_enrollment_consistency: classroom academic year
+ *     must equal the enrolment academic year
+ *
+ * NOT enforced by any live constraint or trigger: grade-level agreement
+ * (finding B2-F01, migration proposed, not applied). The checks below run
+ * server-side under the caller's RLS-scoped client and produce readable
+ * errors; the database remains the final authority.
  */
 export async function assertClassroomMatchesEnrollment(
   supabase: Db,
