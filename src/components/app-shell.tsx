@@ -339,7 +339,9 @@ export function AppShell({ children }: { children: ReactNode }) {
                   </DropdownMenuItem>
                 </DropdownMenuContent>
               </DropdownMenu>
+              )}
             </div>
+
           </div>
 
           <div className="border-t border-border px-4 py-2 md:hidden">
