@@ -114,6 +114,22 @@ function CalendarPage() {
       setFormError(firstZodMessage(parsed.error as z.ZodError));
       return;
     }
+
+    // B1-R01 — an event may never fall outside its academic year. The server
+    // re-checks this against the database; this is the readable first pass.
+    const yearStart = activeAcademicYear?.startsOn;
+    const yearEnd = activeAcademicYear?.endsOn;
+    if (yearStart && yearEnd) {
+      const start = parsed.data.startsOn;
+      const end = parsed.data.endsOn ?? parsed.data.startsOn;
+      if (start < yearStart || end > yearEnd) {
+        setFormError(
+          `Event dates must be inside the selected academic year range (${yearStart} to ${yearEnd}).`,
+        );
+        return;
+      }
+    }
+
     mutation.mutate(parsed.data);
   }
 

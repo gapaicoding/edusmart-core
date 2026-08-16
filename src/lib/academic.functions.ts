@@ -9,7 +9,12 @@ import {
   subjectInput,
   termInput,
 } from "./academic.schemas";
-import { assertWriteApplied, resolveOrganizationId, translateDbError } from "./academic.server";
+import {
+  assertEventWithinAcademicYear,
+  assertWriteApplied,
+  resolveOrganizationId,
+  translateDbError,
+} from "./academic.server";
 import { schoolScopeInput, yearScopeInput } from "./academic.validators";
 
 /**
@@ -443,6 +448,12 @@ export const saveCalendarEvent = createServerFn({ method: "POST" })
   .handler(async ({ data, context }): Promise<{ id: string }> => {
     const { supabase } = context;
     const organizationId = await resolveOrganizationId(supabase, data.schoolId);
+    await assertEventWithinAcademicYear(supabase, {
+      schoolId: data.schoolId,
+      academicYearId: data.academicYearId,
+      startsOn: data.startsOn,
+      endsOn: data.endsOn ?? null,
+    });
     const payload = {
       organization_id: organizationId,
       school_id: data.schoolId,
