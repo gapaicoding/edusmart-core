@@ -249,7 +249,7 @@ function Sidebar({ onNavigate }: { onNavigate?: () => void }) {
 
 export function AppShell({ children }: { children: ReactNode }) {
   const [mobileOpen, setMobileOpen] = useState(false);
-  const { snapshot, activeOrganization } = useAppContext();
+  const { snapshot, activeOrganization, identityLoading, contextLoading, error } = useAppContext();
   const navigate = useNavigate();
   const queryClient = useQueryClient();
 
@@ -260,11 +260,13 @@ export function AppShell({ children }: { children: ReactNode }) {
     navigate({ to: "/auth", replace: true });
   }
 
+  const identityResolving = identityLoading && !error;
   const initials = (snapshot?.profile?.fullName ?? "U")
     .split(" ")
     .slice(0, 2)
     .map((part) => part.charAt(0).toUpperCase())
     .join("");
+
 
   return (
     <div className="min-h-screen bg-muted/30 text-foreground">
