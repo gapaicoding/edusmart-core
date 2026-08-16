@@ -71,7 +71,10 @@ function ContextSwitchers({ compact = false }: { compact?: boolean }) {
     terms,
     activeAcademicYear,
     activeTerm,
-    academicLoading,
+    contextLoading,
+    academicYearLoading,
+    termLoading,
+    error,
     setOrganization,
     setSchool,
     setAcademicYear,
@@ -79,6 +82,21 @@ function ContextSwitchers({ compact = false }: { compact?: boolean }) {
   } = useAppContext();
 
   const triggerClass = compact ? "h-9 w-full" : "h-9 w-[190px]";
+  const yearClass = compact ? "h-9 w-full" : "h-9 w-[150px]";
+  const termClass = compact ? "h-9 w-full" : "h-9 w-[140px]";
+
+  // While context is resolving we show neutral skeletons — never a false
+  // "No organization" / "Select school" label. Errors fall through to the
+  // real controls so the failure stays visible instead of looking like data.
+  if (contextLoading && !error) {
+    return (
+      <div className={cn("flex gap-2", compact ? "flex-col" : "flex-wrap items-center")}>
+        <Skeleton className={cn("rounded-md", triggerClass)} />
+        <Skeleton className={cn("rounded-md", yearClass)} />
+        <Skeleton className={cn("rounded-md", termClass)} />
+      </div>
+    );
+  }
 
   return (
     <div className={cn("flex gap-2", compact ? "flex-col" : "flex-wrap items-center")}>
@@ -110,15 +128,14 @@ function ContextSwitchers({ compact = false }: { compact?: boolean }) {
         </SelectContent>
       </Select>
 
-      {academicLoading ? (
-        <Skeleton className={cn("rounded-md", compact ? "h-9 w-full" : "h-9 w-[150px]")} />
+      {academicYearLoading && !error ? (
+        <Skeleton className={cn("rounded-md", yearClass)} />
       ) : (
         <Select value={activeAcademicYear?.id ?? ""} onValueChange={setAcademicYear}>
-          <SelectTrigger
-            className={compact ? "h-9 w-full" : "h-9 w-[150px]"}
-            aria-label="Academic year"
-          >
-            <SelectValue placeholder="Academic year" />
+          <SelectTrigger className={yearClass} aria-label="Academic year">
+            <SelectValue
+              placeholder={academicYears.length === 0 ? "No academic year" : "Academic year"}
+            />
           </SelectTrigger>
           <SelectContent>
             {academicYears.map((year) => (
@@ -130,21 +147,26 @@ function ContextSwitchers({ compact = false }: { compact?: boolean }) {
         </Select>
       )}
 
-      <Select value={activeTerm?.id ?? ""} onValueChange={setTerm}>
-        <SelectTrigger className={compact ? "h-9 w-full" : "h-9 w-[140px]"} aria-label="Term">
-          <SelectValue placeholder="Term" />
-        </SelectTrigger>
-        <SelectContent>
-          {terms.map((term) => (
-            <SelectItem key={term.id} value={term.id}>
-              {term.name}
-            </SelectItem>
-          ))}
-        </SelectContent>
-      </Select>
+      {termLoading && !error ? (
+        <Skeleton className={cn("rounded-md", termClass)} />
+      ) : (
+        <Select value={activeTerm?.id ?? ""} onValueChange={setTerm}>
+          <SelectTrigger className={termClass} aria-label="Term">
+            <SelectValue placeholder={terms.length === 0 ? "No term" : "Term"} />
+          </SelectTrigger>
+          <SelectContent>
+            {terms.map((term) => (
+              <SelectItem key={term.id} value={term.id}>
+                {term.name}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+      )}
     </div>
   );
 }
+
 
 function Sidebar({ onNavigate }: { onNavigate?: () => void }) {
   const pathname = useRouterState({ select: (s) => s.location.pathname });
