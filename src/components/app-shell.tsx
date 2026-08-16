@@ -34,9 +34,29 @@ import {
 } from "@/components/ui/select";
 import { cn } from "@/lib/utils";
 
-const NAV_ITEMS = [
-  { to: "/dashboard", label: "Dashboard", icon: LayoutDashboard, permission: null },
-] as const;
+type NavItem = { to: string; label: string; icon: typeof LayoutDashboard; permission: string | null };
+type NavGroup = { label: string | null; items: NavItem[] };
+
+/** Permission checks here hide navigation only; RLS remains the real boundary. */
+const NAV_GROUPS: NavGroup[] = [
+  {
+    label: null,
+    items: [{ to: "/dashboard", label: "Dashboard", icon: LayoutDashboard, permission: null }],
+  },
+  {
+    label: "Academic Setup",
+    items: [
+      { to: "/academic/years", label: "Academic Years", icon: CalendarRange, permission: "academic_year.read" },
+      { to: "/academic/terms", label: "Terms", icon: CalendarRange, permission: "term.read" },
+      { to: "/academic/grade-levels", label: "Grade Levels", icon: GraduationCap, permission: "grade_level.read" },
+      { to: "/academic/classrooms", label: "Classrooms", icon: School, permission: "classroom.read" },
+      { to: "/academic/subjects", label: "Subjects", icon: BookOpen, permission: "subject.read" },
+      { to: "/academic/curricula", label: "Curricula", icon: Library, permission: "curriculum.read" },
+      { to: "/academic/calendar", label: "Academic Calendar", icon: CalendarDays, permission: "schedule.read" },
+    ],
+  },
+];
+
 
 function ContextSwitchers({ compact = false }: { compact?: boolean }) {
   const {
