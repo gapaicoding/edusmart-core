@@ -73,7 +73,7 @@ export function SisPage({
             <p className="text-sm text-muted-foreground">{description}</p>
             {activeOrganization && (
               <p className="mt-1 text-xs text-muted-foreground">
-                Organization: {activeOrganization.organizationName}
+                Organization: {activeOrganization.name}
                 {activeSchool ? ` · School filter: ${activeSchool.name}` : ""}
               </p>
             )}
