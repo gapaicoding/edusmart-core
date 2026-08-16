@@ -221,18 +221,28 @@ function Sidebar({ onNavigate }: { onNavigate?: () => void }) {
 
 
       <div className="mt-auto space-y-2 rounded-md border border-border p-3">
-        <p className="flex items-center gap-2 text-xs font-medium text-muted-foreground">
-          <Building2 className="h-3.5 w-3.5" />
-          {activeOrganization?.name ?? "No organization"}
-        </p>
-        <div className="flex flex-wrap gap-1">
-          {(activeOrganization?.roles ?? []).map((role, index) => (
-            <Badge key={`${role.code}-${index}`} variant="secondary" className="text-[10px]">
-              {role.code} · {role.scopeType}
-            </Badge>
-          ))}
-        </div>
+        {orgResolving ? (
+          <>
+            <Skeleton className="h-4 w-32" />
+            <Skeleton className="h-4 w-24" />
+          </>
+        ) : (
+          <>
+            <p className="flex items-center gap-2 text-xs font-medium text-muted-foreground">
+              <Building2 className="h-3.5 w-3.5" />
+              {activeOrganization?.name ?? "No organization"}
+            </p>
+            <div className="flex flex-wrap gap-1">
+              {(activeOrganization?.roles ?? []).map((role, index) => (
+                <Badge key={`${role.code}-${index}`} variant="secondary" className="text-[10px]">
+                  {role.code} · {role.scopeType}
+                </Badge>
+              ))}
+            </div>
+          </>
+        )}
       </div>
+
     </div>
   );
 }
