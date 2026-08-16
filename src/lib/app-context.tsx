@@ -39,6 +39,10 @@ function writeStored(key: string, value: string | null) {
 
 type AppContextValue = {
   isLoading: boolean;
+  /** Session/profile identity still resolving (never true on error). */
+  identityLoading: boolean;
+  /** Organization/school selection still resolving from memberships. */
+  contextLoading: boolean;
   error: Error | null;
   refetch: () => void;
   snapshot: SessionContext | undefined;
@@ -50,6 +54,10 @@ type AppContextValue = {
   activeAcademicYear: AcademicYearSummary | null;
   activeTerm: TermSummary | null;
   academicLoading: boolean;
+  /** Academic year selection still settling after a successful fetch. */
+  academicYearLoading: boolean;
+  /** Term selection still settling after a successful fetch. */
+  termLoading: boolean;
   permissions: string[];
   hasPermission: (code: string) => boolean;
   setOrganization: (id: string) => void;
@@ -57,6 +65,7 @@ type AppContextValue = {
   setAcademicYear: (id: string) => void;
   setTerm: (id: string) => void;
 };
+
 
 const AppContext = createContext<AppContextValue | null>(null);
 
