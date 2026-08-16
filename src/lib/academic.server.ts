@@ -103,3 +103,39 @@ export function assertWriteApplied<T>(rows: T[] | null, action: string): T {
   }
   return row;
 }
+
+/**
+ * B1-R01 — Academic Calendar events must stay inside their academic year.
+ *
+ * There is no database-level guard for this yet, so the authoritative check
+ * runs here, on the server, under the caller's RLS-scoped client: the academic
+ * year row is only readable when the caller may see that school.
+ */
+export async function assertEventWithinAcademicYear(
+  supabase: Db,
+  params: { schoolId: string; academicYearId: string; startsOn: string; endsOn: string | null },
+): Promise<void> {
+  const { data, error } = await supabase
+    .from("academic_years")
+    .select("name, starts_on, ends_on")
+    .eq("id", params.academicYearId)
+    .eq("school_id", params.schoolId)
+    .maybeSingle();
+
+  if (error) throw new Error(translateDbError(error, "Academic year"));
+  if (!data) {
+    throw new Error("The selected academic year does not exist in this school, or you cannot access it.");
+  }
+
+  const start = params.startsOn;
+  const end = params.endsOn ?? params.startsOn;
+
+  if (end < start) {
+    throw new Error("The event end date must be on or after the start date.");
+  }
+  if (start < data.starts_on || end > data.ends_on) {
+    throw new Error(
+      `Event dates must be inside the selected academic year range (${data.starts_on} to ${data.ends_on}).`,
+    );
+  }
+}
