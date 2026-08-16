@@ -26,6 +26,12 @@ import { Route as AuthenticatedAcademicGradeLevelsRouteImport } from './routes/_
 import { Route as AuthenticatedAcademicSubjectsRouteImport } from './routes/_authenticated/academic/subjects'
 import { Route as AuthenticatedAcademicTermsRouteImport } from './routes/_authenticated/academic/terms'
 import { Route as AuthenticatedAcademicYearsRouteImport } from './routes/_authenticated/academic/years'
+import { Route as AuthenticatedGuardiansIndexRouteImport } from './routes/_authenticated/guardians/index'
+import { Route as AuthenticatedGuardiansGuardianIdRouteImport } from './routes/_authenticated/guardians/$guardianId'
+import { Route as AuthenticatedStaffIndexRouteImport } from './routes/_authenticated/staff/index'
+import { Route as AuthenticatedStaffStaffIdRouteImport } from './routes/_authenticated/staff/$staffId'
+import { Route as AuthenticatedStudentsIndexRouteImport } from './routes/_authenticated/students/index'
+import { Route as AuthenticatedStudentsStudentIdRouteImport } from './routes/_authenticated/students/$studentId'
 
 const IndexRoute = IndexRouteImport.update({
   id: '/',
@@ -121,6 +127,41 @@ const AuthenticatedAcademicYearsRoute =
     path: '/academic/years',
     getParentRoute: () => AuthenticatedRouteRoute,
   } as any)
+const AuthenticatedGuardiansIndexRoute =
+  AuthenticatedGuardiansIndexRouteImport.update({
+    id: '/guardians/',
+    path: '/guardians/',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
+const AuthenticatedGuardiansGuardianIdRoute =
+  AuthenticatedGuardiansGuardianIdRouteImport.update({
+    id: '/guardians/$guardianId',
+    path: '/guardians/$guardianId',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
+const AuthenticatedStaffIndexRoute = AuthenticatedStaffIndexRouteImport.update({
+  id: '/staff/',
+  path: '/staff/',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
+const AuthenticatedStaffStaffIdRoute =
+  AuthenticatedStaffStaffIdRouteImport.update({
+    id: '/staff/$staffId',
+    path: '/staff/$staffId',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
+const AuthenticatedStudentsIndexRoute =
+  AuthenticatedStudentsIndexRouteImport.update({
+    id: '/students/',
+    path: '/students/',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
+const AuthenticatedStudentsStudentIdRoute =
+  AuthenticatedStudentsStudentIdRouteImport.update({
+    id: '/students/$studentId',
+    path: '/students/$studentId',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
@@ -139,6 +180,12 @@ export interface FileRoutesByFullPath {
   '/academic/subjects': typeof AuthenticatedAcademicSubjectsRoute
   '/academic/terms': typeof AuthenticatedAcademicTermsRoute
   '/academic/years': typeof AuthenticatedAcademicYearsRoute
+  '/guardians/$guardianId': typeof AuthenticatedGuardiansGuardianIdRoute
+  '/staff/$staffId': typeof AuthenticatedStaffStaffIdRoute
+  '/students/$studentId': typeof AuthenticatedStudentsStudentIdRoute
+  '/guardians/': typeof AuthenticatedGuardiansIndexRoute
+  '/staff/': typeof AuthenticatedStaffIndexRoute
+  '/students/': typeof AuthenticatedStudentsIndexRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -157,6 +204,12 @@ export interface FileRoutesByTo {
   '/academic/subjects': typeof AuthenticatedAcademicSubjectsRoute
   '/academic/terms': typeof AuthenticatedAcademicTermsRoute
   '/academic/years': typeof AuthenticatedAcademicYearsRoute
+  '/guardians/$guardianId': typeof AuthenticatedGuardiansGuardianIdRoute
+  '/staff/$staffId': typeof AuthenticatedStaffStaffIdRoute
+  '/students/$studentId': typeof AuthenticatedStudentsStudentIdRoute
+  '/guardians': typeof AuthenticatedGuardiansIndexRoute
+  '/staff': typeof AuthenticatedStaffIndexRoute
+  '/students': typeof AuthenticatedStudentsIndexRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -177,6 +230,12 @@ export interface FileRoutesById {
   '/_authenticated/academic/subjects': typeof AuthenticatedAcademicSubjectsRoute
   '/_authenticated/academic/terms': typeof AuthenticatedAcademicTermsRoute
   '/_authenticated/academic/years': typeof AuthenticatedAcademicYearsRoute
+  '/_authenticated/guardians/$guardianId': typeof AuthenticatedGuardiansGuardianIdRoute
+  '/_authenticated/staff/$staffId': typeof AuthenticatedStaffStaffIdRoute
+  '/_authenticated/students/$studentId': typeof AuthenticatedStudentsStudentIdRoute
+  '/_authenticated/guardians/': typeof AuthenticatedGuardiansIndexRoute
+  '/_authenticated/staff/': typeof AuthenticatedStaffIndexRoute
+  '/_authenticated/students/': typeof AuthenticatedStudentsIndexRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -197,6 +256,12 @@ export interface FileRouteTypes {
     | '/academic/subjects'
     | '/academic/terms'
     | '/academic/years'
+    | '/guardians/$guardianId'
+    | '/staff/$staffId'
+    | '/students/$studentId'
+    | '/guardians/'
+    | '/staff/'
+    | '/students/'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -215,6 +280,12 @@ export interface FileRouteTypes {
     | '/academic/subjects'
     | '/academic/terms'
     | '/academic/years'
+    | '/guardians/$guardianId'
+    | '/staff/$staffId'
+    | '/students/$studentId'
+    | '/guardians'
+    | '/staff'
+    | '/students'
   id:
     | '__root__'
     | '/'
@@ -234,6 +305,12 @@ export interface FileRouteTypes {
     | '/_authenticated/academic/subjects'
     | '/_authenticated/academic/terms'
     | '/_authenticated/academic/years'
+    | '/_authenticated/guardians/$guardianId'
+    | '/_authenticated/staff/$staffId'
+    | '/_authenticated/students/$studentId'
+    | '/_authenticated/guardians/'
+    | '/_authenticated/staff/'
+    | '/_authenticated/students/'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -366,6 +443,48 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedAcademicYearsRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+    '/_authenticated/guardians/': {
+      id: '/_authenticated/guardians/'
+      path: '/guardians'
+      fullPath: '/guardians/'
+      preLoaderRoute: typeof AuthenticatedGuardiansIndexRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/guardians/$guardianId': {
+      id: '/_authenticated/guardians/$guardianId'
+      path: '/guardians/$guardianId'
+      fullPath: '/guardians/$guardianId'
+      preLoaderRoute: typeof AuthenticatedGuardiansGuardianIdRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/staff/': {
+      id: '/_authenticated/staff/'
+      path: '/staff'
+      fullPath: '/staff/'
+      preLoaderRoute: typeof AuthenticatedStaffIndexRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/staff/$staffId': {
+      id: '/_authenticated/staff/$staffId'
+      path: '/staff/$staffId'
+      fullPath: '/staff/$staffId'
+      preLoaderRoute: typeof AuthenticatedStaffStaffIdRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/students/': {
+      id: '/_authenticated/students/'
+      path: '/students'
+      fullPath: '/students/'
+      preLoaderRoute: typeof AuthenticatedStudentsIndexRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/students/$studentId': {
+      id: '/_authenticated/students/$studentId'
+      path: '/students/$studentId'
+      fullPath: '/students/$studentId'
+      preLoaderRoute: typeof AuthenticatedStudentsStudentIdRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
   }
 }
 
@@ -381,6 +500,12 @@ interface AuthenticatedRouteRouteChildren {
   AuthenticatedAcademicSubjectsRoute: typeof AuthenticatedAcademicSubjectsRoute
   AuthenticatedAcademicTermsRoute: typeof AuthenticatedAcademicTermsRoute
   AuthenticatedAcademicYearsRoute: typeof AuthenticatedAcademicYearsRoute
+  AuthenticatedGuardiansGuardianIdRoute: typeof AuthenticatedGuardiansGuardianIdRoute
+  AuthenticatedStaffStaffIdRoute: typeof AuthenticatedStaffStaffIdRoute
+  AuthenticatedStudentsStudentIdRoute: typeof AuthenticatedStudentsStudentIdRoute
+  AuthenticatedGuardiansIndexRoute: typeof AuthenticatedGuardiansIndexRoute
+  AuthenticatedStaffIndexRoute: typeof AuthenticatedStaffIndexRoute
+  AuthenticatedStudentsIndexRoute: typeof AuthenticatedStudentsIndexRoute
 }
 
 const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
@@ -395,6 +520,12 @@ const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedAcademicSubjectsRoute: AuthenticatedAcademicSubjectsRoute,
   AuthenticatedAcademicTermsRoute: AuthenticatedAcademicTermsRoute,
   AuthenticatedAcademicYearsRoute: AuthenticatedAcademicYearsRoute,
+  AuthenticatedGuardiansGuardianIdRoute: AuthenticatedGuardiansGuardianIdRoute,
+  AuthenticatedStaffStaffIdRoute: AuthenticatedStaffStaffIdRoute,
+  AuthenticatedStudentsStudentIdRoute: AuthenticatedStudentsStudentIdRoute,
+  AuthenticatedGuardiansIndexRoute: AuthenticatedGuardiansIndexRoute,
+  AuthenticatedStaffIndexRoute: AuthenticatedStaffIndexRoute,
+  AuthenticatedStudentsIndexRoute: AuthenticatedStudentsIndexRoute,
 }
 
 const AuthenticatedRouteRouteWithChildren =
