@@ -22,16 +22,18 @@ export const Route = createFileRoute("/_authenticated/select-school")({
 });
 
 function SelectSchoolPage() {
-  const { isLoading, error, organizations, activeOrganization, activeSchool, setSchool } = useAppContext();
+  const { isLoading, contextLoading, error, organizations, activeOrganization, activeSchool, setSchool } =
+    useAppContext();
   const navigate = useNavigate();
   const schools = activeOrganization?.schools ?? [];
 
   useEffect(() => {
-    if (isLoading || error) return;
+    if (contextLoading || error) return;
     if (organizations.length === 0) navigate({ to: "/access-pending", replace: true });
     else if (!activeOrganization) navigate({ to: "/select-organization", replace: true });
     else if (activeSchool) navigate({ to: "/dashboard", replace: true });
-  }, [isLoading, error, organizations, activeOrganization, activeSchool, navigate]);
+  }, [contextLoading, error, organizations, activeOrganization, activeSchool, navigate]);
+
 
   return (
     <div className="flex min-h-screen items-center justify-center bg-muted/30 px-4 py-10">
