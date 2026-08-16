@@ -2,16 +2,20 @@ import { useState, type ReactNode } from "react";
 import { Link, useNavigate, useRouterState } from "@tanstack/react-router";
 import { useQueryClient } from "@tanstack/react-query";
 import {
+  BookOpen,
   Building2,
+  CalendarDays,
   CalendarRange,
   GraduationCap,
   LayoutDashboard,
+  Library,
   LogOut,
   Menu,
   School,
   ShieldCheck,
   X,
 } from "lucide-react";
+
 import { supabase } from "@/integrations/supabase/client";
 import { useAppContext } from "@/lib/app-context";
 import { Button } from "@/components/ui/button";
