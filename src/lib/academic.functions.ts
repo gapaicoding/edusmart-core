@@ -448,6 +448,12 @@ export const saveCalendarEvent = createServerFn({ method: "POST" })
   .handler(async ({ data, context }): Promise<{ id: string }> => {
     const { supabase } = context;
     const organizationId = await resolveOrganizationId(supabase, data.schoolId);
+    await assertEventWithinAcademicYear(supabase, {
+      schoolId: data.schoolId,
+      academicYearId: data.academicYearId,
+      startsOn: data.startsOn,
+      endsOn: data.endsOn ?? null,
+    });
     const payload = {
       organization_id: organizationId,
       school_id: data.schoolId,
