@@ -39,6 +39,10 @@ function writeStored(key: string, value: string | null) {
 
 type AppContextValue = {
   isLoading: boolean;
+  /** Session/profile identity still resolving (never true on error). */
+  identityLoading: boolean;
+  /** Organization/school selection still resolving from memberships. */
+  contextLoading: boolean;
   error: Error | null;
   refetch: () => void;
   snapshot: SessionContext | undefined;
@@ -50,6 +54,10 @@ type AppContextValue = {
   activeAcademicYear: AcademicYearSummary | null;
   activeTerm: TermSummary | null;
   academicLoading: boolean;
+  /** Academic year selection still settling after a successful fetch. */
+  academicYearLoading: boolean;
+  /** Term selection still settling after a successful fetch. */
+  termLoading: boolean;
   permissions: string[];
   hasPermission: (code: string) => boolean;
   setOrganization: (id: string) => void;
@@ -57,6 +65,7 @@ type AppContextValue = {
   setAcademicYear: (id: string) => void;
   setTerm: (id: string) => void;
 };
+
 
 const AppContext = createContext<AppContextValue | null>(null);
 
@@ -150,8 +159,33 @@ export function AppContextProvider({ children }: { children: ReactNode }) {
 
   const permissions = activeOrganization?.permissions ?? [];
 
+  /**
+   * Resolution flags. LOADING and LOADED-BUT-EMPTY are distinct, and a failed
+   * query is never reported as loading (react-query clears isPending on error).
+   */
+  const sessionResolving = sessionQuery.isPending;
+  const scopedTerms = terms.filter((t) => t.academicYearId === academicYearId);
+
+  // Auto-selection happens in effects, so a single-choice org/school is still
+  // "resolving" for one render after the snapshot arrives.
+  const orgSettling =
+    !sessionResolving && !sessionQuery.error && organizations.length === 1 && !activeOrganization;
+  const schoolSettling =
+    !!activeOrganization && !schoolId && activeOrganization.schools.length === 1;
+  const contextLoading = sessionResolving || orgSettling || schoolSettling;
+
+  const academicFetching = Boolean(schoolId) && academicQuery.isPending && !academicQuery.error;
+  const academicYearLoading =
+    contextLoading ||
+    academicFetching ||
+    (!!academicQuery.data && academicYears.length > 0 && !academicYearId);
+  const termLoading =
+    academicYearLoading || (!!academicQuery.data && scopedTerms.length > 0 && !termId);
+
   const value: AppContextValue = {
-    isLoading: sessionQuery.isLoading,
+    isLoading: sessionQuery.isPending,
+    identityLoading: sessionResolving,
+    contextLoading,
     error: ((sessionQuery.error ?? academicQuery.error) as Error | null) ?? null,
     refetch: () => void sessionQuery.refetch(),
     snapshot: sessionQuery.data,
@@ -159,12 +193,15 @@ export function AppContextProvider({ children }: { children: ReactNode }) {
     activeOrganization,
     activeSchool: activeOrganization?.schools.find((s) => s.id === schoolId) ?? null,
     academicYears,
-    terms: terms.filter((t) => t.academicYearId === academicYearId),
+    terms: scopedTerms,
     activeAcademicYear: academicYears.find((y) => y.id === academicYearId) ?? null,
     activeTerm: terms.find((t) => t.id === termId) ?? null,
-    academicLoading: academicQuery.isLoading,
+    academicLoading: academicFetching,
+    academicYearLoading,
+    termLoading,
     permissions,
     hasPermission: (code: string) => permissions.includes(code),
+
     setOrganization: (id: string) => {
       if (!organizations.some((o) => o.organizationId === id)) return;
       setOrganizationId(id);

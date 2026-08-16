@@ -71,7 +71,10 @@ function ContextSwitchers({ compact = false }: { compact?: boolean }) {
     terms,
     activeAcademicYear,
     activeTerm,
-    academicLoading,
+    contextLoading,
+    academicYearLoading,
+    termLoading,
+    error,
     setOrganization,
     setSchool,
     setAcademicYear,
@@ -79,6 +82,21 @@ function ContextSwitchers({ compact = false }: { compact?: boolean }) {
   } = useAppContext();
 
   const triggerClass = compact ? "h-9 w-full" : "h-9 w-[190px]";
+  const yearClass = compact ? "h-9 w-full" : "h-9 w-[150px]";
+  const termClass = compact ? "h-9 w-full" : "h-9 w-[140px]";
+
+  // While context is resolving we show neutral skeletons — never a false
+  // "No organization" / "Select school" label. Errors fall through to the
+  // real controls so the failure stays visible instead of looking like data.
+  if (contextLoading && !error) {
+    return (
+      <div className={cn("flex gap-2", compact ? "flex-col" : "flex-wrap items-center")}>
+        <Skeleton className={cn("rounded-md", triggerClass)} />
+        <Skeleton className={cn("rounded-md", yearClass)} />
+        <Skeleton className={cn("rounded-md", termClass)} />
+      </div>
+    );
+  }
 
   return (
     <div className={cn("flex gap-2", compact ? "flex-col" : "flex-wrap items-center")}>
@@ -110,15 +128,14 @@ function ContextSwitchers({ compact = false }: { compact?: boolean }) {
         </SelectContent>
       </Select>
 
-      {academicLoading ? (
-        <Skeleton className={cn("rounded-md", compact ? "h-9 w-full" : "h-9 w-[150px]")} />
+      {academicYearLoading && !error ? (
+        <Skeleton className={cn("rounded-md", yearClass)} />
       ) : (
         <Select value={activeAcademicYear?.id ?? ""} onValueChange={setAcademicYear}>
-          <SelectTrigger
-            className={compact ? "h-9 w-full" : "h-9 w-[150px]"}
-            aria-label="Academic year"
-          >
-            <SelectValue placeholder="Academic year" />
+          <SelectTrigger className={yearClass} aria-label="Academic year">
+            <SelectValue
+              placeholder={academicYears.length === 0 ? "No academic year" : "Academic year"}
+            />
           </SelectTrigger>
           <SelectContent>
             {academicYears.map((year) => (
@@ -130,30 +147,37 @@ function ContextSwitchers({ compact = false }: { compact?: boolean }) {
         </Select>
       )}
 
-      <Select value={activeTerm?.id ?? ""} onValueChange={setTerm}>
-        <SelectTrigger className={compact ? "h-9 w-full" : "h-9 w-[140px]"} aria-label="Term">
-          <SelectValue placeholder="Term" />
-        </SelectTrigger>
-        <SelectContent>
-          {terms.map((term) => (
-            <SelectItem key={term.id} value={term.id}>
-              {term.name}
-            </SelectItem>
-          ))}
-        </SelectContent>
-      </Select>
+      {termLoading && !error ? (
+        <Skeleton className={cn("rounded-md", termClass)} />
+      ) : (
+        <Select value={activeTerm?.id ?? ""} onValueChange={setTerm}>
+          <SelectTrigger className={termClass} aria-label="Term">
+            <SelectValue placeholder={terms.length === 0 ? "No term" : "Term"} />
+          </SelectTrigger>
+          <SelectContent>
+            {terms.map((term) => (
+              <SelectItem key={term.id} value={term.id}>
+                {term.name}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+      )}
     </div>
   );
 }
 
+
 function Sidebar({ onNavigate }: { onNavigate?: () => void }) {
   const pathname = useRouterState({ select: (s) => s.location.pathname });
-  const { activeOrganization, hasPermission } = useAppContext();
+  const { activeOrganization, hasPermission, contextLoading, error } = useAppContext();
+  const orgResolving = contextLoading && !error;
 
   const groups = NAV_GROUPS.map((group) => ({
     ...group,
     items: group.items.filter((item) => !item.permission || hasPermission(item.permission)),
   })).filter((group) => group.items.length > 0);
+
 
   return (
     <div className="flex h-full flex-col gap-6 p-4">
@@ -197,25 +221,35 @@ function Sidebar({ onNavigate }: { onNavigate?: () => void }) {
 
 
       <div className="mt-auto space-y-2 rounded-md border border-border p-3">
-        <p className="flex items-center gap-2 text-xs font-medium text-muted-foreground">
-          <Building2 className="h-3.5 w-3.5" />
-          {activeOrganization?.name ?? "No organization"}
-        </p>
-        <div className="flex flex-wrap gap-1">
-          {(activeOrganization?.roles ?? []).map((role, index) => (
-            <Badge key={`${role.code}-${index}`} variant="secondary" className="text-[10px]">
-              {role.code} · {role.scopeType}
-            </Badge>
-          ))}
-        </div>
+        {orgResolving ? (
+          <>
+            <Skeleton className="h-4 w-32" />
+            <Skeleton className="h-4 w-24" />
+          </>
+        ) : (
+          <>
+            <p className="flex items-center gap-2 text-xs font-medium text-muted-foreground">
+              <Building2 className="h-3.5 w-3.5" />
+              {activeOrganization?.name ?? "No organization"}
+            </p>
+            <div className="flex flex-wrap gap-1">
+              {(activeOrganization?.roles ?? []).map((role, index) => (
+                <Badge key={`${role.code}-${index}`} variant="secondary" className="text-[10px]">
+                  {role.code} · {role.scopeType}
+                </Badge>
+              ))}
+            </div>
+          </>
+        )}
       </div>
+
     </div>
   );
 }
 
 export function AppShell({ children }: { children: ReactNode }) {
   const [mobileOpen, setMobileOpen] = useState(false);
-  const { snapshot, activeOrganization } = useAppContext();
+  const { snapshot, activeOrganization, identityLoading, contextLoading, error } = useAppContext();
   const navigate = useNavigate();
   const queryClient = useQueryClient();
 
@@ -226,11 +260,13 @@ export function AppShell({ children }: { children: ReactNode }) {
     navigate({ to: "/auth", replace: true });
   }
 
+  const identityResolving = identityLoading && !error;
   const initials = (snapshot?.profile?.fullName ?? "U")
     .split(" ")
     .slice(0, 2)
     .map((part) => part.charAt(0).toUpperCase())
     .join("");
+
 
   return (
     <div className="min-h-screen bg-muted/30 text-foreground">
@@ -274,6 +310,9 @@ export function AppShell({ children }: { children: ReactNode }) {
             </div>
 
             <div className="ml-auto flex items-center gap-2">
+              {identityResolving ? (
+                <Skeleton className="h-8 w-32 rounded-md" />
+              ) : (
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
                   <Button variant="outline" size="sm" className="gap-2">
@@ -287,8 +326,11 @@ export function AppShell({ children }: { children: ReactNode }) {
                   <DropdownMenuLabel className="space-y-1">
                     <p className="text-sm">{snapshot?.profile?.fullName ?? "Account"}</p>
                     <p className="text-xs font-normal text-muted-foreground">
-                      {activeOrganization?.name ?? "No active organization"}
+                      {contextLoading && !error
+                        ? "Loading workspace…"
+                        : (activeOrganization?.name ?? "No active organization")}
                     </p>
+
                   </DropdownMenuLabel>
                   <DropdownMenuSeparator />
                   <DropdownMenuItem onSelect={() => void handleSignOut()}>
@@ -297,7 +339,9 @@ export function AppShell({ children }: { children: ReactNode }) {
                   </DropdownMenuItem>
                 </DropdownMenuContent>
               </DropdownMenu>
+              )}
             </div>
+
           </div>
 
           <div className="border-t border-border px-4 py-2 md:hidden">

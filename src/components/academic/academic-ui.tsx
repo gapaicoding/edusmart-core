@@ -37,17 +37,18 @@ export function AcademicPage({
   actions?: ReactNode;
   children: ReactNode;
 }) {
-  const { activeSchool, hasPermission, isLoading } = useAppContext();
+  const { activeSchool, hasPermission, contextLoading, error } = useAppContext();
 
   let body: ReactNode = children;
 
-  if (isLoading) {
+  if (contextLoading && !error) {
     body = (
       <div className="space-y-3">
         <Skeleton className="h-10 w-full" />
         <Skeleton className="h-40 w-full" />
       </div>
     );
+
   } else if (!hasPermission(readPermission)) {
     body = (
       <Card>
