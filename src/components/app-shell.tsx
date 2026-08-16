@@ -310,6 +310,9 @@ export function AppShell({ children }: { children: ReactNode }) {
             </div>
 
             <div className="ml-auto flex items-center gap-2">
+              {identityResolving ? (
+                <Skeleton className="h-8 w-32 rounded-md" />
+              ) : (
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
                   <Button variant="outline" size="sm" className="gap-2">
@@ -323,8 +326,11 @@ export function AppShell({ children }: { children: ReactNode }) {
                   <DropdownMenuLabel className="space-y-1">
                     <p className="text-sm">{snapshot?.profile?.fullName ?? "Account"}</p>
                     <p className="text-xs font-normal text-muted-foreground">
-                      {activeOrganization?.name ?? "No active organization"}
+                      {contextLoading && !error
+                        ? "Loading workspace…"
+                        : (activeOrganization?.name ?? "No active organization")}
                     </p>
+
                   </DropdownMenuLabel>
                   <DropdownMenuSeparator />
                   <DropdownMenuItem onSelect={() => void handleSignOut()}>
