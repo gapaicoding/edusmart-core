@@ -170,12 +170,14 @@ function ContextSwitchers({ compact = false }: { compact?: boolean }) {
 
 function Sidebar({ onNavigate }: { onNavigate?: () => void }) {
   const pathname = useRouterState({ select: (s) => s.location.pathname });
-  const { activeOrganization, hasPermission } = useAppContext();
+  const { activeOrganization, hasPermission, contextLoading, error } = useAppContext();
+  const orgResolving = contextLoading && !error;
 
   const groups = NAV_GROUPS.map((group) => ({
     ...group,
     items: group.items.filter((item) => !item.permission || hasPermission(item.permission)),
   })).filter((group) => group.items.length > 0);
+
 
   return (
     <div className="flex h-full flex-col gap-6 p-4">
