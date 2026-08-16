@@ -26,7 +26,10 @@ import { Route as AuthenticatedAcademicGradeLevelsRouteImport } from './routes/_
 import { Route as AuthenticatedAcademicSubjectsRouteImport } from './routes/_authenticated/academic/subjects'
 import { Route as AuthenticatedAcademicTermsRouteImport } from './routes/_authenticated/academic/terms'
 import { Route as AuthenticatedAcademicYearsRouteImport } from './routes/_authenticated/academic/years'
+import { Route as AuthenticatedGuardiansIndexRouteImport } from './routes/_authenticated/guardians/index'
+import { Route as AuthenticatedGuardiansGuardianIdRouteImport } from './routes/_authenticated/guardians/$guardianId'
 import { Route as AuthenticatedStudentsIndexRouteImport } from './routes/_authenticated/students/index'
+import { Route as AuthenticatedStudentsStudentIdRouteImport } from './routes/_authenticated/students/$studentId'
 
 const IndexRoute = IndexRouteImport.update({
   id: '/',
@@ -122,10 +125,28 @@ const AuthenticatedAcademicYearsRoute =
     path: '/academic/years',
     getParentRoute: () => AuthenticatedRouteRoute,
   } as any)
+const AuthenticatedGuardiansIndexRoute =
+  AuthenticatedGuardiansIndexRouteImport.update({
+    id: '/guardians/',
+    path: '/guardians/',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
+const AuthenticatedGuardiansGuardianIdRoute =
+  AuthenticatedGuardiansGuardianIdRouteImport.update({
+    id: '/guardians/$guardianId',
+    path: '/guardians/$guardianId',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
 const AuthenticatedStudentsIndexRoute =
   AuthenticatedStudentsIndexRouteImport.update({
     id: '/students/',
     path: '/students/',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
+const AuthenticatedStudentsStudentIdRoute =
+  AuthenticatedStudentsStudentIdRouteImport.update({
+    id: '/students/$studentId',
+    path: '/students/$studentId',
     getParentRoute: () => AuthenticatedRouteRoute,
   } as any)
 
@@ -146,6 +167,9 @@ export interface FileRoutesByFullPath {
   '/academic/subjects': typeof AuthenticatedAcademicSubjectsRoute
   '/academic/terms': typeof AuthenticatedAcademicTermsRoute
   '/academic/years': typeof AuthenticatedAcademicYearsRoute
+  '/guardians/$guardianId': typeof AuthenticatedGuardiansGuardianIdRoute
+  '/students/$studentId': typeof AuthenticatedStudentsStudentIdRoute
+  '/guardians/': typeof AuthenticatedGuardiansIndexRoute
   '/students/': typeof AuthenticatedStudentsIndexRoute
 }
 export interface FileRoutesByTo {
@@ -165,6 +189,9 @@ export interface FileRoutesByTo {
   '/academic/subjects': typeof AuthenticatedAcademicSubjectsRoute
   '/academic/terms': typeof AuthenticatedAcademicTermsRoute
   '/academic/years': typeof AuthenticatedAcademicYearsRoute
+  '/guardians/$guardianId': typeof AuthenticatedGuardiansGuardianIdRoute
+  '/students/$studentId': typeof AuthenticatedStudentsStudentIdRoute
+  '/guardians': typeof AuthenticatedGuardiansIndexRoute
   '/students': typeof AuthenticatedStudentsIndexRoute
 }
 export interface FileRoutesById {
@@ -186,6 +213,9 @@ export interface FileRoutesById {
   '/_authenticated/academic/subjects': typeof AuthenticatedAcademicSubjectsRoute
   '/_authenticated/academic/terms': typeof AuthenticatedAcademicTermsRoute
   '/_authenticated/academic/years': typeof AuthenticatedAcademicYearsRoute
+  '/_authenticated/guardians/$guardianId': typeof AuthenticatedGuardiansGuardianIdRoute
+  '/_authenticated/students/$studentId': typeof AuthenticatedStudentsStudentIdRoute
+  '/_authenticated/guardians/': typeof AuthenticatedGuardiansIndexRoute
   '/_authenticated/students/': typeof AuthenticatedStudentsIndexRoute
 }
 export interface FileRouteTypes {
@@ -207,6 +237,9 @@ export interface FileRouteTypes {
     | '/academic/subjects'
     | '/academic/terms'
     | '/academic/years'
+    | '/guardians/$guardianId'
+    | '/students/$studentId'
+    | '/guardians/'
     | '/students/'
   fileRoutesByTo: FileRoutesByTo
   to:
@@ -226,6 +259,9 @@ export interface FileRouteTypes {
     | '/academic/subjects'
     | '/academic/terms'
     | '/academic/years'
+    | '/guardians/$guardianId'
+    | '/students/$studentId'
+    | '/guardians'
     | '/students'
   id:
     | '__root__'
@@ -246,6 +282,9 @@ export interface FileRouteTypes {
     | '/_authenticated/academic/subjects'
     | '/_authenticated/academic/terms'
     | '/_authenticated/academic/years'
+    | '/_authenticated/guardians/$guardianId'
+    | '/_authenticated/students/$studentId'
+    | '/_authenticated/guardians/'
     | '/_authenticated/students/'
   fileRoutesById: FileRoutesById
 }
@@ -379,11 +418,32 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedAcademicYearsRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+    '/_authenticated/guardians/': {
+      id: '/_authenticated/guardians/'
+      path: '/guardians'
+      fullPath: '/guardians/'
+      preLoaderRoute: typeof AuthenticatedGuardiansIndexRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/guardians/$guardianId': {
+      id: '/_authenticated/guardians/$guardianId'
+      path: '/guardians/$guardianId'
+      fullPath: '/guardians/$guardianId'
+      preLoaderRoute: typeof AuthenticatedGuardiansGuardianIdRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
     '/_authenticated/students/': {
       id: '/_authenticated/students/'
       path: '/students'
       fullPath: '/students/'
       preLoaderRoute: typeof AuthenticatedStudentsIndexRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/students/$studentId': {
+      id: '/_authenticated/students/$studentId'
+      path: '/students/$studentId'
+      fullPath: '/students/$studentId'
+      preLoaderRoute: typeof AuthenticatedStudentsStudentIdRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
   }
@@ -401,6 +461,9 @@ interface AuthenticatedRouteRouteChildren {
   AuthenticatedAcademicSubjectsRoute: typeof AuthenticatedAcademicSubjectsRoute
   AuthenticatedAcademicTermsRoute: typeof AuthenticatedAcademicTermsRoute
   AuthenticatedAcademicYearsRoute: typeof AuthenticatedAcademicYearsRoute
+  AuthenticatedGuardiansGuardianIdRoute: typeof AuthenticatedGuardiansGuardianIdRoute
+  AuthenticatedStudentsStudentIdRoute: typeof AuthenticatedStudentsStudentIdRoute
+  AuthenticatedGuardiansIndexRoute: typeof AuthenticatedGuardiansIndexRoute
   AuthenticatedStudentsIndexRoute: typeof AuthenticatedStudentsIndexRoute
 }
 
@@ -416,6 +479,9 @@ const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedAcademicSubjectsRoute: AuthenticatedAcademicSubjectsRoute,
   AuthenticatedAcademicTermsRoute: AuthenticatedAcademicTermsRoute,
   AuthenticatedAcademicYearsRoute: AuthenticatedAcademicYearsRoute,
+  AuthenticatedGuardiansGuardianIdRoute: AuthenticatedGuardiansGuardianIdRoute,
+  AuthenticatedStudentsStudentIdRoute: AuthenticatedStudentsStudentIdRoute,
+  AuthenticatedGuardiansIndexRoute: AuthenticatedGuardiansIndexRoute,
   AuthenticatedStudentsIndexRoute: AuthenticatedStudentsIndexRoute,
 }
 
