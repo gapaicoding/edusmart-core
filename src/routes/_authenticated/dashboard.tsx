@@ -28,6 +28,7 @@ function DashboardPage() {
   const navigate = useNavigate();
   const {
     isLoading,
+    contextLoading,
     error,
     refetch,
     organizations,
@@ -41,7 +42,7 @@ function DashboardPage() {
   } = useAppContext();
 
   useEffect(() => {
-    if (isLoading || error) return;
+    if (contextLoading || error) return;
     if (organizations.length === 0) {
       navigate({ to: "/access-pending", replace: true });
       return;
@@ -53,7 +54,8 @@ function DashboardPage() {
     if (!activeSchool && activeOrganization.schools.length !== 1) {
       navigate({ to: "/select-school", replace: true });
     }
-  }, [isLoading, error, organizations, activeOrganization, activeSchool, navigate]);
+  }, [contextLoading, error, organizations, activeOrganization, activeSchool, navigate]);
+
 
   if (error) {
     return (
