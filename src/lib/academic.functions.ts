@@ -9,7 +9,12 @@ import {
   subjectInput,
   termInput,
 } from "./academic.schemas";
-import { assertWriteApplied, resolveOrganizationId, translateDbError } from "./academic.server";
+import {
+  assertEventWithinAcademicYear,
+  assertWriteApplied,
+  resolveOrganizationId,
+  translateDbError,
+} from "./academic.server";
 import { schoolScopeInput, yearScopeInput } from "./academic.validators";
 
 /**
