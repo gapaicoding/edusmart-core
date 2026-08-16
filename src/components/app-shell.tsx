@@ -148,7 +148,12 @@ function ContextSwitchers({ compact = false }: { compact?: boolean }) {
 
 function Sidebar({ onNavigate }: { onNavigate?: () => void }) {
   const pathname = useRouterState({ select: (s) => s.location.pathname });
-  const { activeOrganization } = useAppContext();
+  const { activeOrganization, hasPermission } = useAppContext();
+
+  const groups = NAV_GROUPS.map((group) => ({
+    ...group,
+    items: group.items.filter((item) => !item.permission || hasPermission(item.permission)),
+  })).filter((group) => group.items.length > 0);
 
   return (
     <div className="flex h-full flex-col gap-6 p-4">
@@ -162,22 +167,34 @@ function Sidebar({ onNavigate }: { onNavigate?: () => void }) {
         </div>
       </div>
 
-      <nav className="flex flex-col gap-1">
-        {NAV_ITEMS.map((item) => (
-          <Link
-            key={item.to}
-            to={item.to}
-            onClick={onNavigate}
-            className={cn(
-              "flex items-center gap-2 rounded-md px-3 py-2 text-sm transition-colors hover:bg-accent hover:text-accent-foreground",
-              pathname === item.to ? "bg-accent font-medium text-accent-foreground" : "text-muted-foreground",
+      <nav className="flex flex-col gap-4 overflow-y-auto">
+        {groups.map((group) => (
+          <div key={group.label ?? "root"} className="flex flex-col gap-1">
+            {group.label && (
+              <p className="px-3 pb-1 text-[11px] font-semibold uppercase tracking-wide text-muted-foreground/70">
+                {group.label}
+              </p>
             )}
-          >
-            <item.icon className="h-4 w-4" />
-            {item.label}
-          </Link>
+            {group.items.map((item) => (
+              <Link
+                key={item.to}
+                to={item.to}
+                onClick={onNavigate}
+                className={cn(
+                  "flex items-center gap-2 rounded-md px-3 py-2 text-sm transition-colors hover:bg-accent hover:text-accent-foreground",
+                  pathname === item.to
+                    ? "bg-accent font-medium text-accent-foreground"
+                    : "text-muted-foreground",
+                )}
+              >
+                <item.icon className="h-4 w-4" />
+                {item.label}
+              </Link>
+            ))}
+          </div>
         ))}
       </nav>
+
 
       <div className="mt-auto space-y-2 rounded-md border border-border p-3">
         <p className="flex items-center gap-2 text-xs font-medium text-muted-foreground">
