@@ -85,7 +85,14 @@ export function translateDbError(error: PostgrestError, subject: string): string
   }
   if (error.code === "23505") return "That record already exists.";
   if (error.code === "23503") return "A related record referenced here does not exist or is not accessible.";
-  if (error.code === "23514") return "The values submitted violate a database rule.";
+  if (error.code === "23514") {
+    // Validation triggers (B1-R01 calendar/academic-year bounds) raise 23514
+    // with a human-readable message — surface it instead of a generic string.
+    if (/must fall inside|cannot exclude|not found for calendar event/i.test(error.message)) {
+      return error.message;
+    }
+    return "The values submitted violate a database rule.";
+  }
 
   return `${subject}: ${error.message}`;
 }
