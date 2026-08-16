@@ -19,6 +19,13 @@ import { Route as AuthenticatedAccessPendingRouteImport } from './routes/_authen
 import { Route as AuthenticatedDashboardRouteImport } from './routes/_authenticated/dashboard'
 import { Route as AuthenticatedSelectOrganizationRouteImport } from './routes/_authenticated/select-organization'
 import { Route as AuthenticatedSelectSchoolRouteImport } from './routes/_authenticated/select-school'
+import { Route as AuthenticatedAcademicCalendarRouteImport } from './routes/_authenticated/academic/calendar'
+import { Route as AuthenticatedAcademicClassroomsRouteImport } from './routes/_authenticated/academic/classrooms'
+import { Route as AuthenticatedAcademicCurriculaRouteImport } from './routes/_authenticated/academic/curricula'
+import { Route as AuthenticatedAcademicGradeLevelsRouteImport } from './routes/_authenticated/academic/grade-levels'
+import { Route as AuthenticatedAcademicSubjectsRouteImport } from './routes/_authenticated/academic/subjects'
+import { Route as AuthenticatedAcademicTermsRouteImport } from './routes/_authenticated/academic/terms'
+import { Route as AuthenticatedAcademicYearsRouteImport } from './routes/_authenticated/academic/years'
 
 const IndexRoute = IndexRouteImport.update({
   id: '/',
@@ -72,6 +79,48 @@ const AuthenticatedSelectSchoolRoute =
     path: '/select-school',
     getParentRoute: () => AuthenticatedRouteRoute,
   } as any)
+const AuthenticatedAcademicCalendarRoute =
+  AuthenticatedAcademicCalendarRouteImport.update({
+    id: '/academic/calendar',
+    path: '/academic/calendar',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
+const AuthenticatedAcademicClassroomsRoute =
+  AuthenticatedAcademicClassroomsRouteImport.update({
+    id: '/academic/classrooms',
+    path: '/academic/classrooms',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
+const AuthenticatedAcademicCurriculaRoute =
+  AuthenticatedAcademicCurriculaRouteImport.update({
+    id: '/academic/curricula',
+    path: '/academic/curricula',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
+const AuthenticatedAcademicGradeLevelsRoute =
+  AuthenticatedAcademicGradeLevelsRouteImport.update({
+    id: '/academic/grade-levels',
+    path: '/academic/grade-levels',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
+const AuthenticatedAcademicSubjectsRoute =
+  AuthenticatedAcademicSubjectsRouteImport.update({
+    id: '/academic/subjects',
+    path: '/academic/subjects',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
+const AuthenticatedAcademicTermsRoute =
+  AuthenticatedAcademicTermsRouteImport.update({
+    id: '/academic/terms',
+    path: '/academic/terms',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
+const AuthenticatedAcademicYearsRoute =
+  AuthenticatedAcademicYearsRouteImport.update({
+    id: '/academic/years',
+    path: '/academic/years',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
@@ -83,6 +132,13 @@ export interface FileRoutesByFullPath {
   '/dashboard': typeof AuthenticatedDashboardRoute
   '/select-organization': typeof AuthenticatedSelectOrganizationRoute
   '/select-school': typeof AuthenticatedSelectSchoolRoute
+  '/academic/calendar': typeof AuthenticatedAcademicCalendarRoute
+  '/academic/classrooms': typeof AuthenticatedAcademicClassroomsRoute
+  '/academic/curricula': typeof AuthenticatedAcademicCurriculaRoute
+  '/academic/grade-levels': typeof AuthenticatedAcademicGradeLevelsRoute
+  '/academic/subjects': typeof AuthenticatedAcademicSubjectsRoute
+  '/academic/terms': typeof AuthenticatedAcademicTermsRoute
+  '/academic/years': typeof AuthenticatedAcademicYearsRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -94,6 +150,13 @@ export interface FileRoutesByTo {
   '/dashboard': typeof AuthenticatedDashboardRoute
   '/select-organization': typeof AuthenticatedSelectOrganizationRoute
   '/select-school': typeof AuthenticatedSelectSchoolRoute
+  '/academic/calendar': typeof AuthenticatedAcademicCalendarRoute
+  '/academic/classrooms': typeof AuthenticatedAcademicClassroomsRoute
+  '/academic/curricula': typeof AuthenticatedAcademicCurriculaRoute
+  '/academic/grade-levels': typeof AuthenticatedAcademicGradeLevelsRoute
+  '/academic/subjects': typeof AuthenticatedAcademicSubjectsRoute
+  '/academic/terms': typeof AuthenticatedAcademicTermsRoute
+  '/academic/years': typeof AuthenticatedAcademicYearsRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -107,6 +170,13 @@ export interface FileRoutesById {
   '/_authenticated/dashboard': typeof AuthenticatedDashboardRoute
   '/_authenticated/select-organization': typeof AuthenticatedSelectOrganizationRoute
   '/_authenticated/select-school': typeof AuthenticatedSelectSchoolRoute
+  '/_authenticated/academic/calendar': typeof AuthenticatedAcademicCalendarRoute
+  '/_authenticated/academic/classrooms': typeof AuthenticatedAcademicClassroomsRoute
+  '/_authenticated/academic/curricula': typeof AuthenticatedAcademicCurriculaRoute
+  '/_authenticated/academic/grade-levels': typeof AuthenticatedAcademicGradeLevelsRoute
+  '/_authenticated/academic/subjects': typeof AuthenticatedAcademicSubjectsRoute
+  '/_authenticated/academic/terms': typeof AuthenticatedAcademicTermsRoute
+  '/_authenticated/academic/years': typeof AuthenticatedAcademicYearsRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -120,6 +190,13 @@ export interface FileRouteTypes {
     | '/dashboard'
     | '/select-organization'
     | '/select-school'
+    | '/academic/calendar'
+    | '/academic/classrooms'
+    | '/academic/curricula'
+    | '/academic/grade-levels'
+    | '/academic/subjects'
+    | '/academic/terms'
+    | '/academic/years'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -131,6 +208,13 @@ export interface FileRouteTypes {
     | '/dashboard'
     | '/select-organization'
     | '/select-school'
+    | '/academic/calendar'
+    | '/academic/classrooms'
+    | '/academic/curricula'
+    | '/academic/grade-levels'
+    | '/academic/subjects'
+    | '/academic/terms'
+    | '/academic/years'
   id:
     | '__root__'
     | '/'
@@ -143,6 +227,13 @@ export interface FileRouteTypes {
     | '/_authenticated/dashboard'
     | '/_authenticated/select-organization'
     | '/_authenticated/select-school'
+    | '/_authenticated/academic/calendar'
+    | '/_authenticated/academic/classrooms'
+    | '/_authenticated/academic/curricula'
+    | '/_authenticated/academic/grade-levels'
+    | '/_authenticated/academic/subjects'
+    | '/_authenticated/academic/terms'
+    | '/_authenticated/academic/years'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -226,6 +317,55 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedSelectSchoolRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+    '/_authenticated/academic/calendar': {
+      id: '/_authenticated/academic/calendar'
+      path: '/academic/calendar'
+      fullPath: '/academic/calendar'
+      preLoaderRoute: typeof AuthenticatedAcademicCalendarRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/academic/classrooms': {
+      id: '/_authenticated/academic/classrooms'
+      path: '/academic/classrooms'
+      fullPath: '/academic/classrooms'
+      preLoaderRoute: typeof AuthenticatedAcademicClassroomsRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/academic/curricula': {
+      id: '/_authenticated/academic/curricula'
+      path: '/academic/curricula'
+      fullPath: '/academic/curricula'
+      preLoaderRoute: typeof AuthenticatedAcademicCurriculaRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/academic/grade-levels': {
+      id: '/_authenticated/academic/grade-levels'
+      path: '/academic/grade-levels'
+      fullPath: '/academic/grade-levels'
+      preLoaderRoute: typeof AuthenticatedAcademicGradeLevelsRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/academic/subjects': {
+      id: '/_authenticated/academic/subjects'
+      path: '/academic/subjects'
+      fullPath: '/academic/subjects'
+      preLoaderRoute: typeof AuthenticatedAcademicSubjectsRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/academic/terms': {
+      id: '/_authenticated/academic/terms'
+      path: '/academic/terms'
+      fullPath: '/academic/terms'
+      preLoaderRoute: typeof AuthenticatedAcademicTermsRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/academic/years': {
+      id: '/_authenticated/academic/years'
+      path: '/academic/years'
+      fullPath: '/academic/years'
+      preLoaderRoute: typeof AuthenticatedAcademicYearsRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
   }
 }
 
@@ -234,6 +374,13 @@ interface AuthenticatedRouteRouteChildren {
   AuthenticatedDashboardRoute: typeof AuthenticatedDashboardRoute
   AuthenticatedSelectOrganizationRoute: typeof AuthenticatedSelectOrganizationRoute
   AuthenticatedSelectSchoolRoute: typeof AuthenticatedSelectSchoolRoute
+  AuthenticatedAcademicCalendarRoute: typeof AuthenticatedAcademicCalendarRoute
+  AuthenticatedAcademicClassroomsRoute: typeof AuthenticatedAcademicClassroomsRoute
+  AuthenticatedAcademicCurriculaRoute: typeof AuthenticatedAcademicCurriculaRoute
+  AuthenticatedAcademicGradeLevelsRoute: typeof AuthenticatedAcademicGradeLevelsRoute
+  AuthenticatedAcademicSubjectsRoute: typeof AuthenticatedAcademicSubjectsRoute
+  AuthenticatedAcademicTermsRoute: typeof AuthenticatedAcademicTermsRoute
+  AuthenticatedAcademicYearsRoute: typeof AuthenticatedAcademicYearsRoute
 }
 
 const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
@@ -241,6 +388,13 @@ const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedDashboardRoute: AuthenticatedDashboardRoute,
   AuthenticatedSelectOrganizationRoute: AuthenticatedSelectOrganizationRoute,
   AuthenticatedSelectSchoolRoute: AuthenticatedSelectSchoolRoute,
+  AuthenticatedAcademicCalendarRoute: AuthenticatedAcademicCalendarRoute,
+  AuthenticatedAcademicClassroomsRoute: AuthenticatedAcademicClassroomsRoute,
+  AuthenticatedAcademicCurriculaRoute: AuthenticatedAcademicCurriculaRoute,
+  AuthenticatedAcademicGradeLevelsRoute: AuthenticatedAcademicGradeLevelsRoute,
+  AuthenticatedAcademicSubjectsRoute: AuthenticatedAcademicSubjectsRoute,
+  AuthenticatedAcademicTermsRoute: AuthenticatedAcademicTermsRoute,
+  AuthenticatedAcademicYearsRoute: AuthenticatedAcademicYearsRoute,
 }
 
 const AuthenticatedRouteRouteWithChildren =
