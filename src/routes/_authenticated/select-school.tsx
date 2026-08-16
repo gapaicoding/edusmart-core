@@ -49,7 +49,7 @@ function SelectSchoolPage() {
         <CardContent className="space-y-3">
           {error ? (
             <p className="text-sm text-destructive">We couldn't load your school access: {error.message}</p>
-          ) : isLoading ? (
+          ) : isLoading || contextLoading ? (
             <>
               <Skeleton className="h-14 w-full" />
               <Skeleton className="h-14 w-full" />
