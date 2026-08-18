@@ -7,6 +7,10 @@ import { toast } from "sonner";
 import { Field, FormDialog, QueryState, SisPage, StatusBadge } from "@/components/sis/sis-ui";
 import { useAppContext } from "@/lib/app-context";
 import { getStaffDetail, saveStaffAssignment } from "@/lib/sis.functions";
+import {
+  listStaffTeachingAssignments,
+  type TeachingAssignmentRow,
+} from "@/lib/teaching.functions";
 import { STAFF_ASSIGNMENT_STATUSES } from "@/lib/sis.schemas";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
