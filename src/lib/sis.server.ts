@@ -78,7 +78,10 @@ export function translateSisError(error: PostgrestError, subject: string): strin
 
 
   if (error.code === "P0001") return error.message;
-  if (error.code === "42501" || error.code === "PGRST301") {
+  if (error.code === "PGRST301" || /jwt/i.test(error.message)) {
+    return "Your session has expired. Please sign in again and retry.";
+  }
+  if (error.code === "42501") {
     return "Your current role is not allowed to perform this action (rejected by the database).";
   }
   if (error.code === "23505") return "That record already exists.";
@@ -192,4 +195,31 @@ export async function assertClassroomMatchesEnrollment(
   if (data.grade_level_id !== enrollment.gradeLevelId) {
     throw new Error("That classroom belongs to a different grade level than this enrolment.");
   }
+}
+
+/**
+ * B2-F03 fix — insert WITHOUT a RETURNING clause.
+ *
+ * PostgREST adds `RETURNING` whenever `.select()` is chained to an insert.
+ * Postgres then evaluates the table's SELECT policy against the freshly
+ * inserted tuple. The SIS SELECT policies call STABLE SECURITY DEFINER
+ * helpers (can_access_student / can_access_guardian / can_access_staff)
+ * that re-query the same table; those helpers run under the statement's own
+ * snapshot, which cannot see the row the statement is inserting, so they
+ * return false and Postgres rejects the write with 42501 "new row violates
+ * row-level security policy" — even though the INSERT WITH CHECK passed.
+ *
+ * Generating the id here lets us skip RETURNING entirely. RLS stays fully
+ * authoritative: the INSERT WITH CHECK policy still decides the write.
+ */
+export async function insertWithoutReturning(
+  supabase: Db,
+  table: string,
+  payload: Record<string, unknown>,
+  subject: string,
+): Promise<{ id: string }> {
+  const id = typeof payload["id"] === "string" ? (payload["id"] as string) : crypto.randomUUID();
+  const { error } = await supabase.from(table).insert({ ...payload, id });
+  if (error) throw new Error(translateSisError(error, subject));
+  return { id };
 }
