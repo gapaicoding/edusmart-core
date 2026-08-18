@@ -256,6 +256,50 @@ function StaffDetailPage() {
               )}
             </CardContent>
           </Card>
+
+          {hasPermission("teaching_assignment.read") && (
+            <Card>
+              <CardHeader>
+                <CardTitle className="text-base">Teaching assignments</CardTitle>
+                <CardDescription>Subjects and classrooms this person teaches.</CardDescription>
+              </CardHeader>
+              <CardContent>
+                {teachingQuery.isPending ? (
+                  <p className="text-sm text-muted-foreground">Loading teaching assignments…</p>
+                ) : (teachingQuery.data?.rows ?? []).length === 0 ? (
+                  <p className="text-sm text-muted-foreground">No teaching assignments yet.</p>
+                ) : (
+                  <Table>
+                    <TableHeader>
+                      <TableRow>
+                        <TableHead>Subject</TableHead>
+                        <TableHead>Classroom</TableHead>
+                        <TableHead>Academic context</TableHead>
+                        <TableHead>Role</TableHead>
+                        <TableHead>Status</TableHead>
+                      </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                      {(teachingQuery.data?.rows ?? []).map((t) => (
+                        <TableRow key={t.id}>
+                          <TableCell>{t.subjectName ?? "—"}</TableCell>
+                          <TableCell>{t.classroomName ?? "—"}</TableCell>
+                          <TableCell className="text-xs">
+                            {t.academicYearName ?? "—"}
+                            {t.termName ? ` · ${t.termName}` : ""}
+                          </TableCell>
+                          <TableCell className="capitalize">{t.role}</TableCell>
+                          <TableCell>
+                            <StatusBadge status={t.status} />
+                          </TableCell>
+                        </TableRow>
+                      ))}
+                    </TableBody>
+                  </Table>
+                )}
+              </CardContent>
+            </Card>
+          )}
         </div>
       </QueryState>
 
