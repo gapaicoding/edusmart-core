@@ -292,7 +292,7 @@ function StaffDetailPage() {
                       </TableRow>
                     </TableHeader>
                     <TableBody>
-                      {(teachingQuery.data?.rows ?? []).map((t) => (
+                      {(teachingQuery.data?.rows ?? []).map((t: TeachingAssignmentRow) => (
                         <TableRow key={t.id}>
                           <TableCell>{t.subjectName ?? "—"}</TableCell>
                           <TableCell>{t.classroomName ?? "—"}</TableCell>
