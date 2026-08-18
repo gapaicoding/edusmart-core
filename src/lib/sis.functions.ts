@@ -629,26 +629,39 @@ export const listStaff = createServerFn({ method: "GET" })
     assignments: Record<string, StaffAssignmentRow[]>;
   }> => {
     const { supabase } = context;
-    let restrictIds: string[] | null = null;
 
-    if (data.schoolId) {
-      const { data: assignmentRows, error } = await supabase
+    // Assignment lookup is an explicit filter only; it never gates staff identity.
+    const wantsAssignmentFilter =
+      data.assignmentScope === "assigned" || data.assignmentScope === "unassigned";
+    let assignedIds: string[] | null = null;
+
+    if (wantsAssignmentFilter) {
+      let assignmentQuery = supabase
         .from("staff_school_assignments")
         .select("staff_member_id")
-        .eq("school_id", data.schoolId)
         .eq("status", "active");
+      if (data.schoolId) assignmentQuery = assignmentQuery.eq("school_id", data.schoolId);
+      const { data: assignmentRows, error } = await assignmentQuery;
       if (error) throw new Error(translateSisError(error, "Staff assignments"));
-      restrictIds = Array.from(new Set((assignmentRows ?? []).map((r) => r.staff_member_id)));
-      if (restrictIds.length === 0) {
-        return { rows: [], total: 0, page: data.page, pageSize: data.pageSize, assignments: {} };
-      }
+      assignedIds = Array.from(new Set((assignmentRows ?? []).map((r) => r.staff_member_id)));
     }
 
     let query = supabase
       .from("staff_members")
       .select("id, full_name, staff_kind, status, profile_id", { count: "exact" })
       .eq("organization_id", data.organizationId);
-    if (restrictIds) query = query.in("id", restrictIds);
+
+    if (wantsAssignmentFilter && assignedIds) {
+      if (data.assignmentScope === "unassigned") {
+        if (assignedIds.length > 0) query = query.not("id", "in", `(${assignedIds.join(",")})`);
+      } else {
+        if (assignedIds.length === 0) {
+          return { rows: [], total: 0, page: data.page, pageSize: data.pageSize, assignments: {} };
+        }
+        query = query.in("id", assignedIds);
+      }
+    }
+
     if (data.status) query = query.eq("status", data.status);
     if (data.staffKind) query = query.eq("staff_kind", data.staffKind);
     if (data.search) {
