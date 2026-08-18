@@ -69,6 +69,8 @@ export type ClassEnrollmentRow = {
   id: string;
   studentEnrollmentId: string;
   classroomId: string;
+  classroomName: string | null;
+  classroomCode: string | null;
   startsOn: string;
   endsOn: string | null;
   isPrimary: boolean;
