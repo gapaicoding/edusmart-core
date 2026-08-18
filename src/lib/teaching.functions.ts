@@ -60,7 +60,8 @@ export type TeachingOptions = {
   staff: Array<TeachingOption & { staffMemberId: string }>;
 };
 
-type Row = Record<string, any>;
+/** Untyped PostgREST row; the generated Database types are not used here. */
+type Row = any;
 
 /** Batched enrichment: one query per related table, never one per row. */
 async function enrichAssignments(
