@@ -1,4 +1,5 @@
 import type { PostgrestError, SupabaseClient } from "@supabase/supabase-js";
+import type { Database } from "@/integrations/supabase/types";
 import { translateSisError } from "./sis.server";
 
 /**
@@ -9,7 +10,7 @@ import { translateSisError } from "./sis.server";
  * service-role credential is used anywhere in this module.
  */
 
-type Db = SupabaseClient<any, "public", any>;
+type Db = SupabaseClient<Database>;
 
 /**
  * Live database guards on public.teaching_assignments:
@@ -25,11 +26,11 @@ type Db = SupabaseClient<any, "public", any>;
 const FRIENDLY_TRIGGER: Array<[string, string]> = [
   [
     "classroom academic year mismatch",
-    "That classroom belongs to a different academic year than this assignment. Pick a classroom in the selected year.",
+    "This classroom belongs to a different academic year than the teaching assignment.",
   ],
   [
     "term academic year mismatch",
-    "That term belongs to a different academic year than this assignment. Pick a term inside the selected year.",
+    "This term belongs to a different academic year than the teaching assignment.",
   ],
   [
     "teaching_assignment.archive",
@@ -45,8 +46,7 @@ const FRIENDLY_CONSTRAINT: Record<string, string> = {
   teaching_assignments_role_check: "That assignment role is not supported.",
   teaching_assignments_status_check: "That assignment status is not supported.",
   teaching_assignments_dates_check: "The end date must be on or after the start date.",
-  teaching_assignments_classroom_fk:
-    "That classroom is not available in the selected school.",
+  teaching_assignments_classroom_fk: "That classroom is not available in the selected school.",
   teaching_assignments_subject_fk: "That subject is not available in the selected school.",
   teaching_assignments_term_fk: "That term is not available in the selected school.",
   teaching_assignments_year_fk: "That academic year is not available in the selected school.",
@@ -146,7 +146,10 @@ export async function assertAssignmentReferences(
   }
 
   if (!year.data) throw new Error("That academic year does not exist, or you cannot access it.");
-  if (year.data.school_id !== scope.schoolId || year.data.organization_id !== scope.organizationId) {
+  if (
+    year.data.school_id !== scope.schoolId ||
+    year.data.organization_id !== scope.organizationId
+  ) {
     throw new Error("That academic year belongs to a different school.");
   }
 

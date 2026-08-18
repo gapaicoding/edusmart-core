@@ -1,5 +1,7 @@
 import { createServerFn } from "@tanstack/react-start";
+import type { SupabaseClient } from "@supabase/supabase-js";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
+import type { Database } from "@/integrations/supabase/types";
 import {
   staffTeachingInput,
   teachingAssignmentFilterInput,
@@ -60,12 +62,25 @@ export type TeachingOptions = {
   staff: Array<TeachingOption & { staffMemberId: string }>;
 };
 
-/** Untyped PostgREST row; the generated Database types are not used here. */
-type Row = any;
+type Row = Pick<
+  Database["public"]["Tables"]["teaching_assignments"]["Row"],
+  | "id"
+  | "organization_id"
+  | "school_id"
+  | "academic_year_id"
+  | "term_id"
+  | "classroom_id"
+  | "subject_id"
+  | "staff_school_assignment_id"
+  | "role"
+  | "status"
+  | "starts_on"
+  | "ends_on"
+>;
 
 /** Batched enrichment: one query per related table, never one per row. */
 async function enrichAssignments(
-  supabase: any,
+  supabase: SupabaseClient<Database>,
   rows: Row[],
 ): Promise<TeachingAssignmentRow[]> {
   if (rows.length === 0) return [];
@@ -85,7 +100,7 @@ async function enrichAssignments(
     supabase.from("academic_years").select("id, name").in("id", yearIds),
     termIds.length > 0
       ? supabase.from("terms").select("id, name").in("id", termIds)
-      : Promise.resolve({ data: [], error: null }),
+      : Promise.resolve({ data: [] as Array<{ id: string; name: string }>, error: null }),
     supabase
       .from("staff_school_assignments")
       .select("id, staff_member_id, position_title, employee_number, status")
@@ -102,21 +117,25 @@ async function enrichAssignments(
     if (result.error) throw new Error(translateTeachingError(result.error, label));
   }
 
-  const staffMemberIds = uniq((ssas.data ?? []).map((r: Row) => r.staff_member_id));
-  const gradeLevelIds = uniq((classrooms.data ?? []).map((r: Row) => r.grade_level_id));
+  const staffMemberIds = uniq((ssas.data ?? []).map((r) => r.staff_member_id));
+  const gradeLevelIds = uniq((classrooms.data ?? []).map((r) => r.grade_level_id));
 
   const [staffMembers, gradeLevels] = await Promise.all([
     staffMemberIds.length > 0
       ? supabase.from("staff_members").select("id, full_name").in("id", staffMemberIds)
-      : Promise.resolve({ data: [], error: null }),
+      : Promise.resolve({
+          data: [] as Array<{ id: string; full_name: string }>,
+          error: null,
+        }),
     gradeLevelIds.length > 0
       ? supabase.from("grade_levels").select("id, name").in("id", gradeLevelIds)
-      : Promise.resolve({ data: [], error: null }),
+      : Promise.resolve({ data: [] as Array<{ id: string; name: string }>, error: null }),
   ]);
   if (staffMembers.error) throw new Error(translateTeachingError(staffMembers.error, "Staff"));
   if (gradeLevels.error) throw new Error(translateTeachingError(gradeLevels.error, "Grade levels"));
 
-  const byId = (list: Row[] | null) => new Map((list ?? []).map((r) => [r.id as string, r]));
+  const byId = <T extends { id: string }>(list: T[] | null) =>
+    new Map((list ?? []).map((r) => [r.id, r]));
   const classroomMap = byId(classrooms.data);
   const subjectMap = byId(subjects.data);
   const yearMap = byId(years.data);
@@ -167,86 +186,95 @@ const ASSIGNMENT_COLUMNS =
 export const listTeachingAssignments = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
   .inputValidator((input: unknown) => teachingAssignmentFilterInput.parse(input))
-  .handler(async ({ data, context }): Promise<{
-    rows: TeachingAssignmentRow[];
-    total: number;
-    page: number;
-    pageSize: number;
-  }> => {
-    const { supabase } = context;
+  .handler(
+    async ({
+      data,
+      context,
+    }): Promise<{
+      rows: TeachingAssignmentRow[];
+      total: number;
+      page: number;
+      pageSize: number;
+    }> => {
+      const { supabase } = context;
 
-    // Free-text search matches staff names; resolve the ids first so the main
-    // query stays a single filtered page request.
-    let ssaFilter: string[] | null = null;
-    if (data.search) {
-      const term = `%${data.search.replace(/[%,]/g, "")}%`;
-      const { data: staffRows, error: staffError } = await supabase
-        .from("staff_members")
-        .select("id")
+      // Free-text search matches staff names; resolve the ids first so the main
+      // query stays a single filtered page request.
+      let ssaFilter: string[] | null = null;
+      if (data.search) {
+        const term = `%${data.search.replace(/[%,]/g, "")}%`;
+        const { data: staffRows, error: staffError } = await supabase
+          .from("staff_members")
+          .select("id")
+          .eq("organization_id", data.organizationId)
+          .ilike("full_name", term);
+        if (staffError) throw new Error(translateTeachingError(staffError, "Staff"));
+        const staffIds = (staffRows ?? []).map((r) => r.id);
+        if (staffIds.length === 0) {
+          return { rows: [], total: 0, page: data.page, pageSize: data.pageSize };
+        }
+        const { data: ssaRows, error: ssaError } = await supabase
+          .from("staff_school_assignments")
+          .select("id")
+          .eq("school_id", data.schoolId)
+          .in("staff_member_id", staffIds);
+        if (ssaError) throw new Error(translateTeachingError(ssaError, "Staff assignments"));
+        ssaFilter = (ssaRows ?? []).map((r) => r.id);
+        if (ssaFilter.length === 0) {
+          return { rows: [], total: 0, page: data.page, pageSize: data.pageSize };
+        }
+      }
+
+      // Grade level is a classroom attribute; translate it into classroom ids.
+      let classroomFilter: string[] | null = null;
+      if (data.gradeLevelId) {
+        let q = supabase
+          .from("classrooms")
+          .select("id")
+          .eq("school_id", data.schoolId)
+          .eq("grade_level_id", data.gradeLevelId);
+        if (data.academicYearId) q = q.eq("academic_year_id", data.academicYearId);
+        const { data: classroomRows, error } = await q;
+        if (error) throw new Error(translateTeachingError(error, "Classrooms"));
+        classroomFilter = (classroomRows ?? []).map((r) => r.id);
+        if (classroomFilter.length === 0) {
+          return { rows: [], total: 0, page: data.page, pageSize: data.pageSize };
+        }
+      }
+
+      let query = supabase
+        .from("teaching_assignments")
+        .select(ASSIGNMENT_COLUMNS, { count: "exact" })
         .eq("organization_id", data.organizationId)
-        .ilike("full_name", term);
-      if (staffError) throw new Error(translateTeachingError(staffError, "Staff"));
-      const staffIds = (staffRows ?? []).map((r: Row) => r.id);
-      if (staffIds.length === 0) {
-        return { rows: [], total: 0, page: data.page, pageSize: data.pageSize };
-      }
-      const { data: ssaRows, error: ssaError } = await supabase
-        .from("staff_school_assignments")
-        .select("id")
-        .eq("school_id", data.schoolId)
-        .in("staff_member_id", staffIds);
-      if (ssaError) throw new Error(translateTeachingError(ssaError, "Staff assignments"));
-      ssaFilter = (ssaRows ?? []).map((r: Row) => r.id);
-      if (ssaFilter.length === 0) {
-        return { rows: [], total: 0, page: data.page, pageSize: data.pageSize };
-      }
-    }
+        .eq("school_id", data.schoolId);
 
-    // Grade level is a classroom attribute; translate it into classroom ids.
-    let classroomFilter: string[] | null = null;
-    if (data.gradeLevelId) {
-      let q = supabase
-        .from("classrooms")
-        .select("id")
-        .eq("school_id", data.schoolId)
-        .eq("grade_level_id", data.gradeLevelId);
-      if (data.academicYearId) q = q.eq("academic_year_id", data.academicYearId);
-      const { data: classroomRows, error } = await q;
-      if (error) throw new Error(translateTeachingError(error, "Classrooms"));
-      classroomFilter = (classroomRows ?? []).map((r: Row) => r.id);
-      if (classroomFilter.length === 0) {
-        return { rows: [], total: 0, page: data.page, pageSize: data.pageSize };
-      }
-    }
+      if (data.academicYearId) query = query.eq("academic_year_id", data.academicYearId);
+      if (data.termId) query = query.eq("term_id", data.termId);
+      if (data.classroomId) query = query.eq("classroom_id", data.classroomId);
+      if (data.subjectId) query = query.eq("subject_id", data.subjectId);
+      if (data.role) query = query.eq("role", data.role);
+      if (data.status) query = query.eq("status", data.status);
+      if (ssaFilter) query = query.in("staff_school_assignment_id", ssaFilter);
+      if (classroomFilter) query = query.in("classroom_id", classroomFilter);
 
-    let query = supabase
-      .from("teaching_assignments")
-      .select(ASSIGNMENT_COLUMNS, { count: "exact" })
-      .eq("organization_id", data.organizationId)
-      .eq("school_id", data.schoolId);
+      const from = (data.page - 1) * data.pageSize;
+      const {
+        data: rows,
+        error,
+        count,
+      } = await query
+        .order("starts_on", { ascending: false })
+        .range(from, from + data.pageSize - 1);
+      if (error) throw new Error(translateTeachingError(error, "Teaching assignments"));
 
-    if (data.academicYearId) query = query.eq("academic_year_id", data.academicYearId);
-    if (data.termId) query = query.eq("term_id", data.termId);
-    if (data.classroomId) query = query.eq("classroom_id", data.classroomId);
-    if (data.subjectId) query = query.eq("subject_id", data.subjectId);
-    if (data.role) query = query.eq("role", data.role);
-    if (data.status) query = query.eq("status", data.status);
-    if (ssaFilter) query = query.in("staff_school_assignment_id", ssaFilter);
-    if (classroomFilter) query = query.in("classroom_id", classroomFilter);
-
-    const from = (data.page - 1) * data.pageSize;
-    const { data: rows, error, count } = await query
-      .order("starts_on", { ascending: false })
-      .range(from, from + data.pageSize - 1);
-    if (error) throw new Error(translateTeachingError(error, "Teaching assignments"));
-
-    return {
-      rows: await enrichAssignments(supabase, rows ?? []),
-      total: count ?? 0,
-      page: data.page,
-      pageSize: data.pageSize,
-    };
-  });
+      return {
+        rows: await enrichAssignments(supabase, rows ?? []),
+        total: count ?? 0,
+        page: data.page,
+        pageSize: data.pageSize,
+      };
+    },
+  );
 
 export const getTeachingOptions = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
@@ -299,32 +327,27 @@ export const getTeachingOptions = createServerFn({ method: "GET" })
       if (result.error) throw new Error(translateTeachingError(result.error, label));
     }
 
-    const staffIds = Array.from(
-      new Set((ssas.data ?? []).map((r: Row) => r.staff_member_id as string)),
-    );
+    const staffIds = Array.from(new Set((ssas.data ?? []).map((r) => r.staff_member_id)));
     const { data: staffRows, error: staffError } =
       staffIds.length > 0
-        ? await supabase
-            .from("staff_members")
-            .select("id, full_name, status")
-            .in("id", staffIds)
+        ? await supabase.from("staff_members").select("id, full_name, status").in("id", staffIds)
         : { data: [], error: null };
     if (staffError) throw new Error(translateTeachingError(staffError, "Staff"));
-    const staffMap = new Map((staffRows ?? []).map((r: Row) => [r.id as string, r]));
+    const staffMap = new Map((staffRows ?? []).map((r) => [r.id, r]));
 
     return {
-      academicYears: (years.data ?? []).map((r: Row) => ({
+      academicYears: (years.data ?? []).map((r) => ({
         id: r.id,
         label: r.name,
         hint: r.code ?? null,
       })),
-      terms: (terms.data ?? []).map((r: Row) => ({
+      terms: (terms.data ?? []).map((r) => ({
         id: r.id,
         label: r.name,
         hint: r.code ?? null,
         academicYearId: r.academic_year_id,
       })),
-      classrooms: (classrooms.data ?? []).map((r: Row) => ({
+      classrooms: (classrooms.data ?? []).map((r) => ({
         id: r.id,
         label: r.name,
         hint: r.code ?? null,
@@ -332,15 +355,15 @@ export const getTeachingOptions = createServerFn({ method: "GET" })
         gradeLevelId: r.grade_level_id ?? null,
       })),
       subjects: (subjects.data ?? [])
-        .filter((r: Row) => r.is_active !== false)
-        .map((r: Row) => ({ id: r.id, label: r.name, hint: r.code ?? null })),
-      gradeLevels: (grades.data ?? []).map((r: Row) => ({
+        .filter((r) => r.is_active !== false)
+        .map((r) => ({ id: r.id, label: r.name, hint: r.code ?? null })),
+      gradeLevels: (grades.data ?? []).map((r) => ({
         id: r.id,
         label: r.name,
         hint: r.code ?? null,
       })),
       staff: (ssas.data ?? [])
-        .map((r: Row) => {
+        .map((r) => {
           const staff = staffMap.get(r.staff_member_id);
           return {
             id: r.id as string,
@@ -406,7 +429,9 @@ export const saveTeachingAssignment = createServerFn({ method: "POST" })
         "Teaching assignment",
       );
     } catch (error) {
-      throw error instanceof Error ? error : new Error("We couldn't save this teaching assignment.");
+      throw error instanceof Error
+        ? error
+        : new Error("We couldn't save this teaching assignment.");
     }
   });
 
@@ -423,7 +448,7 @@ export const listStaffTeachingAssignments = createServerFn({ method: "GET" })
       .eq("organization_id", data.organizationId);
     if (ssaError) throw new Error(translateTeachingError(ssaError, "Staff assignments"));
 
-    const ssaIds = (ssaRows ?? []).map((r: Row) => r.id);
+    const ssaIds = (ssaRows ?? []).map((r) => r.id);
     if (ssaIds.length === 0) return { rows: [] };
 
     const { data: rows, error } = await supabase
