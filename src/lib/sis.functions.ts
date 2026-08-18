@@ -16,6 +16,7 @@ import {
   assertClassroomMatchesEnrollment,
   assertOrganizationAccess,
   assertWriteApplied,
+  insertWithoutReturning,
   loadEnrollmentContext,
   resolveSchoolOrganization,
   translateSisError,
@@ -246,9 +247,7 @@ export const saveStudent = createServerFn({ method: "POST" })
       return { id: assertWriteApplied(rows, "Updating this student").id };
     }
 
-    const { data: rows, error } = await supabase.from("students").insert(payload).select("id");
-    if (error) throw new Error(translateSisError(error, "Student"));
-    return { id: assertWriteApplied(rows, "Creating this student").id };
+    return insertWithoutReturning(supabase, "students", payload, "Student");
   });
 
 export const getStudentDetail = createServerFn({ method: "GET" })
@@ -397,12 +396,7 @@ export const saveEnrollment = createServerFn({ method: "POST" })
       return { id: assertWriteApplied(rows, "Updating this enrolment").id };
     }
 
-    const { data: rows, error } = await supabase
-      .from("student_enrollments")
-      .insert(payload)
-      .select("id");
-    if (error) throw new Error(translateSisError(error, "Enrolment"));
-    return { id: assertWriteApplied(rows, "Creating this enrolment").id };
+    return insertWithoutReturning(supabase, "student_enrollments", payload, "Enrolment");
   });
 
 export const saveClassEnrollment = createServerFn({ method: "POST" })
@@ -436,9 +430,7 @@ export const saveClassEnrollment = createServerFn({ method: "POST" })
       return { id: assertWriteApplied(rows, "Updating this classroom placement").id };
     }
 
-    const { data: rows, error } = await supabase.from("class_enrollments").insert(payload).select("id");
-    if (error) throw new Error(translateSisError(error, "Classroom placement"));
-    return { id: assertWriteApplied(rows, "Creating this classroom placement").id };
+    return insertWithoutReturning(supabase, "class_enrollments", payload, "Classroom placement");
   });
 
 export const listGuardians = createServerFn({ method: "GET" })
@@ -506,9 +498,7 @@ export const saveGuardian = createServerFn({ method: "POST" })
       return { id: assertWriteApplied(rows, "Updating this guardian").id };
     }
 
-    const { data: rows, error } = await supabase.from("guardians").insert(payload).select("id");
-    if (error) throw new Error(translateSisError(error, "Guardian"));
-    return { id: assertWriteApplied(rows, "Creating this guardian").id };
+    return insertWithoutReturning(supabase, "guardians", payload, "Guardian");
   });
 
 export const getGuardianDetail = createServerFn({ method: "GET" })
@@ -609,9 +599,7 @@ export const saveStudentGuardian = createServerFn({ method: "POST" })
       return { id: assertWriteApplied(rows, "Updating this relationship").id };
     }
 
-    const { data: rows, error } = await supabase.from("student_guardians").insert(payload).select("id");
-    if (error) throw new Error(translateSisError(error, "Guardian relationship"));
-    return { id: assertWriteApplied(rows, "Linking this guardian").id };
+    return insertWithoutReturning(supabase, "student_guardians", payload, "Guardian relationship");
   });
 
 export const listStaff = createServerFn({ method: "GET" })
@@ -725,9 +713,7 @@ export const saveStaffMember = createServerFn({ method: "POST" })
       return { id: assertWriteApplied(rows, "Updating this staff member").id };
     }
 
-    const { data: rows, error } = await supabase.from("staff_members").insert(payload).select("id");
-    if (error) throw new Error(translateSisError(error, "Staff member"));
-    return { id: assertWriteApplied(rows, "Creating this staff member").id };
+    return insertWithoutReturning(supabase, "staff_members", payload, "Staff member");
   });
 
 export const getStaffDetail = createServerFn({ method: "GET" })
@@ -810,10 +796,5 @@ export const saveStaffAssignment = createServerFn({ method: "POST" })
       return { id: assertWriteApplied(rows, "Updating this school assignment").id };
     }
 
-    const { data: rows, error } = await supabase
-      .from("staff_school_assignments")
-      .insert(payload)
-      .select("id");
-    if (error) throw new Error(translateSisError(error, "School assignment"));
-    return { id: assertWriteApplied(rows, "Creating this school assignment").id };
+    return insertWithoutReturning(supabase, "staff_school_assignments", payload, "School assignment");
   });
