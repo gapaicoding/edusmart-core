@@ -7,6 +7,7 @@ import {
   Building2,
   CalendarDays,
   CalendarRange,
+  ClipboardList,
   GraduationCap,
   HeartHandshake,
   LayoutDashboard,
@@ -68,6 +69,17 @@ const NAV_GROUPS: NavGroup[] = [
       { to: "/students", label: "Students", icon: Users, permission: "student.read" },
       { to: "/guardians", label: "Guardians", icon: HeartHandshake, permission: "guardian.read" },
       { to: "/staff", label: "Staff", icon: Briefcase, permission: "staff.read" },
+    ],
+  },
+  {
+    label: "Academic Operations",
+    items: [
+      {
+        to: "/teaching-assignments",
+        label: "Teacher Assignments",
+        icon: ClipboardList,
+        permission: "teaching_assignment.read",
+      },
     ],
   },
 ];
