@@ -69,6 +69,8 @@ export type ClassEnrollmentRow = {
   id: string;
   studentEnrollmentId: string;
   classroomId: string;
+  classroomName: string | null;
+  classroomCode: string | null;
   startsOn: string;
   endsOn: string | null;
   isPrimary: boolean;
@@ -299,15 +301,39 @@ export const getStudentDetail = createServerFn({ method: "GET" })
         .in("student_enrollment_id", enrollmentIds)
         .order("starts_on", { ascending: false });
       if (error) throw new Error(translateSisError(error, "Classroom history"));
-      placements = (rows ?? []).map((r) => ({
-        id: r.id,
-        studentEnrollmentId: r.student_enrollment_id,
-        classroomId: r.classroom_id,
-        startsOn: r.starts_on,
-        endsOn: r.ends_on,
-        isPrimary: r.is_primary,
-        status: r.status,
-      }));
+
+      // Enrich with human-readable classroom identity. classroom_id stays the
+      // relationship key; name/code are display-only metadata fetched under the
+      // caller's RLS-scoped client.
+      const classroomIds = Array.from(
+        new Set((rows ?? []).map((r) => r.classroom_id).filter(Boolean)),
+      );
+      const classroomMeta = new Map<string, { name: string | null; code: string | null }>();
+      if (classroomIds.length > 0) {
+        const { data: classroomRows, error: classroomError } = await supabase
+          .from("classrooms")
+          .select("id, name, code")
+          .in("id", classroomIds);
+        if (classroomError) throw new Error(translateSisError(classroomError, "Classroom"));
+        for (const cr of classroomRows ?? []) {
+          classroomMeta.set(cr.id, { name: cr.name, code: cr.code });
+        }
+      }
+
+      placements = (rows ?? []).map((r) => {
+        const meta = classroomMeta.get(r.classroom_id) ?? { name: null, code: null };
+        return {
+          id: r.id,
+          studentEnrollmentId: r.student_enrollment_id,
+          classroomId: r.classroom_id,
+          classroomName: meta.name,
+          classroomCode: meta.code,
+          startsOn: r.starts_on,
+          endsOn: r.ends_on,
+          isPrimary: r.is_primary,
+          status: r.status,
+        };
+      });
     }
 
     const { data: links, error: linkError } = await supabase
