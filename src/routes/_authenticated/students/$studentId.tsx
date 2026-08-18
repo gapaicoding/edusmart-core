@@ -499,7 +499,16 @@ function StudentDetailPage() {
                   <TableBody>
                     {(detailQuery.data?.placements ?? []).map((p) => (
                       <TableRow key={p.id}>
-                        <TableCell className="font-mono text-xs">{p.classroomId.slice(0, 8)}…</TableCell>
+                        <TableCell className="text-sm">
+                          {p.classroomName ?? (
+                            <span className="font-mono text-xs text-muted-foreground">
+                              {p.classroomId.slice(0, 8)}…
+                            </span>
+                          )}
+                          {p.classroomCode ? (
+                            <span className="ml-2 text-xs text-muted-foreground">{p.classroomCode}</span>
+                          ) : null}
+                        </TableCell>
                         <TableCell className="text-xs">
                           {p.startsOn}
                           {p.endsOn ? ` → ${p.endsOn}` : ""}
