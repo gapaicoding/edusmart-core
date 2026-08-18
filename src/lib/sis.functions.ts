@@ -123,15 +123,25 @@ export const listStudents = createServerFn({ method: "GET" })
   .handler(async ({ data, context }): Promise<StudentListResult> => {
     const { supabase } = context;
     const placements: StudentListResult["placements"] = {};
-    let restrictIds: string[] | null = null;
     const schoolScoped = Boolean(data.schoolId);
 
-    if (data.schoolId) {
+    // Placement lookup is enrichment first: it never becomes an identity predicate
+    // unless the caller explicitly asked for an enrolment-derived filter.
+    const wantsEnrolmentFilter =
+      data.enrollmentScope === "enrolled" ||
+      data.enrollmentScope === "unenrolled" ||
+      Boolean(data.gradeLevelId) ||
+      Boolean(data.classroomId);
+
+    let matchedIds: string[] | null = null;
+
+    if (data.schoolId || wantsEnrolmentFilter) {
       let enrollQuery = supabase
         .from("student_enrollments")
-        .select("id, student_id, grade_level_id, status")
-        .eq("school_id", data.schoolId);
-      if (data.academicYearId) enrollQuery = enrollQuery.eq("academic_year_id", data.academicYearId);
+        .select("id, student_id, grade_level_id, status");
+      if (data.schoolId) enrollQuery = enrollQuery.eq("school_id", data.schoolId);
+      if (data.schoolId && data.academicYearId)
+        enrollQuery = enrollQuery.eq("academic_year_id", data.academicYearId);
       if (data.gradeLevelId) enrollQuery = enrollQuery.eq("grade_level_id", data.gradeLevelId);
 
       const { data: enrollments, error: enrollError } = await enrollQuery;
@@ -164,18 +174,7 @@ export const listStudents = createServerFn({ method: "GET" })
           enrollmentStatus: enrollment.status,
         };
       }
-      restrictIds = Array.from(new Set(matched));
-
-      if (restrictIds.length === 0) {
-        return {
-          rows: [],
-          total: 0,
-          page: data.page,
-          pageSize: data.pageSize,
-          placements,
-          schoolScoped,
-        };
-      }
+      matchedIds = Array.from(new Set(matched));
     }
 
     let query = supabase
@@ -185,7 +184,24 @@ export const listStudents = createServerFn({ method: "GET" })
       })
       .eq("organization_id", data.organizationId);
 
-    if (restrictIds) query = query.in("id", restrictIds);
+    if (wantsEnrolmentFilter && matchedIds) {
+      if (data.enrollmentScope === "unenrolled") {
+        if (matchedIds.length > 0) query = query.not("id", "in", `(${matchedIds.join(",")})`);
+      } else {
+        if (matchedIds.length === 0) {
+          return {
+            rows: [],
+            total: 0,
+            page: data.page,
+            pageSize: data.pageSize,
+            placements,
+            schoolScoped,
+          };
+        }
+        query = query.in("id", matchedIds);
+      }
+    }
+
     if (data.status) query = query.eq("status", data.status);
     if (data.search) {
       const term = `%${data.search.replace(/[%,]/g, "")}%`;
@@ -613,26 +629,39 @@ export const listStaff = createServerFn({ method: "GET" })
     assignments: Record<string, StaffAssignmentRow[]>;
   }> => {
     const { supabase } = context;
-    let restrictIds: string[] | null = null;
 
-    if (data.schoolId) {
-      const { data: assignmentRows, error } = await supabase
+    // Assignment lookup is an explicit filter only; it never gates staff identity.
+    const wantsAssignmentFilter =
+      data.assignmentScope === "assigned" || data.assignmentScope === "unassigned";
+    let assignedIds: string[] | null = null;
+
+    if (wantsAssignmentFilter) {
+      let assignmentQuery = supabase
         .from("staff_school_assignments")
         .select("staff_member_id")
-        .eq("school_id", data.schoolId)
         .eq("status", "active");
+      if (data.schoolId) assignmentQuery = assignmentQuery.eq("school_id", data.schoolId);
+      const { data: assignmentRows, error } = await assignmentQuery;
       if (error) throw new Error(translateSisError(error, "Staff assignments"));
-      restrictIds = Array.from(new Set((assignmentRows ?? []).map((r) => r.staff_member_id)));
-      if (restrictIds.length === 0) {
-        return { rows: [], total: 0, page: data.page, pageSize: data.pageSize, assignments: {} };
-      }
+      assignedIds = Array.from(new Set((assignmentRows ?? []).map((r) => r.staff_member_id)));
     }
 
     let query = supabase
       .from("staff_members")
       .select("id, full_name, staff_kind, status, profile_id", { count: "exact" })
       .eq("organization_id", data.organizationId);
-    if (restrictIds) query = query.in("id", restrictIds);
+
+    if (wantsAssignmentFilter && assignedIds) {
+      if (data.assignmentScope === "unassigned") {
+        if (assignedIds.length > 0) query = query.not("id", "in", `(${assignedIds.join(",")})`);
+      } else {
+        if (assignedIds.length === 0) {
+          return { rows: [], total: 0, page: data.page, pageSize: data.pageSize, assignments: {} };
+        }
+        query = query.in("id", assignedIds);
+      }
+    }
+
     if (data.status) query = query.eq("status", data.status);
     if (data.staffKind) query = query.eq("staff_kind", data.staffKind);
     if (data.search) {

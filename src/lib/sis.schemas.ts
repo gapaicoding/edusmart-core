@@ -49,6 +49,9 @@ const optionalDate = z
   .nullable()
   .transform((v) => (v ? v : null));
 
+export const ENROLLMENT_SCOPES = ["all", "enrolled", "unenrolled"] as const;
+export const ASSIGNMENT_SCOPES = ["all", "assigned", "unassigned"] as const;
+
 export const studentFilterInput = z.object({
   organizationId: uuid,
   schoolId: uuid.nullable().optional(),
@@ -56,6 +59,7 @@ export const studentFilterInput = z.object({
   gradeLevelId: uuid.nullable().optional(),
   classroomId: uuid.nullable().optional(),
   status: z.enum(STUDENT_STATUSES).nullable().optional(),
+  enrollmentScope: z.enum(ENROLLMENT_SCOPES).default("all"),
   search: z.string().trim().max(120).optional().nullable(),
   page: z.coerce.number().int().min(1).default(1),
   pageSize: z.coerce.number().int().min(5).max(100).default(25),
@@ -143,6 +147,7 @@ export const staffFilterInput = z.object({
   schoolId: uuid.nullable().optional(),
   staffKind: z.enum(STAFF_KINDS).nullable().optional(),
   status: z.enum(PERSON_STATUSES).nullable().optional(),
+  assignmentScope: z.enum(ASSIGNMENT_SCOPES).default("all"),
   search: z.string().trim().max(120).optional().nullable(),
   page: z.coerce.number().int().min(1).default(1),
   pageSize: z.coerce.number().int().min(5).max(100).default(25),
