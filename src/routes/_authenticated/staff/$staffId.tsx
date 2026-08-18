@@ -74,6 +74,14 @@ function StaffDetailPage() {
     enabled: Boolean(organizationId) && hasPermission("staff.read"),
   });
 
+  const fetchTeaching = useServerFn(listStaffTeachingAssignments);
+  const teachingQuery = useQuery({
+    queryKey: ["teaching", "staff", staffId, organizationId],
+    queryFn: () =>
+      fetchTeaching({ data: { staffMemberId: staffId, organizationId: organizationId! } }),
+    enabled: Boolean(organizationId) && hasPermission("teaching_assignment.read"),
+  });
+
   const [open, setOpen] = useState(false);
   const [form, setForm] = useState<AssignmentForm>({
     schoolId: "",
