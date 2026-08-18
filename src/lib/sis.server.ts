@@ -34,6 +34,29 @@ const FRIENDLY_CHECK: Record<string, string> = {
   staff_school_assignments_dates_check: "The leaving date must be on or after the joining date.",
 };
 
+/**
+ * B2-F01/B2-F02 placement integrity triggers. They raise SQLSTATE 23514 with
+ * stable message text; never surface the raw trigger text to users.
+ */
+const FRIENDLY_PLACEMENT_INTEGRITY: Array<[string, string]> = [
+  [
+    "same grade level as StudentEnrollment",
+    "This classroom is for a different grade level than the student's enrollment. Choose a classroom in the student's grade.",
+  ],
+  [
+    "same academic year as StudentEnrollment",
+    "This classroom belongs to a different academic year than the student's enrollment. Choose a classroom in the same year.",
+  ],
+  [
+    "Cannot change StudentEnrollment academic year or grade level",
+    "This student already has classroom placements in the current grade/year. End those placements and create a new enrollment instead of editing this one.",
+  ],
+  [
+    "Cannot change Classroom academic year or grade level",
+    "Students are already placed in this classroom. Move or end their placements before changing its grade level or academic year.",
+  ],
+];
+
 export function translateSisError(error: PostgrestError, subject: string): string {
   console.error(`[EduSmart SIS] ${subject} query failed`, {
     code: error.code,
@@ -43,12 +66,16 @@ export function translateSisError(error: PostgrestError, subject: string): strin
   });
 
   const text = `${error.message} ${error.details ?? ""}`;
+  for (const [fragment, friendly] of FRIENDLY_PLACEMENT_INTEGRITY) {
+    if (text.includes(fragment)) return friendly;
+  }
   for (const [constraint, friendly] of Object.entries(FRIENDLY_UNIQUE)) {
     if (text.includes(constraint)) return friendly;
   }
   for (const [constraint, friendly] of Object.entries(FRIENDLY_CHECK)) {
     if (text.includes(constraint)) return friendly;
   }
+
 
   if (error.code === "P0001") return error.message;
   if (error.code === "42501" || error.code === "PGRST301") {
