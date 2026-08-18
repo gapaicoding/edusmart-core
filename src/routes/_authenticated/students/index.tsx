@@ -84,6 +84,7 @@ function StudentsPage() {
   const [status, setStatus] = useState<string>(ALL);
   const [gradeLevelId, setGradeLevelId] = useState<string>(ALL);
   const [classroomId, setClassroomId] = useState<string>(ALL);
+  const [enrollmentScope, setEnrollmentScope] = useState<"all" | "enrolled" | "unenrolled">("all");
   const [page, setPage] = useState(1);
   const [dialogOpen, setDialogOpen] = useState(false);
   const [form, setForm] = useState<StudentFormState>(EMPTY_FORM);
@@ -101,11 +102,22 @@ function StudentsPage() {
       gradeLevelId: gradeLevelId === ALL ? null : gradeLevelId,
       classroomId: classroomId === ALL ? null : classroomId,
       status: status === ALL ? null : status,
+      enrollmentScope,
       search: search || null,
       page,
       pageSize: 25,
     }),
-    [organizationId, schoolId, academicYearId, gradeLevelId, classroomId, status, search, page],
+    [
+      organizationId,
+      schoolId,
+      academicYearId,
+      gradeLevelId,
+      classroomId,
+      status,
+      enrollmentScope,
+      search,
+      page,
+    ],
   );
 
   const studentsQuery = useQuery({
@@ -156,7 +168,7 @@ function StudentsPage() {
   const gradeLevelName = (id: string) =>
     gradeLevelsQuery.data?.find((g) => g.id === id)?.name ?? "—";
   const classroomName = (id: string | null) =>
-    id ? (classroomsQuery.data?.find((c) => c.id === id)?.name ?? "—") : "Unassigned";
+    id ? (classroomsQuery.data?.find((c) => c.id === id)?.name ?? "—") : "No classroom";
 
   function openCreate() {
     setForm(EMPTY_FORM);
@@ -240,6 +252,24 @@ function StudentsPage() {
             </SelectContent>
           </Select>
           <Select
+            value={enrollmentScope}
+            onValueChange={(v) => {
+              setEnrollmentScope(v as "all" | "enrolled" | "unenrolled");
+              setPage(1);
+            }}
+          >
+            <SelectTrigger>
+              <SelectValue placeholder="Enrolment" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">All accessible students</SelectItem>
+              <SelectItem value="enrolled" disabled={!schoolId}>
+                Enrolled in {activeSchool?.name ?? "current school"}
+              </SelectItem>
+              <SelectItem value="unenrolled">Not enrolled</SelectItem>
+            </SelectContent>
+          </Select>
+          <Select
             value={gradeLevelId}
             onValueChange={(v) => {
               setGradeLevelId(v);
@@ -283,7 +313,8 @@ function StudentsPage() {
 
         {!schoolId && (
           <p className="text-xs text-muted-foreground">
-            Select a school in the top bar to filter by enrolment, grade level and classroom.
+            Student identities are organization-wide. Select a school in the top bar to filter by
+            enrolment, grade level and classroom.
           </p>
         )}
 
@@ -302,8 +333,8 @@ function StudentsPage() {
                 <TableRow>
                   <TableHead>Name</TableHead>
                   <TableHead>NISN</TableHead>
-                  {studentsQuery.data?.schoolScoped && <TableHead>Grade</TableHead>}
-                  {studentsQuery.data?.schoolScoped && <TableHead>Classroom</TableHead>}
+                  <TableHead>Grade</TableHead>
+                  <TableHead>Classroom</TableHead>
                   <TableHead>Status</TableHead>
                   <TableHead className="text-right">Actions</TableHead>
                 </TableRow>
@@ -326,14 +357,20 @@ function StudentsPage() {
                         )}
                       </TableCell>
                       <TableCell className="font-mono text-xs">{row.nisn ?? "—"}</TableCell>
-                      {studentsQuery.data?.schoolScoped && (
-                        <TableCell>
-                          {placement ? gradeLevelName(placement.gradeLevelId) : "—"}
-                        </TableCell>
-                      )}
-                      {studentsQuery.data?.schoolScoped && (
-                        <TableCell>{classroomName(placement?.classroomId ?? null)}</TableCell>
-                      )}
+                      <TableCell>
+                        {placement ? (
+                          gradeLevelName(placement.gradeLevelId)
+                        ) : (
+                          <span className="text-xs text-muted-foreground">Not enrolled</span>
+                        )}
+                      </TableCell>
+                      <TableCell>
+                        {placement ? (
+                          classroomName(placement.classroomId)
+                        ) : (
+                          <span className="text-xs text-muted-foreground">Not enrolled</span>
+                        )}
+                      </TableCell>
                       <TableCell>
                         <StatusBadge status={row.status} />
                       </TableCell>

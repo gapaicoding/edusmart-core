@@ -67,7 +67,7 @@ function StaffPage() {
   const [search, setSearch] = useState("");
   const [status, setStatus] = useState(ALL);
   const [staffKind, setStaffKind] = useState(ALL);
-  const [schoolFilter, setSchoolFilter] = useState<"organization" | "school">("organization");
+  const [assignmentScope, setAssignmentScope] = useState<"all" | "assigned" | "unassigned">("all");
   const [page, setPage] = useState(1);
   const [dialogOpen, setDialogOpen] = useState(false);
   const [form, setForm] = useState<StaffFormState>(EMPTY_FORM);
@@ -79,14 +79,15 @@ function StaffPage() {
   const filters = useMemo(
     () => ({
       organizationId: organizationId!,
-      schoolId: schoolFilter === "school" ? (activeSchool?.id ?? null) : null,
+      schoolId: assignmentScope === "assigned" ? (activeSchool?.id ?? null) : null,
+      assignmentScope,
       staffKind: staffKind === ALL ? null : staffKind,
       status: status === ALL ? null : status,
       search: search || null,
       page,
       pageSize: 25,
     }),
-    [organizationId, schoolFilter, activeSchool, staffKind, status, search, page],
+    [organizationId, assignmentScope, activeSchool, staffKind, status, search, page],
   );
 
   const staffQuery = useQuery({
@@ -198,21 +199,21 @@ function StaffPage() {
             </SelectContent>
           </Select>
           <Select
-            value={schoolFilter}
+            value={assignmentScope}
             onValueChange={(v) => {
-              setSchoolFilter(v as "organization" | "school");
+              setAssignmentScope(v as "all" | "assigned" | "unassigned");
               setPage(1);
             }}
-            disabled={!activeSchool}
           >
             <SelectTrigger>
               <SelectValue />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="organization">All schools in organization</SelectItem>
-              <SelectItem value="school">
+              <SelectItem value="all">All accessible staff</SelectItem>
+              <SelectItem value="assigned" disabled={!activeSchool}>
                 Assigned to {activeSchool?.name ?? "active school"}
               </SelectItem>
+              <SelectItem value="unassigned">Unassigned</SelectItem>
             </SelectContent>
           </Select>
         </div>
