@@ -4,7 +4,13 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import { toast } from "sonner";
 
-import { AcademicPage, Field, FormDialog, QueryState, StatusBadge } from "@/components/academic/academic-ui";
+import {
+  AcademicPage,
+  Field,
+  FormDialog,
+  QueryState,
+  StatusBadge,
+} from "@/components/academic/academic-ui";
 import { Pager } from "@/components/sis/sis-ui";
 import { useAppContext } from "@/lib/app-context";
 import {
@@ -86,13 +92,8 @@ function personLabel(row: TeachingAssignmentRow) {
 }
 
 function TeachingAssignmentsPage() {
-  const {
-    activeOrganization,
-    activeSchool,
-    activeAcademicYear,
-    activeTerm,
-    hasPermission,
-  } = useAppContext();
+  const { activeOrganization, activeSchool, activeAcademicYear, activeTerm, hasPermission } =
+    useAppContext();
   const queryClient = useQueryClient();
   const fetchAssignments = useServerFn(listTeachingAssignments);
   const fetchOptions = useServerFn(getTeachingOptions);
@@ -121,8 +122,7 @@ function TeachingAssignmentsPage() {
 
   const optionsQuery = useQuery({
     queryKey: ["teaching", "options", organizationId, schoolId],
-    queryFn: () =>
-      fetchOptions({ data: { organizationId: organizationId!, schoolId: schoolId! } }),
+    queryFn: () => fetchOptions({ data: { organizationId: organizationId!, schoolId: schoolId! } }),
     enabled: Boolean(organizationId && schoolId) && hasPermission("teaching_assignment.read"),
   });
   const options = optionsQuery.data;
@@ -141,7 +141,18 @@ function TeachingAssignmentsPage() {
       page,
       pageSize: 25,
     }),
-    [organizationId, schoolId, academicYearId, termId, gradeLevelId, classroomId, subjectId, status, search, page],
+    [
+      organizationId,
+      schoolId,
+      academicYearId,
+      termId,
+      gradeLevelId,
+      classroomId,
+      subjectId,
+      status,
+      search,
+      page,
+    ],
   );
 
   const listQuery = useQuery({
@@ -244,6 +255,27 @@ function TeachingAssignmentsPage() {
   }
 
   const rows = listQuery.data?.rows ?? [];
+  const currentAssignment = form.id ? rows.find((row) => row.id === form.id) : undefined;
+  const activeStaffOptions = options?.staff ?? [];
+  const formStaffOptions =
+    currentAssignment &&
+    !activeStaffOptions.some((option) => option.id === currentAssignment.staffSchoolAssignmentId)
+      ? [
+          ...activeStaffOptions,
+          {
+            id: currentAssignment.staffSchoolAssignmentId,
+            staffMemberId: currentAssignment.staffMemberId ?? "",
+            label: `${personLabel(currentAssignment)} (current historical assignment)`,
+            hint: [
+              currentAssignment.staffPositionTitle,
+              currentAssignment.staffEmployeeNumber,
+              currentAssignment.staffAssignmentStatus,
+            ]
+              .filter(Boolean)
+              .join(" · "),
+          },
+        ]
+      : activeStaffOptions;
   const hasFilters =
     search !== "" ||
     [academicYearId, termId, gradeLevelId, classroomId, subjectId, status].some((v) => v !== ALL);
@@ -397,7 +429,9 @@ function TeachingAssignmentsPage() {
           error={listQuery.error}
           isEmpty={rows.length === 0}
           emptyTitle={
-            hasFilters ? "No teaching assignments match these filters" : "No teaching assignments yet"
+            hasFilters
+              ? "No teaching assignments match these filters"
+              : "No teaching assignments yet"
           }
           emptyDescription={
             hasFilters
@@ -444,7 +478,8 @@ function TeachingAssignmentsPage() {
                       <TableCell>
                         {row.classroomName ?? "Classroom not accessible"}
                         <p className="text-xs text-muted-foreground">
-                          {[row.classroomCode, row.gradeLevelName].filter(Boolean).join(" · ") || "—"}
+                          {[row.classroomCode, row.gradeLevelName].filter(Boolean).join(" · ") ||
+                            "—"}
                         </p>
                       </TableCell>
                       <TableCell className="text-xs">
@@ -534,7 +569,7 @@ function TeachingAssignmentsPage() {
               <SelectValue placeholder="Select staff assigned to this school" />
             </SelectTrigger>
             <SelectContent>
-              {(options?.staff ?? []).map((s) => (
+              {formStaffOptions.map((s) => (
                 <SelectItem key={s.id} value={s.id}>
                   {s.label}
                   {s.hint ? ` · ${s.hint}` : ""}
@@ -570,7 +605,10 @@ function TeachingAssignmentsPage() {
             </Select>
           </Field>
           <Field label="Subject">
-            <Select value={form.subjectId} onValueChange={(v) => setForm({ ...form, subjectId: v })}>
+            <Select
+              value={form.subjectId}
+              onValueChange={(v) => setForm({ ...form, subjectId: v })}
+            >
               <SelectTrigger>
                 <SelectValue placeholder="Select subject" />
               </SelectTrigger>
@@ -608,7 +646,12 @@ function TeachingAssignmentsPage() {
               </SelectTrigger>
               <SelectContent>
                 {TEACHING_STATUSES.map((s) => (
-                  <SelectItem key={s} value={s} className="capitalize" disabled={s === "archived" && !canArchive}>
+                  <SelectItem
+                    key={s}
+                    value={s}
+                    className="capitalize"
+                    disabled={s === "archived" && !canArchive}
+                  >
                     {s}
                   </SelectItem>
                 ))}

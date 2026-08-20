@@ -11,6 +11,7 @@ import {
 import {
   assertAssignmentReferences,
   assertSchoolScope,
+  ELIGIBLE_STAFF_ASSIGNMENT_STATUS,
   translateTeachingError,
 } from "./teaching.server";
 import { assertWriteApplied, insertWithoutReturning } from "./sis.server";
@@ -313,7 +314,7 @@ export const getTeachingOptions = createServerFn({ method: "GET" })
         .from("staff_school_assignments")
         .select("id, staff_member_id, position_title, employee_number, status")
         .eq("school_id", data.schoolId)
-        .eq("status", "active"),
+        .eq("status", ELIGIBLE_STAFF_ASSIGNMENT_STATUS),
     ]);
 
     for (const [result, label] of [
@@ -383,12 +384,32 @@ export const saveTeachingAssignment = createServerFn({ method: "POST" })
   .handler(async ({ data, context }): Promise<{ id: string }> => {
     const { supabase } = context;
     const scope = await assertSchoolScope(supabase, data.organizationId, data.schoolId);
+
+    let requireActiveStaffAssignment = true;
+    if (data.id) {
+      const { data: persistedAssignment, error } = await supabase
+        .from("teaching_assignments")
+        .select("id, staff_school_assignment_id")
+        .eq("id", data.id)
+        .eq("organization_id", scope.organizationId)
+        .eq("school_id", scope.schoolId)
+        .maybeSingle();
+      if (error) throw new Error(translateTeachingError(error, "Teaching assignment"));
+      const persisted = assertWriteApplied(
+        persistedAssignment ? [persistedAssignment] : [],
+        "Updating this teaching assignment",
+      );
+      requireActiveStaffAssignment =
+        persisted.staff_school_assignment_id !== data.staffSchoolAssignmentId;
+    }
+
     await assertAssignmentReferences(supabase, scope, {
       academicYearId: data.academicYearId,
       termId: data.termId,
       classroomId: data.classroomId,
       subjectId: data.subjectId,
       staffSchoolAssignmentId: data.staffSchoolAssignmentId,
+      requireActiveStaffAssignment,
     });
 
     const payload = {

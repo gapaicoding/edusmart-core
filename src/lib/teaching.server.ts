@@ -12,6 +12,10 @@ import { translateSisError } from "./sis.server";
 
 type Db = SupabaseClient<Database>;
 
+export const ELIGIBLE_STAFF_ASSIGNMENT_STATUS = "active" as const;
+export const INACTIVE_STAFF_ASSIGNMENT_MESSAGE =
+  "The selected staff assignment is no longer active for this school. Choose an active staff assignment.";
+
 /**
  * Live database guards on public.teaching_assignments:
  *  - composite FKs (id, organization_id, school_id) to classrooms / subjects /
@@ -103,6 +107,7 @@ export async function assertAssignmentReferences(
     classroomId: string;
     subjectId: string;
     staffSchoolAssignmentId: string;
+    requireActiveStaffAssignment: boolean;
   },
 ): Promise<void> {
   const [year, classroom, subject, staffAssignment, term] = await Promise.all([
@@ -184,6 +189,12 @@ export async function assertAssignmentReferences(
     throw new Error(
       "That staff member is assigned to a different school. Assign them to this school before giving them a teaching responsibility.",
     );
+  }
+  if (
+    input.requireActiveStaffAssignment &&
+    staffAssignment.data.status !== ELIGIBLE_STAFF_ASSIGNMENT_STATUS
+  ) {
+    throw new Error(INACTIVE_STAFF_ASSIGNMENT_MESSAGE);
   }
 
   if (input.termId) {
