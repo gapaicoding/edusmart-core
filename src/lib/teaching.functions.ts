@@ -79,6 +79,33 @@ type Row = Pick<
   | "ends_on"
 >;
 
+type DatabaseWithTeachingReplacement = Database & {
+  public: Database["public"] & {
+    Functions: Database["public"]["Functions"] & {
+      replace_teaching_assignment: {
+        Args: {
+          p_teaching_assignment_id: string;
+          p_organization_id: string;
+          p_school_id: string;
+          p_academic_year_id: string;
+          p_term_id: string | null;
+          p_classroom_id: string;
+          p_subject_id: string;
+          p_staff_school_assignment_id: string;
+          p_role: string;
+          p_status: string;
+          p_starts_on: string;
+          p_ends_on: string | null;
+        };
+        Returns: Array<{
+          teaching_assignment_id: string;
+          replacement_occurred: boolean;
+        }>;
+      };
+    };
+  };
+};
+
 /** Batched enrichment: one query per related table, never one per row. */
 async function enrichAssignments(
   supabase: SupabaseClient<Database>,
@@ -381,26 +408,35 @@ export const getTeachingOptions = createServerFn({ method: "GET" })
 export const saveTeachingAssignment = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((input: unknown) => teachingAssignmentInput.parse(input))
-  .handler(async ({ data, context }): Promise<{ id: string }> => {
+  .handler(async ({ data, context }): Promise<{ id: string; replacementOccurred: boolean }> => {
     const { supabase } = context;
     const scope = await assertSchoolScope(supabase, data.organizationId, data.schoolId);
 
-    let requireActiveStaffAssignment = true;
     if (data.id) {
-      const { data: persistedAssignment, error } = await supabase
-        .from("teaching_assignments")
-        .select("id, staff_school_assignment_id")
-        .eq("id", data.id)
-        .eq("organization_id", scope.organizationId)
-        .eq("school_id", scope.schoolId)
-        .maybeSingle();
+      // Generated Supabase types predate the live B3-F03 migration. Extend only
+      // the known RPC surface locally until the normal type-generation workflow
+      // refreshes Database; table types and runtime client behavior are unchanged.
+      const rpcSupabase = supabase as SupabaseClient<DatabaseWithTeachingReplacement>;
+      const { data: rows, error } = await rpcSupabase.rpc("replace_teaching_assignment", {
+        p_teaching_assignment_id: data.id,
+        p_organization_id: scope.organizationId,
+        p_school_id: scope.schoolId,
+        p_academic_year_id: data.academicYearId,
+        p_term_id: data.termId,
+        p_classroom_id: data.classroomId,
+        p_subject_id: data.subjectId,
+        p_staff_school_assignment_id: data.staffSchoolAssignmentId,
+        p_role: data.role,
+        p_status: data.status,
+        p_starts_on: data.startsOn,
+        p_ends_on: data.endsOn,
+      });
       if (error) throw new Error(translateTeachingError(error, "Teaching assignment"));
-      const persisted = assertWriteApplied(
-        persistedAssignment ? [persistedAssignment] : [],
-        "Updating this teaching assignment",
-      );
-      requireActiveStaffAssignment =
-        persisted.staff_school_assignment_id !== data.staffSchoolAssignmentId;
+      const result = assertWriteApplied(rows, "Updating this teaching assignment");
+      return {
+        id: result.teaching_assignment_id,
+        replacementOccurred: result.replacement_occurred,
+      };
     }
 
     await assertAssignmentReferences(supabase, scope, {
@@ -409,7 +445,7 @@ export const saveTeachingAssignment = createServerFn({ method: "POST" })
       classroomId: data.classroomId,
       subjectId: data.subjectId,
       staffSchoolAssignmentId: data.staffSchoolAssignmentId,
-      requireActiveStaffAssignment,
+      requireActiveStaffAssignment: true,
     });
 
     const payload = {
@@ -427,28 +463,17 @@ export const saveTeachingAssignment = createServerFn({ method: "POST" })
       updated_at: new Date().toISOString(),
     };
 
-    if (data.id) {
-      const { data: rows, error } = await supabase
-        .from("teaching_assignments")
-        .update(payload)
-        .eq("id", data.id)
-        .eq("organization_id", scope.organizationId)
-        .eq("school_id", scope.schoolId)
-        .select("id");
-      if (error) throw new Error(translateTeachingError(error, "Teaching assignment"));
-      return { id: assertWriteApplied(rows, "Updating this teaching assignment").id };
-    }
-
     // B2-F03 pattern: the SELECT policy calls can_access_teaching_assignment(),
     // a STABLE SECURITY DEFINER helper that cannot see the row being inserted,
     // so INSERT ... RETURNING would fail with 42501 even when WITH CHECK passes.
     try {
-      return await insertWithoutReturning(
+      const result = await insertWithoutReturning(
         supabase,
         "teaching_assignments",
         payload,
         "Teaching assignment",
       );
+      return { ...result, replacementOccurred: false };
     } catch (error) {
       throw error instanceof Error
         ? error

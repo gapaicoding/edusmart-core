@@ -179,10 +179,14 @@ function TeachingAssignmentsPage() {
           endsOn: input.endsOn,
         },
       }),
-    onSuccess: () => {
+    onSuccess: (result) => {
       setDialogOpen(false);
       setFormError(null);
-      toast.success("Teaching assignment saved");
+      toast.success(
+        result.replacementOccurred
+          ? "Teaching assignment updated. The previous assignment was preserved in history."
+          : "Teaching assignment saved",
+      );
       void queryClient.invalidateQueries({ queryKey: ["teaching"] });
     },
     onError: (error: unknown) =>
@@ -650,7 +654,10 @@ function TeachingAssignmentsPage() {
                     key={s}
                     value={s}
                     className="capitalize"
-                    disabled={s === "archived" && !canArchive}
+                    disabled={
+                      (s === "archived" && !canArchive) ||
+                      (s === "draft" && Boolean(form.id) && currentAssignment?.status !== "draft")
+                    }
                   >
                     {s}
                   </SelectItem>

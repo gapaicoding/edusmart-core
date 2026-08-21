@@ -29,6 +29,35 @@ export const INACTIVE_STAFF_ASSIGNMENT_MESSAGE =
  */
 const FRIENDLY_TRIGGER: Array<[string, string]> = [
   [
+    "TeachingAssignment cannot return to draft after publication",
+    "This teaching assignment is already part of history and cannot be returned to draft.",
+  ],
+  [
+    "TeachingAssignment material identity cannot be rewritten after activation",
+    "Active or historical teaching assignments cannot have their teacher, classroom, subject, academic year, or term rewritten. Create or replace the teaching assignment instead.",
+  ],
+  [
+    "Historical TeachingAssignment material identity cannot be changed",
+    "Historical teaching assignments cannot have their teacher, classroom, subject, academic year, or term changed. Create a new teaching assignment instead.",
+  ],
+  ["TeachingAssignment staff assignment is not active", INACTIVE_STAFF_ASSIGNMENT_MESSAGE],
+  [
+    "TeachingAssignment is unavailable for update",
+    "This teaching assignment no longer exists or you do not have permission to update it.",
+  ],
+  [
+    "TeachingAssignment update was not applied",
+    "We couldn't save this teaching assignment. Please try again.",
+  ],
+  [
+    "TeachingAssignment replacement transition was not applied",
+    "We couldn't save this teaching assignment. Please try again.",
+  ],
+  [
+    "TeachingAssignment replacement was not created",
+    "We couldn't save this teaching assignment. Please try again.",
+  ],
+  [
     "classroom academic year mismatch",
     "This classroom belongs to a different academic year than the teaching assignment.",
   ],
@@ -47,6 +76,8 @@ const FRIENDLY_TRIGGER: Array<[string, string]> = [
 ];
 
 const FRIENDLY_CONSTRAINT: Record<string, string> = {
+  uq_teaching_assignments_active_exact:
+    "An active teaching assignment with the same teacher, classroom, subject, academic context, and role already exists.",
   teaching_assignments_role_check: "That assignment role is not supported.",
   teaching_assignments_status_check: "That assignment status is not supported.",
   teaching_assignments_dates_check: "The end date must be on or after the start date.",
