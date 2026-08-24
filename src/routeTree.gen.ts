@@ -14,6 +14,7 @@ import { Route as AuthenticatedRouteRouteImport } from './routes/_authenticated/
 import { Route as AcceptInviteRouteImport } from './routes/accept-invite'
 import { Route as AuthRouteImport } from './routes/auth'
 import { Route as ForgotPasswordRouteImport } from './routes/forgot-password'
+import { Route as HealthzRouteImport } from './routes/healthz'
 import { Route as ResetPasswordRouteImport } from './routes/reset-password'
 import { Route as AuthenticatedAccessPendingRouteImport } from './routes/_authenticated/access-pending'
 import { Route as AuthenticatedDashboardRouteImport } from './routes/_authenticated/dashboard'
@@ -56,6 +57,11 @@ const AuthRoute = AuthRouteImport.update({
 const ForgotPasswordRoute = ForgotPasswordRouteImport.update({
   id: '/forgot-password',
   path: '/forgot-password',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const HealthzRoute = HealthzRouteImport.update({
+  id: '/healthz',
+  path: '/healthz',
   getParentRoute: () => rootRouteImport,
 } as any)
 const ResetPasswordRoute = ResetPasswordRouteImport.update({
@@ -175,6 +181,7 @@ export interface FileRoutesByFullPath {
   '/accept-invite': typeof AcceptInviteRoute
   '/auth': typeof AuthRoute
   '/forgot-password': typeof ForgotPasswordRoute
+  '/healthz': typeof HealthzRoute
   '/reset-password': typeof ResetPasswordRoute
   '/access-pending': typeof AuthenticatedAccessPendingRoute
   '/dashboard': typeof AuthenticatedDashboardRoute
@@ -200,6 +207,7 @@ export interface FileRoutesByTo {
   '/accept-invite': typeof AcceptInviteRoute
   '/auth': typeof AuthRoute
   '/forgot-password': typeof ForgotPasswordRoute
+  '/healthz': typeof HealthzRoute
   '/reset-password': typeof ResetPasswordRoute
   '/access-pending': typeof AuthenticatedAccessPendingRoute
   '/dashboard': typeof AuthenticatedDashboardRoute
@@ -227,6 +235,7 @@ export interface FileRoutesById {
   '/accept-invite': typeof AcceptInviteRoute
   '/auth': typeof AuthRoute
   '/forgot-password': typeof ForgotPasswordRoute
+  '/healthz': typeof HealthzRoute
   '/reset-password': typeof ResetPasswordRoute
   '/_authenticated/access-pending': typeof AuthenticatedAccessPendingRoute
   '/_authenticated/dashboard': typeof AuthenticatedDashboardRoute
@@ -254,6 +263,7 @@ export interface FileRouteTypes {
     | '/accept-invite'
     | '/auth'
     | '/forgot-password'
+    | '/healthz'
     | '/reset-password'
     | '/access-pending'
     | '/dashboard'
@@ -279,6 +289,7 @@ export interface FileRouteTypes {
     | '/accept-invite'
     | '/auth'
     | '/forgot-password'
+    | '/healthz'
     | '/reset-password'
     | '/access-pending'
     | '/dashboard'
@@ -305,6 +316,7 @@ export interface FileRouteTypes {
     | '/accept-invite'
     | '/auth'
     | '/forgot-password'
+    | '/healthz'
     | '/reset-password'
     | '/_authenticated/access-pending'
     | '/_authenticated/dashboard'
@@ -332,6 +344,7 @@ export interface RootRouteChildren {
   AcceptInviteRoute: typeof AcceptInviteRoute
   AuthRoute: typeof AuthRoute
   ForgotPasswordRoute: typeof ForgotPasswordRoute
+  HealthzRoute: typeof HealthzRoute
   ResetPasswordRoute: typeof ResetPasswordRoute
 }
 
@@ -370,6 +383,13 @@ declare module '@tanstack/react-router' {
       path: '/forgot-password'
       fullPath: '/forgot-password'
       preLoaderRoute: typeof ForgotPasswordRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/healthz': {
+      id: '/healthz'
+      path: '/healthz'
+      fullPath: '/healthz'
+      preLoaderRoute: typeof HealthzRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/reset-password': {
@@ -560,6 +580,7 @@ const rootRouteChildren: RootRouteChildren = {
   AcceptInviteRoute: AcceptInviteRoute,
   AuthRoute: AuthRoute,
   ForgotPasswordRoute: ForgotPasswordRoute,
+  HealthzRoute: HealthzRoute,
   ResetPasswordRoute: ResetPasswordRoute,
 }
 export const routeTree = rootRouteImport
