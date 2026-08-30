@@ -79,9 +79,9 @@ type Row = Pick<
   | "ends_on"
 >;
 
-type DatabaseWithTeachingReplacement = Database & {
-  public: Database["public"] & {
-    Functions: Database["public"]["Functions"] & {
+type DatabaseWithTeachingReplacement = Omit<Database, "public"> & {
+  public: Omit<Database["public"], "Functions"> & {
+    Functions: Omit<Database["public"]["Functions"], "replace_teaching_assignment"> & {
       replace_teaching_assignment: {
         Args: {
           p_teaching_assignment_id: string;
@@ -413,9 +413,9 @@ export const saveTeachingAssignment = createServerFn({ method: "POST" })
     const scope = await assertSchoolScope(supabase, data.organizationId, data.schoolId);
 
     if (data.id) {
-      // Generated Supabase types predate the live B3-F03 migration. Extend only
-      // the known RPC surface locally until the normal type-generation workflow
-      // refreshes Database; table types and runtime client behavior are unchanged.
+      // Postgres function parameters do not expose nullability to generated
+      // Supabase types. The canonical table, validation schema, and RPC body all
+      // intentionally allow a whole-year term and open-ended assignment here.
       const rpcSupabase = supabase as SupabaseClient<DatabaseWithTeachingReplacement>;
       const { data: rows, error } = await rpcSupabase.rpc("replace_teaching_assignment", {
         p_teaching_assignment_id: data.id,
