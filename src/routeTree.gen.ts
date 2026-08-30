@@ -29,6 +29,8 @@ import { Route as AuthenticatedAcademicTermsRouteImport } from './routes/_authen
 import { Route as AuthenticatedAcademicYearsRouteImport } from './routes/_authenticated/academic/years'
 import { Route as AuthenticatedGuardiansIndexRouteImport } from './routes/_authenticated/guardians/index'
 import { Route as AuthenticatedGuardiansGuardianIdRouteImport } from './routes/_authenticated/guardians/$guardianId'
+import { Route as AuthenticatedScheduleIndexRouteImport } from './routes/_authenticated/schedule/index'
+import { Route as AuthenticatedScheduleMyRouteImport } from './routes/_authenticated/schedule/my'
 import { Route as AuthenticatedStaffIndexRouteImport } from './routes/_authenticated/staff/index'
 import { Route as AuthenticatedStaffStaffIdRouteImport } from './routes/_authenticated/staff/$staffId'
 import { Route as AuthenticatedStudentsIndexRouteImport } from './routes/_authenticated/students/index'
@@ -146,6 +148,17 @@ const AuthenticatedGuardiansGuardianIdRoute =
     path: '/guardians/$guardianId',
     getParentRoute: () => AuthenticatedRouteRoute,
   } as any)
+const AuthenticatedScheduleIndexRoute =
+  AuthenticatedScheduleIndexRouteImport.update({
+    id: '/schedule/',
+    path: '/schedule/',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
+const AuthenticatedScheduleMyRoute = AuthenticatedScheduleMyRouteImport.update({
+  id: '/schedule/my',
+  path: '/schedule/my',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
 const AuthenticatedStaffIndexRoute = AuthenticatedStaffIndexRouteImport.update({
   id: '/staff/',
   path: '/staff/',
@@ -195,9 +208,11 @@ export interface FileRoutesByFullPath {
   '/academic/terms': typeof AuthenticatedAcademicTermsRoute
   '/academic/years': typeof AuthenticatedAcademicYearsRoute
   '/guardians/$guardianId': typeof AuthenticatedGuardiansGuardianIdRoute
+  '/schedule/my': typeof AuthenticatedScheduleMyRoute
   '/staff/$staffId': typeof AuthenticatedStaffStaffIdRoute
   '/students/$studentId': typeof AuthenticatedStudentsStudentIdRoute
   '/guardians/': typeof AuthenticatedGuardiansIndexRoute
+  '/schedule/': typeof AuthenticatedScheduleIndexRoute
   '/staff/': typeof AuthenticatedStaffIndexRoute
   '/students/': typeof AuthenticatedStudentsIndexRoute
   '/teaching-assignments/': typeof AuthenticatedTeachingAssignmentsIndexRoute
@@ -221,9 +236,11 @@ export interface FileRoutesByTo {
   '/academic/terms': typeof AuthenticatedAcademicTermsRoute
   '/academic/years': typeof AuthenticatedAcademicYearsRoute
   '/guardians/$guardianId': typeof AuthenticatedGuardiansGuardianIdRoute
+  '/schedule/my': typeof AuthenticatedScheduleMyRoute
   '/staff/$staffId': typeof AuthenticatedStaffStaffIdRoute
   '/students/$studentId': typeof AuthenticatedStudentsStudentIdRoute
   '/guardians': typeof AuthenticatedGuardiansIndexRoute
+  '/schedule': typeof AuthenticatedScheduleIndexRoute
   '/staff': typeof AuthenticatedStaffIndexRoute
   '/students': typeof AuthenticatedStudentsIndexRoute
   '/teaching-assignments': typeof AuthenticatedTeachingAssignmentsIndexRoute
@@ -249,9 +266,11 @@ export interface FileRoutesById {
   '/_authenticated/academic/terms': typeof AuthenticatedAcademicTermsRoute
   '/_authenticated/academic/years': typeof AuthenticatedAcademicYearsRoute
   '/_authenticated/guardians/$guardianId': typeof AuthenticatedGuardiansGuardianIdRoute
+  '/_authenticated/schedule/my': typeof AuthenticatedScheduleMyRoute
   '/_authenticated/staff/$staffId': typeof AuthenticatedStaffStaffIdRoute
   '/_authenticated/students/$studentId': typeof AuthenticatedStudentsStudentIdRoute
   '/_authenticated/guardians/': typeof AuthenticatedGuardiansIndexRoute
+  '/_authenticated/schedule/': typeof AuthenticatedScheduleIndexRoute
   '/_authenticated/staff/': typeof AuthenticatedStaffIndexRoute
   '/_authenticated/students/': typeof AuthenticatedStudentsIndexRoute
   '/_authenticated/teaching-assignments/': typeof AuthenticatedTeachingAssignmentsIndexRoute
@@ -277,9 +296,11 @@ export interface FileRouteTypes {
     | '/academic/terms'
     | '/academic/years'
     | '/guardians/$guardianId'
+    | '/schedule/my'
     | '/staff/$staffId'
     | '/students/$studentId'
     | '/guardians/'
+    | '/schedule/'
     | '/staff/'
     | '/students/'
     | '/teaching-assignments/'
@@ -303,9 +324,11 @@ export interface FileRouteTypes {
     | '/academic/terms'
     | '/academic/years'
     | '/guardians/$guardianId'
+    | '/schedule/my'
     | '/staff/$staffId'
     | '/students/$studentId'
     | '/guardians'
+    | '/schedule'
     | '/staff'
     | '/students'
     | '/teaching-assignments'
@@ -330,9 +353,11 @@ export interface FileRouteTypes {
     | '/_authenticated/academic/terms'
     | '/_authenticated/academic/years'
     | '/_authenticated/guardians/$guardianId'
+    | '/_authenticated/schedule/my'
     | '/_authenticated/staff/$staffId'
     | '/_authenticated/students/$studentId'
     | '/_authenticated/guardians/'
+    | '/_authenticated/schedule/'
     | '/_authenticated/staff/'
     | '/_authenticated/students/'
     | '/_authenticated/teaching-assignments/'
@@ -490,6 +515,20 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedGuardiansGuardianIdRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+    '/_authenticated/schedule/': {
+      id: '/_authenticated/schedule/'
+      path: '/schedule'
+      fullPath: '/schedule/'
+      preLoaderRoute: typeof AuthenticatedScheduleIndexRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/schedule/my': {
+      id: '/_authenticated/schedule/my'
+      path: '/schedule/my'
+      fullPath: '/schedule/my'
+      preLoaderRoute: typeof AuthenticatedScheduleMyRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
     '/_authenticated/staff/': {
       id: '/_authenticated/staff/'
       path: '/staff'
@@ -541,9 +580,11 @@ interface AuthenticatedRouteRouteChildren {
   AuthenticatedAcademicTermsRoute: typeof AuthenticatedAcademicTermsRoute
   AuthenticatedAcademicYearsRoute: typeof AuthenticatedAcademicYearsRoute
   AuthenticatedGuardiansGuardianIdRoute: typeof AuthenticatedGuardiansGuardianIdRoute
+  AuthenticatedScheduleMyRoute: typeof AuthenticatedScheduleMyRoute
   AuthenticatedStaffStaffIdRoute: typeof AuthenticatedStaffStaffIdRoute
   AuthenticatedStudentsStudentIdRoute: typeof AuthenticatedStudentsStudentIdRoute
   AuthenticatedGuardiansIndexRoute: typeof AuthenticatedGuardiansIndexRoute
+  AuthenticatedScheduleIndexRoute: typeof AuthenticatedScheduleIndexRoute
   AuthenticatedStaffIndexRoute: typeof AuthenticatedStaffIndexRoute
   AuthenticatedStudentsIndexRoute: typeof AuthenticatedStudentsIndexRoute
   AuthenticatedTeachingAssignmentsIndexRoute: typeof AuthenticatedTeachingAssignmentsIndexRoute
@@ -562,9 +603,11 @@ const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedAcademicTermsRoute: AuthenticatedAcademicTermsRoute,
   AuthenticatedAcademicYearsRoute: AuthenticatedAcademicYearsRoute,
   AuthenticatedGuardiansGuardianIdRoute: AuthenticatedGuardiansGuardianIdRoute,
+  AuthenticatedScheduleMyRoute: AuthenticatedScheduleMyRoute,
   AuthenticatedStaffStaffIdRoute: AuthenticatedStaffStaffIdRoute,
   AuthenticatedStudentsStudentIdRoute: AuthenticatedStudentsStudentIdRoute,
   AuthenticatedGuardiansIndexRoute: AuthenticatedGuardiansIndexRoute,
+  AuthenticatedScheduleIndexRoute: AuthenticatedScheduleIndexRoute,
   AuthenticatedStaffIndexRoute: AuthenticatedStaffIndexRoute,
   AuthenticatedStudentsIndexRoute: AuthenticatedStudentsIndexRoute,
   AuthenticatedTeachingAssignmentsIndexRoute:
