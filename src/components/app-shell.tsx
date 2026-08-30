@@ -6,6 +6,7 @@ import {
   Briefcase,
   Building2,
   CalendarDays,
+  CalendarClock,
   CalendarRange,
   ClipboardList,
   GraduationCap,
@@ -80,6 +81,8 @@ const NAV_GROUPS: NavGroup[] = [
         icon: ClipboardList,
         permission: "teaching_assignment.read",
       },
+      { to: "/schedule", label: "Schedule", icon: CalendarClock, permission: "schedule.read" },
+      { to: "/schedule/my", label: "My Schedule", icon: CalendarDays, permission: "schedule.read" },
     ],
   },
 ];
