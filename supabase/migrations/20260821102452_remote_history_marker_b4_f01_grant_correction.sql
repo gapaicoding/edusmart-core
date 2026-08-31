@@ -1,0 +1,7 @@
+-- Historical Development compatibility marker.
+-- This version was genuinely executed on the founded Development project.
+-- Its executable semantics are represented in the canonical repository by
+-- migration 20260821193000.
+-- This marker is intentionally NO-OP on fresh databases.
+-- Do not replace this marker with the historical SQL body.
+-- Do not mark the corresponding remote migration reverted.
