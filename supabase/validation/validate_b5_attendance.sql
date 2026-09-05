@@ -130,11 +130,29 @@ begin
       )
   ) then raise exception 'Forbidden Attendance-specific roster SELECT policy exists — Batch 5 uses canonical SIS access'; end if;
 
+  -- 4c. No additional permissive policy may bypass the operational contract.
+  if exists (
+    select 1 from pg_policies
+    where schemaname='public'
+      and (
+        (tablename='attendance_sessions' and policyname not in (
+          'attendance_sessions_select',
+          'attendance_sessions_insert',
+          'attendance_sessions_update'
+        ))
+        or (tablename='student_attendance_records' and policyname not in (
+          'student_attendance_select',
+          'student_attendance_insert',
+          'student_attendance_update'
+        ))
+      )
+  ) then raise exception 'Unexpected Attendance policy can bypass the operational contract'; end if;
+
   -- 5. No attendance DELETE policy
   if exists (
     select 1 from pg_policies
     where schemaname='public' and tablename in ('attendance_sessions','student_attendance_records')
-      and cmd='d'
+      and cmd in ('DELETE','ALL')
   ) then raise exception 'Attendance DELETE policy exists — hard-delete is not allowed'; end if;
 
   -- 6. Session UPDATE policy semantics: submit and lock branches only
