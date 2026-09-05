@@ -24,6 +24,9 @@ begin
   if lifecycle not like '%Published or inactive TimetableEntry history cannot be deleted%'
      or lifecycle not like '%Inactive TimetableEntry history cannot be updated%'
      or lifecycle not like '%Published TimetableEntry cannot return to draft%'
+     or lifecycle not like '%new.effective_to := v_business_today - 1%'
+     or lifecycle not like '%TimetableEntry withdrawal cannot change material identity%'
+     or lifecycle not like '%Ended published TimetableEntry must remain published history%'
   then raise exception 'Schedule lifecycle/history guards are incomplete'; end if;
 
   if transition_guard not like '%schedule.publish%'
