@@ -240,17 +240,53 @@ create trigger audit_attendance_sessions
 after insert or update on public.attendance_sessions
 for each row execute function public.audit_row_change();
 
+-- Operational Attendance is restricted to permission grants held through
+-- ORG, SCHOOL, or CLASS scopes. OWN and RELATED remain available for future
+-- subject-facing workflows but cannot enter this roster-based workspace.
+drop policy if exists attendance_sessions_select on public.attendance_sessions;
+create policy attendance_sessions_select
+on public.attendance_sessions for select to authenticated
+using (
+  public.has_staff_scope_permission(
+    'attendance.read', organization_id, school_id, classroom_id
+  )
+);
+
+drop policy if exists attendance_sessions_insert on public.attendance_sessions;
+create policy attendance_sessions_insert
+on public.attendance_sessions for insert to authenticated
+with check (
+  public.has_staff_scope_permission(
+    'attendance.session.create', organization_id, school_id, classroom_id
+  )
+  and status = 'open'
+);
+
 drop policy if exists attendance_sessions_update on public.attendance_sessions;
 create policy attendance_sessions_update
 on public.attendance_sessions for update to authenticated
 using (
-  (status = 'open' and public.has_permission('attendance.submit', organization_id, school_id, classroom_id))
-  or (status = 'submitted' and public.has_permission('attendance.lock', organization_id, school_id, classroom_id))
+  (status = 'open' and public.has_staff_scope_permission('attendance.submit', organization_id, school_id, classroom_id))
+  or (status = 'submitted' and public.has_staff_scope_permission('attendance.lock', organization_id, school_id, classroom_id))
 )
 with check (
-  (status = 'submitted' and public.has_permission('attendance.submit', organization_id, school_id, classroom_id))
-  or (status = 'locked' and public.has_permission('attendance.lock', organization_id, school_id, classroom_id))
+  (status = 'submitted' and public.has_staff_scope_permission('attendance.submit', organization_id, school_id, classroom_id))
+  or (status = 'locked' and public.has_staff_scope_permission('attendance.lock', organization_id, school_id, classroom_id))
 );
+
+drop policy if exists student_attendance_select on public.student_attendance_records;
+create policy student_attendance_select
+on public.student_attendance_records for select to authenticated
+using (exists (
+  select 1
+  from public.attendance_sessions s
+  where s.id = student_attendance_records.attendance_session_id
+    and s.organization_id = student_attendance_records.organization_id
+    and s.school_id = student_attendance_records.school_id
+    and public.has_staff_scope_permission(
+      'attendance.read', s.organization_id, s.school_id, s.classroom_id
+    )
+));
 
 drop policy if exists student_attendance_insert on public.student_attendance_records;
 create policy student_attendance_insert
@@ -261,9 +297,9 @@ with check (exists (
     and s.organization_id = student_attendance_records.organization_id
     and s.school_id = student_attendance_records.school_id
     and (
-      (s.status = 'open' and public.has_permission('attendance.record', s.organization_id, s.school_id, s.classroom_id))
-      or (s.status = 'submitted' and public.has_permission('attendance.correct_open', s.organization_id, s.school_id, s.classroom_id))
-      or (s.status in ('locked','corrected') and public.has_permission('attendance.correct_locked', s.organization_id, s.school_id, s.classroom_id))
+      (s.status = 'open' and public.has_staff_scope_permission('attendance.record', s.organization_id, s.school_id, s.classroom_id))
+      or (s.status = 'submitted' and public.has_staff_scope_permission('attendance.correct_open', s.organization_id, s.school_id, s.classroom_id))
+      or (s.status in ('locked','corrected') and public.has_staff_scope_permission('attendance.correct_locked', s.organization_id, s.school_id, s.classroom_id))
     )
 ));
 
@@ -277,11 +313,11 @@ using (exists (
     and s.school_id = student_attendance_records.school_id
     and (
       (s.status = 'open' and (
-        public.has_permission('attendance.record', s.organization_id, s.school_id, s.classroom_id)
-        or public.has_permission('attendance.correct_open', s.organization_id, s.school_id, s.classroom_id)
+        public.has_staff_scope_permission('attendance.record', s.organization_id, s.school_id, s.classroom_id)
+        or public.has_staff_scope_permission('attendance.correct_open', s.organization_id, s.school_id, s.classroom_id)
       ))
-      or (s.status = 'submitted' and public.has_permission('attendance.correct_open', s.organization_id, s.school_id, s.classroom_id))
-      or (s.status in ('locked','corrected') and public.has_permission('attendance.correct_locked', s.organization_id, s.school_id, s.classroom_id))
+      or (s.status = 'submitted' and public.has_staff_scope_permission('attendance.correct_open', s.organization_id, s.school_id, s.classroom_id))
+      or (s.status in ('locked','corrected') and public.has_staff_scope_permission('attendance.correct_locked', s.organization_id, s.school_id, s.classroom_id))
     )
 ))
 with check (exists (
@@ -291,11 +327,11 @@ with check (exists (
     and s.school_id = student_attendance_records.school_id
     and (
       (s.status = 'open' and (
-        public.has_permission('attendance.record', s.organization_id, s.school_id, s.classroom_id)
-        or public.has_permission('attendance.correct_open', s.organization_id, s.school_id, s.classroom_id)
+        public.has_staff_scope_permission('attendance.record', s.organization_id, s.school_id, s.classroom_id)
+        or public.has_staff_scope_permission('attendance.correct_open', s.organization_id, s.school_id, s.classroom_id)
       ))
-      or (s.status = 'submitted' and public.has_permission('attendance.correct_open', s.organization_id, s.school_id, s.classroom_id))
-      or (s.status in ('locked','corrected') and public.has_permission('attendance.correct_locked', s.organization_id, s.school_id, s.classroom_id))
+      or (s.status = 'submitted' and public.has_staff_scope_permission('attendance.correct_open', s.organization_id, s.school_id, s.classroom_id))
+      or (s.status in ('locked','corrected') and public.has_staff_scope_permission('attendance.correct_locked', s.organization_id, s.school_id, s.classroom_id))
     )
 ));
 

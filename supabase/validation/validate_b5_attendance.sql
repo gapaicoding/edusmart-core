@@ -42,8 +42,23 @@ begin
   -- 4. Required policies must exist (missing = failure, not silent pass)
   if not exists (
     select 1 from pg_policies where schemaname='public' and tablename='attendance_sessions'
+      and policyname='attendance_sessions_select'
+  ) then raise exception 'Missing required policy: attendance_sessions_select'; end if;
+
+  if not exists (
+    select 1 from pg_policies where schemaname='public' and tablename='attendance_sessions'
       and policyname='attendance_sessions_update'
   ) then raise exception 'Missing required policy: attendance_sessions_update'; end if;
+
+  if not exists (
+    select 1 from pg_policies where schemaname='public' and tablename='attendance_sessions'
+      and policyname='attendance_sessions_insert'
+  ) then raise exception 'Missing required policy: attendance_sessions_insert'; end if;
+
+  if not exists (
+    select 1 from pg_policies where schemaname='public' and tablename='student_attendance_records'
+      and policyname='student_attendance_select'
+  ) then raise exception 'Missing required policy: student_attendance_select'; end if;
 
   if not exists (
     select 1 from pg_policies where schemaname='public' and tablename='student_attendance_records'
@@ -54,6 +69,52 @@ begin
     select 1 from pg_policies where schemaname='public' and tablename='student_attendance_records'
       and policyname='student_attendance_update'
   ) then raise exception 'Missing required policy: student_attendance_update'; end if;
+
+  -- 4a. Operational Attendance must use the ORG/SCHOOL/CLASS-only helper.
+  if not exists (
+    select 1 from pg_policies
+    where schemaname='public' and tablename='attendance_sessions'
+      and policyname='attendance_sessions_select'
+      and qual like '%has_staff_scope_permission%'
+      and qual like '%attendance.read%'
+      and qual not like '%has_permission(%'
+  ) then raise exception 'attendance_sessions_select is not operational-scope-only'; end if;
+
+  if not exists (
+    select 1 from pg_policies
+    where schemaname='public' and tablename='attendance_sessions'
+      and policyname='attendance_sessions_insert'
+      and with_check like '%has_staff_scope_permission%'
+      and with_check like '%attendance.session.create%'
+      and with_check not like '%has_permission(%'
+  ) then raise exception 'attendance_sessions_insert is not operational-scope-only'; end if;
+
+  if not exists (
+    select 1 from pg_policies
+    where schemaname='public' and tablename='student_attendance_records'
+      and policyname='student_attendance_select'
+      and qual like '%has_staff_scope_permission%'
+      and qual like '%attendance.read%'
+      and qual not like '%has_permission(%'
+  ) then raise exception 'student_attendance_select is not operational-scope-only'; end if;
+
+  if not exists (
+    select 1 from pg_proc
+    where oid='public.has_staff_scope_permission(text,uuid,uuid,uuid)'::regprocedure
+      and prosecdef
+  ) then raise exception 'Operational scope helper must exist as SECURITY DEFINER'; end if;
+
+  if pg_get_functiondef('public.has_staff_scope_permission(text,uuid,uuid,uuid)'::regprocedure)
+       not like '%mr.scope_type = ''ORG''%'
+     or pg_get_functiondef('public.has_staff_scope_permission(text,uuid,uuid,uuid)'::regprocedure)
+       not like '%mr.scope_type = ''SCHOOL''%'
+     or pg_get_functiondef('public.has_staff_scope_permission(text,uuid,uuid,uuid)'::regprocedure)
+       not like '%mr.scope_type = ''CLASS''%'
+     or pg_get_functiondef('public.has_staff_scope_permission(text,uuid,uuid,uuid)'::regprocedure)
+       like '%mr.scope_type = ''OWN''%'
+     or pg_get_functiondef('public.has_staff_scope_permission(text,uuid,uuid,uuid)'::regprocedure)
+       like '%mr.scope_type = ''RELATED''%'
+  then raise exception 'Operational scope helper admits an invalid scope type'; end if;
 
   -- 4b. Attendance-specific roster SELECT policies MUST NOT exist. Batch 5 relies on
   -- the canonical can_access_enrollment/can_access_student SELECT policies for the
@@ -81,58 +142,70 @@ begin
     select 1 from pg_policies
     where schemaname='public' and tablename='attendance_sessions'
       and policyname='attendance_sessions_update'
+      and qual like '%has_staff_scope_permission%'
       and qual like '%attendance.submit%'
       and qual like '%attendance.lock%'
+      and qual not like '%has_permission(%'
+      and with_check like '%has_staff_scope_permission%'
       and with_check like '%attendance.submit%'
       and with_check like '%attendance.lock%'
+      and with_check not like '%has_permission(%'
   ) then raise exception 'attendance_sessions_update policy is missing submit/lock semantics'; end if;
 
-  -- 7. Record INSERT/UPDATE policies require correct_locked for locked/corrected sessions
-  if exists (
-    select 1 from pg_policies
-    where schemaname='public' and tablename='student_attendance_records'
-      and policyname in ('student_attendance_insert','student_attendance_update')
-      and coalesce(with_check, qual, '') not like '%attendance.correct_locked%'
-  ) then raise exception 'Locked correction policy is incomplete'; end if;
-
-  -- 8. Record policies require correct_open for submitted sessions
-  if exists (
-    select 1 from pg_policies
-    where schemaname='public' and tablename='student_attendance_records'
-      and policyname in ('student_attendance_insert','student_attendance_update')
-      and coalesce(with_check, qual, '') not like '%attendance.correct_open%'
-  ) then raise exception 'Submitted correction policy is incomplete'; end if;
-
-  -- 9. Record INSERT/UPDATE require attendance.record for open sessions
-  if exists (
-    select 1 from pg_policies
-    where schemaname='public' and tablename='student_attendance_records'
-      and policyname in ('student_attendance_insert','student_attendance_update')
-      and coalesce(with_check, qual, '') not like '%attendance.record%'
-  ) then raise exception 'Open session record policy is incomplete'; end if;
-
-  -- 10. Locked/corrected correction requires attendance.correct_locked (both branches).
-  if not exists (
-    select 1 from pg_policies
-    where schemaname='public' and tablename='student_attendance_records'
-      and policyname='student_attendance_update'
-      and qual like '%''locked''%' and qual like '%''corrected''%'
-      and with_check like '%''locked''%' and with_check like '%''corrected''%'
-  ) then raise exception 'student_attendance_update is missing the locked/corrected branch'; end if;
-
+  -- 7. INSERT WITH CHECK independently preserves all record-state permissions.
   if not exists (
     select 1 from pg_policies
     where schemaname='public' and tablename='student_attendance_records'
       and policyname='student_attendance_insert'
-      and with_check like '%''locked''%' and with_check like '%''corrected''%'
-  ) then raise exception 'student_attendance_insert is missing the locked/corrected branch'; end if;
+      and with_check like '%has_staff_scope_permission%'
+      and with_check not like '%has_permission(%'
+      and with_check like '%attendance.record%'
+      and with_check like '%attendance.correct_open%'
+      and with_check like '%attendance.correct_locked%'
+      and with_check like '%''open''%'
+      and with_check like '%''submitted''%'
+      and with_check like '%''locked''%'
+      and with_check like '%''corrected''%'
+  ) then raise exception 'student_attendance_insert WITH CHECK is incomplete'; end if;
 
-  -- 11. Lifecycle guard is SECURITY INVOKER (uses auth.uid, not definer privilege)
+  -- 8. UPDATE USING independently preserves the old-row boundary.
+  if not exists (
+    select 1 from pg_policies
+    where schemaname='public' and tablename='student_attendance_records'
+      and policyname='student_attendance_update'
+      and qual like '%has_staff_scope_permission%'
+      and qual not like '%has_permission(%'
+      and qual like '%attendance.record%'
+      and qual like '%attendance.correct_open%'
+      and qual like '%attendance.correct_locked%'
+      and qual like '%''open''%'
+      and qual like '%''submitted''%'
+      and qual like '%''locked''%'
+      and qual like '%''corrected''%'
+  ) then raise exception 'student_attendance_update USING is incomplete'; end if;
+
+  -- 9. UPDATE WITH CHECK independently preserves the new-row boundary.
+  if not exists (
+    select 1 from pg_policies
+    where schemaname='public' and tablename='student_attendance_records'
+      and policyname='student_attendance_update'
+      and with_check like '%has_staff_scope_permission%'
+      and with_check not like '%has_permission(%'
+      and with_check like '%attendance.record%'
+      and with_check like '%attendance.correct_open%'
+      and with_check like '%attendance.correct_locked%'
+      and with_check like '%''open''%'
+      and with_check like '%''submitted''%'
+      and with_check like '%''locked''%'
+      and with_check like '%''corrected''%'
+  ) then raise exception 'student_attendance_update WITH CHECK is incomplete'; end if;
+
+  -- 10. Lifecycle guard is SECURITY INVOKER (uses auth.uid, not definer privilege)
   if (select p.prosecdef from pg_proc p where p.oid='public.guard_attendance_session_transition()'::regprocedure) then
     raise exception 'guard_attendance_session_transition must be SECURITY INVOKER';
   end if;
 
-  -- 12. Validation/consistency functions are SECURITY DEFINER
+  -- 11. Validation/consistency functions are SECURITY DEFINER
   if not (select p.prosecdef from pg_proc p where p.oid='public.validate_attendance_session_consistency()'::regprocedure)
      or not (select p.prosecdef from pg_proc p where p.oid='public.validate_student_attendance_record()'::regprocedure)
   then raise exception 'Attendance validation functions must be SECURITY DEFINER'; end if;
