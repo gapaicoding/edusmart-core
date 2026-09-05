@@ -83,7 +83,10 @@ declare
     'public.validate_staff_assignment_timetable_conflicts()',
     'public.set_timetable_entry_row_version()',
     'public.validate_timetable_history_lifecycle()',
-    'public.replace_timetable_entry(uuid,uuid,uuid,bigint,date,uuid,uuid,uuid,smallint,text,boolean,date,boolean)'
+    'public.replace_timetable_entry(uuid,uuid,uuid,bigint,date,uuid,uuid,uuid,smallint,text,boolean,date,boolean)',
+    'public.guard_attendance_session_transition()',
+    'public.validate_attendance_session_consistency()',
+    'public.validate_student_attendance_record()'
   ];
   required_triggers text[] := array[
     'auth.users:on_auth_user_created',
@@ -99,7 +102,11 @@ declare
     'public.teaching_assignments:trg_teaching_assignments_validate_timetable_conflicts',
     'public.staff_school_assignments:trg_staff_school_assignments_validate_timetable_conflicts',
     'public.timetable_entries:trg_timetable_entries_row_version',
-    'public.timetable_entries:trg_timetable_entries_history_lifecycle'
+    'public.timetable_entries:trg_timetable_entries_history_lifecycle',
+    'public.attendance_sessions:trg_attendance_sessions_workflow_guard',
+    'public.attendance_sessions:trg_attendance_sessions_validate_consistency',
+    'public.attendance_sessions:audit_attendance_sessions',
+    'public.student_attendance_records:trg_student_attendance_validate_record'
   ];
   required_constraints text[] := array[
     'public.timetable_periods:timetable_periods_active_time_no_overlap',
@@ -147,7 +154,8 @@ declare
     '20260820163930','20260821064307','20260821100739','20260821102452',
     '20260821132235','20260821133442','20260821190000','20260821193000',
     '20260821210000','20260821230000','20260822014606','20260822042901',
-    '20260822101519','20260830110000','20260830120000'
+    '20260822101519','20260830110000','20260830120000','20260905120000',
+    '20260905170000'
   ];
   actual text[];
 begin
