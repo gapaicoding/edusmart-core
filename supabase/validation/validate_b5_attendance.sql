@@ -55,20 +55,19 @@ begin
       and policyname='student_attendance_update'
   ) then raise exception 'Missing required policy: student_attendance_update'; end if;
 
-  if not exists (
-    select 1 from pg_policies where schemaname='public' and tablename='class_enrollments'
-      and policyname='class_enrollments_attendance_select'
-  ) then raise exception 'Missing required policy: class_enrollments_attendance_select'; end if;
-
-  if not exists (
-    select 1 from pg_policies where schemaname='public' and tablename='student_enrollments'
-      and policyname='student_enrollments_attendance_select'
-  ) then raise exception 'Missing required policy: student_enrollments_attendance_select'; end if;
-
-  if not exists (
-    select 1 from pg_policies where schemaname='public' and tablename='students'
-      and policyname='students_attendance_select'
-  ) then raise exception 'Missing required policy: students_attendance_select'; end if;
+  -- 4b. Attendance-specific roster SELECT policies MUST NOT exist. Batch 5 relies on
+  -- the canonical can_access_enrollment/can_access_student SELECT policies for the
+  -- operational staff/teacher roster read path. Reintroducing these policies exposes
+  -- the systemic OWN-scope fallback in public.has_permission and creates a recursive
+  -- Attendance-only RLS chain; both are forbidden.
+  if exists (
+    select 1 from pg_policies where schemaname='public'
+      and (
+        (tablename='class_enrollments' and policyname='class_enrollments_attendance_select')
+        or (tablename='student_enrollments' and policyname='student_enrollments_attendance_select')
+        or (tablename='students' and policyname='students_attendance_select')
+      )
+  ) then raise exception 'Forbidden Attendance-specific roster SELECT policy exists — Batch 5 uses canonical SIS access'; end if;
 
   -- 5. No attendance DELETE policy
   if exists (
@@ -112,27 +111,21 @@ begin
       and coalesce(with_check, qual, '') not like '%attendance.record%'
   ) then raise exception 'Open session record policy is incomplete'; end if;
 
-  -- 10. Roster SELECT policies are subject-aware (pass profile_id/student_id)
+  -- 10. Locked/corrected correction requires attendance.correct_locked (both branches).
   if not exists (
     select 1 from pg_policies
-    where schemaname='public' and tablename='class_enrollments'
-      and policyname='class_enrollments_attendance_select'
-      and qual like '%profile_id%'
-  ) then raise exception 'class_enrollments_attendance_select is not subject-aware'; end if;
+    where schemaname='public' and tablename='student_attendance_records'
+      and policyname='student_attendance_update'
+      and qual like '%''locked''%' and qual like '%''corrected''%'
+      and with_check like '%''locked''%' and with_check like '%''corrected''%'
+  ) then raise exception 'student_attendance_update is missing the locked/corrected branch'; end if;
 
   if not exists (
     select 1 from pg_policies
-    where schemaname='public' and tablename='student_enrollments'
-      and policyname='student_enrollments_attendance_select'
-      and qual like '%profile_id%'
-  ) then raise exception 'student_enrollments_attendance_select is not subject-aware'; end if;
-
-  if not exists (
-    select 1 from pg_policies
-    where schemaname='public' and tablename='students'
-      and policyname='students_attendance_select'
-      and qual like '%profile_id%'
-  ) then raise exception 'students_attendance_select is not subject-aware'; end if;
+    where schemaname='public' and tablename='student_attendance_records'
+      and policyname='student_attendance_insert'
+      and with_check like '%''locked''%' and with_check like '%''corrected''%'
+  ) then raise exception 'student_attendance_insert is missing the locked/corrected branch'; end if;
 
   -- 11. Lifecycle guard is SECURITY INVOKER (uses auth.uid, not definer privilege)
   if (select p.prosecdef from pg_proc p where p.oid='public.guard_attendance_session_transition()'::regprocedure) then

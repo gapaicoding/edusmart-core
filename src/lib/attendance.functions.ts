@@ -390,15 +390,19 @@ export const saveStudentAttendanceRecord = createServerFn({ method: "POST" })
         },
         "Student attendance",
       );
-    let query = context.supabase
+    if (!data.expectedUpdatedAt)
+      throw new Error(
+        "Updating an existing attendance record requires the current updated_at token.",
+      );
+    const { data: rows, error } = await context.supabase
       .from("student_attendance_records")
       .update(payload)
       .eq("id", data.recordId)
       .eq("attendance_session_id", data.sessionId)
       .eq("organization_id", data.organizationId)
-      .eq("school_id", data.schoolId);
-    if (data.expectedUpdatedAt) query = query.eq("updated_at", data.expectedUpdatedAt);
-    const { data: rows, error } = await query.select("id");
+      .eq("school_id", data.schoolId)
+      .eq("updated_at", data.expectedUpdatedAt)
+      .select("id");
     if (error) throw new Error(translateAttendanceError(error, "Student attendance"));
     if (!rows?.[0])
       throw new Error(

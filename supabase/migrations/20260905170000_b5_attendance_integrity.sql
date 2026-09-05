@@ -299,69 +299,18 @@ with check (exists (
     )
 ));
 
+-- B5 least-privilege decision: no Attendance-specific SELECT policies are added to
+-- class_enrollments / student_enrollments / students. The canonical
+-- can_access_enrollment('enrollment.read', ...) and can_access_student('student.read', ...)
+-- policies already grant operational staff/teacher access to the roster read paths used
+-- by getAttendanceSession. Adding an Attendance-specific overlay would (a) expose the
+-- systemic OWN-scope fallback in public.has_permission to a new parent/student surface
+-- that Batch 5 does not consume and (b) create a recursive RLS chain across the three
+-- relations. Any parent/student portal roster access belongs to a later batch that
+-- introduces the corresponding SECURITY DEFINER helper.
 drop policy if exists class_enrollments_attendance_select on public.class_enrollments;
-create policy class_enrollments_attendance_select
-on public.class_enrollments for select to authenticated
-using (exists (
-  select 1
-  from public.student_enrollments se
-  join public.students st on st.id = se.student_id and st.organization_id = se.organization_id
-  where se.id = class_enrollments.student_enrollment_id
-    and se.organization_id = class_enrollments.organization_id
-    and se.school_id = class_enrollments.school_id
-    and public.has_permission(
-      'attendance.read',
-      class_enrollments.organization_id,
-      class_enrollments.school_id,
-      class_enrollments.classroom_id,
-      st.profile_id,
-      st.id
-    )
-));
-
 drop policy if exists student_enrollments_attendance_select on public.student_enrollments;
-create policy student_enrollments_attendance_select
-on public.student_enrollments for select to authenticated
-using (exists (
-  select 1
-  from public.students st
-  join public.class_enrollments ce
-    on ce.student_enrollment_id = student_enrollments.id
-   and ce.organization_id = student_enrollments.organization_id
-   and ce.school_id = student_enrollments.school_id
-  where st.id = student_enrollments.student_id
-    and st.organization_id = student_enrollments.organization_id
-    and public.has_permission(
-      'attendance.read',
-      ce.organization_id,
-      ce.school_id,
-      ce.classroom_id,
-      st.profile_id,
-      st.id
-    )
-));
-
 drop policy if exists students_attendance_select on public.students;
-create policy students_attendance_select
-on public.students for select to authenticated
-using (exists (
-  select 1
-  from public.student_enrollments se
-  join public.class_enrollments ce
-    on ce.student_enrollment_id = se.id
-   and ce.organization_id = se.organization_id
-   and ce.school_id = se.school_id
-  where se.student_id = students.id
-    and se.organization_id = students.organization_id
-    and public.has_permission(
-      'attendance.read',
-      ce.organization_id,
-      ce.school_id,
-      ce.classroom_id,
-      students.profile_id,
-      students.id
-    )
-));
 
 comment on function public.validate_attendance_session_consistency() is
   'B5: validates immutable session origin, meaningful manual reason, and eligible timetable/classroom context.';

@@ -74,6 +74,14 @@ export const saveAttendanceRecordInput = attendanceScopeInput
         message: "Correction reason must be meaningful.",
       });
     }
+    if (value.recordId && !value.expectedUpdatedAt) {
+      context.addIssue({
+        code: z.ZodIssueCode.custom,
+        path: ["expectedUpdatedAt"],
+        message:
+          "Updating an existing attendance record requires the current updated_at token.",
+      });
+    }
   });
 
 export const attendanceLifecycleInput = attendanceScopeInput.extend({
