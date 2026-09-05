@@ -33,6 +33,7 @@ import {
 } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
 import { useAppContext } from "@/lib/app-context";
+import { attendanceErrorMessage } from "@/lib/attendance.errors";
 import { ATTENDANCE_SESSION_STATUSES, STUDENT_ATTENDANCE_STATUSES } from "@/lib/attendance.schemas";
 import {
   changeAttendanceSessionLifecycle,
@@ -63,9 +64,6 @@ const formatTime = (value: string | null) =>
         timeZone: "Asia/Jakarta",
       }).format(new Date(value))
     : null;
-const messageOf = (error: unknown) =>
-  error instanceof Error ? error.message : "An unexpected attendance error occurred.";
-
 function downloadCsv(rows: Array<Record<string, string | null>>) {
   const headings = Object.keys(rows[0] ?? { date: "", classroom: "", status: "", origin: "" });
   const quote = (value: string | null | undefined) =>
@@ -116,7 +114,7 @@ export function SessionOpener({
       toast.success("Attendance session opened.");
       onCreated(id);
     },
-    onError: (value) => setError(messageOf(value)),
+    onError: (value) => setError(attendanceErrorMessage(value)),
   });
   return (
     <FormDialog
@@ -504,7 +502,7 @@ export function AttendanceSessionPage({ id }: { id: string }) {
       await refresh();
       toast.success("Attendance saved.");
     },
-    onError: (value) => setError(messageOf(value)),
+    onError: (value) => setError(attendanceErrorMessage(value)),
   });
   const lifecycle = useMutation({
     mutationFn: (action: "submit" | "lock") =>
@@ -516,7 +514,7 @@ export function AttendanceSessionPage({ id }: { id: string }) {
       await refresh();
       toast.success("Attendance lifecycle updated.");
     },
-    onError: (value) => setError(messageOf(value)),
+    onError: (value) => setError(attendanceErrorMessage(value)),
   });
   const data = session.data;
   const marked = useMemo(() => data?.roster.filter((row) => row.status).length ?? 0, [data]);

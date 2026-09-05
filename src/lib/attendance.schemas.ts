@@ -2,6 +2,7 @@ import { z } from "zod";
 
 const uuid = z.string().uuid();
 const date = z.string().regex(/^\d{4}-\d{2}-\d{2}$/, "Use a valid date.");
+export const postgresTimestampSchema = z.string().datetime({ offset: true });
 
 // corrected is legacy/reserved — no user-reachable transition creates it; kept for filtering historical data
 export const ATTENDANCE_SESSION_STATUSES = ["open", "submitted", "locked", "corrected"] as const;
@@ -60,7 +61,7 @@ export const saveAttendanceRecordInput = attendanceScopeInput
     status: z.enum(STUDENT_ATTENDANCE_STATUSES),
     note: z.string().trim().max(500).nullable().optional(),
     correctionReason: z.string().trim().max(500).nullable().optional(),
-    expectedUpdatedAt: z.string().datetime().optional(),
+    expectedUpdatedAt: postgresTimestampSchema.optional(),
   })
   .superRefine((value, context) => {
     if (
@@ -78,8 +79,7 @@ export const saveAttendanceRecordInput = attendanceScopeInput
       context.addIssue({
         code: z.ZodIssueCode.custom,
         path: ["expectedUpdatedAt"],
-        message:
-          "Updating an existing attendance record requires the current updated_at token.",
+        message: "Updating an existing attendance record requires the current updated_at token.",
       });
     }
   });
@@ -87,5 +87,5 @@ export const saveAttendanceRecordInput = attendanceScopeInput
 export const attendanceLifecycleInput = attendanceScopeInput.extend({
   id: uuid,
   action: z.enum(["submit", "lock"]),
-  expectedUpdatedAt: z.string().datetime(),
+  expectedUpdatedAt: postgresTimestampSchema,
 });
