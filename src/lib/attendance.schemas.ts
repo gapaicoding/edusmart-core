@@ -3,6 +3,7 @@ import { z } from "zod";
 const uuid = z.string().uuid();
 const date = z.string().regex(/^\d{4}-\d{2}-\d{2}$/, "Use a valid date.");
 
+// corrected is legacy/reserved — no user-reachable transition creates it; kept for filtering historical data
 export const ATTENDANCE_SESSION_STATUSES = ["open", "submitted", "locked", "corrected"] as const;
 export const STUDENT_ATTENDANCE_STATUSES = [
   "present",
@@ -59,6 +60,7 @@ export const saveAttendanceRecordInput = attendanceScopeInput
     status: z.enum(STUDENT_ATTENDANCE_STATUSES),
     note: z.string().trim().max(500).nullable().optional(),
     correctionReason: z.string().trim().max(500).nullable().optional(),
+    expectedUpdatedAt: z.string().datetime().optional(),
   })
   .superRefine((value, context) => {
     if (

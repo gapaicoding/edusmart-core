@@ -495,6 +495,7 @@ export function AttendanceSessionPage({ id }: { id: string }) {
           status: status as (typeof STUDENT_ATTENDANCE_STATUSES)[number],
           note: row.note,
           correctionReason: reason ?? null,
+          expectedUpdatedAt: row.updatedAt ?? undefined,
         },
       }),
     onSuccess: async () => {

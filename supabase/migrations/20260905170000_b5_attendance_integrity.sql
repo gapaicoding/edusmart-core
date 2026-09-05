@@ -302,17 +302,43 @@ with check (exists (
 drop policy if exists class_enrollments_attendance_select on public.class_enrollments;
 create policy class_enrollments_attendance_select
 on public.class_enrollments for select to authenticated
-using (public.has_permission('attendance.read', organization_id, school_id, classroom_id));
+using (exists (
+  select 1
+  from public.student_enrollments se
+  join public.students st on st.id = se.student_id and st.organization_id = se.organization_id
+  where se.id = class_enrollments.student_enrollment_id
+    and se.organization_id = class_enrollments.organization_id
+    and se.school_id = class_enrollments.school_id
+    and public.has_permission(
+      'attendance.read',
+      class_enrollments.organization_id,
+      class_enrollments.school_id,
+      class_enrollments.classroom_id,
+      st.profile_id,
+      st.id
+    )
+));
 
 drop policy if exists student_enrollments_attendance_select on public.student_enrollments;
 create policy student_enrollments_attendance_select
 on public.student_enrollments for select to authenticated
 using (exists (
-  select 1 from public.class_enrollments ce
-  where ce.student_enrollment_id = student_enrollments.id
-    and ce.organization_id = student_enrollments.organization_id
-    and ce.school_id = student_enrollments.school_id
-    and public.has_permission('attendance.read', ce.organization_id, ce.school_id, ce.classroom_id)
+  select 1
+  from public.students st
+  join public.class_enrollments ce
+    on ce.student_enrollment_id = student_enrollments.id
+   and ce.organization_id = student_enrollments.organization_id
+   and ce.school_id = student_enrollments.school_id
+  where st.id = student_enrollments.student_id
+    and st.organization_id = student_enrollments.organization_id
+    and public.has_permission(
+      'attendance.read',
+      ce.organization_id,
+      ce.school_id,
+      ce.classroom_id,
+      st.profile_id,
+      st.id
+    )
 ));
 
 drop policy if exists students_attendance_select on public.students;
@@ -327,12 +353,19 @@ using (exists (
    and ce.school_id = se.school_id
   where se.student_id = students.id
     and se.organization_id = students.organization_id
-    and public.has_permission('attendance.read', ce.organization_id, ce.school_id, ce.classroom_id)
+    and public.has_permission(
+      'attendance.read',
+      ce.organization_id,
+      ce.school_id,
+      ce.classroom_id,
+      students.profile_id,
+      students.id
+    )
 ));
 
 comment on function public.validate_attendance_session_consistency() is
   'B5: validates immutable session origin, meaningful manual reason, and eligible timetable/classroom context.';
 comment on function public.guard_attendance_session_transition() is
-  'B5: authoritative open-to-submitted-to-locked AttendanceSession lifecycle with caller permission checks.';
+  'B5: authoritative open->submitted->locked session lifecycle. The corrected value is legacy/reserved and not a user-reachable transition; record-level corrections preserve the session status while the audited record captures the change.';
 comment on function public.validate_student_attendance_record() is
-  'B5: validates dated primary-class roster membership, immutable record identity, actor attribution, and correction reasons.';
+  'B5: validates dated primary-class roster membership, immutable record identity, actor attribution, and correction reasons. Corrections to submitted/locked/corrected records require the appropriate permission and a reason; the session status is never changed by a record correction.';

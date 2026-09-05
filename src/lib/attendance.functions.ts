@@ -42,6 +42,7 @@ export type AttendanceRosterRow = {
   status: string | null;
   note: string | null;
   correctionReason: string | null;
+  updatedAt: string | null;
 };
 export type AttendanceSessionDetail = AttendanceSessionSummary & {
   roster: AttendanceRosterRow[];
@@ -335,7 +336,7 @@ export const getAttendanceSession = createServerFn({ method: "GET" })
         : { data: [], error: null },
       context.supabase
         .from("student_attendance_records")
-        .select("id, student_enrollment_id, status, note, correction_reason")
+        .select("id, student_enrollment_id, status, note, correction_reason, updated_at")
         .eq("attendance_session_id", session.id)
         .eq("organization_id", data.organizationId)
         .eq("school_id", data.schoolId),
@@ -358,6 +359,7 @@ export const getAttendanceSession = createServerFn({ method: "GET" })
           status: record?.status ?? null,
           note: record?.note ?? null,
           correctionReason: record?.correction_reason ?? null,
+          updatedAt: record?.updated_at ?? null,
         };
       })
       .sort((a, b) => a.studentName.localeCompare(b.studentName));
@@ -388,18 +390,19 @@ export const saveStudentAttendanceRecord = createServerFn({ method: "POST" })
         },
         "Student attendance",
       );
-    const { data: rows, error } = await context.supabase
+    let query = context.supabase
       .from("student_attendance_records")
       .update(payload)
       .eq("id", data.recordId)
       .eq("attendance_session_id", data.sessionId)
       .eq("organization_id", data.organizationId)
-      .eq("school_id", data.schoolId)
-      .select("id");
+      .eq("school_id", data.schoolId);
+    if (data.expectedUpdatedAt) query = query.eq("updated_at", data.expectedUpdatedAt);
+    const { data: rows, error } = await query.select("id");
     if (error) throw new Error(translateAttendanceError(error, "Student attendance"));
     if (!rows?.[0])
       throw new Error(
-        "This attendance record changed or your permission scope no longer allows the update.",
+        "This attendance record was modified by another user. Refresh and retry.",
       );
     return { id: rows[0].id };
   });
