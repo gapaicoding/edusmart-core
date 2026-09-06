@@ -185,7 +185,6 @@ export type PortalAttendanceRow = {
   sessionDate: string;
   sessionStatus: string;
   status: string;
-  minutesLate: number | null;
 };
 
 export const listPortalAttendance = createServerFn({ method: "GET" })
@@ -203,7 +202,6 @@ export const listPortalAttendance = createServerFn({ method: "GET" })
         session_date: string;
         session_status: string;
         status: string;
-        minutes_late: number | null;
       }> | null;
       error: import("@supabase/supabase-js").PostgrestError | null;
     }>;
@@ -220,7 +218,6 @@ export const listPortalAttendance = createServerFn({ method: "GET" })
         sessionDate: r.session_date,
         sessionStatus: r.session_status,
         status: r.status,
-        minutesLate: r.minutes_late,
       })),
     };
   });

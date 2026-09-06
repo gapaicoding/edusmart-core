@@ -353,10 +353,7 @@ function AttendanceSection({ child }: { child: PortalChild }) {
           <CardContent className="flex items-center justify-between p-3 text-sm">
             <div>
               <p className="font-medium">{new Date(r.sessionDate).toLocaleDateString()}</p>
-              <p className="text-xs text-muted-foreground capitalize">
-                Session {r.sessionStatus}
-                {r.minutesLate ? ` · ${r.minutesLate} min late` : ""}
-              </p>
+              <p className="text-xs text-muted-foreground capitalize">Session {r.sessionStatus}</p>
             </div>
             <Badge
               variant={r.status === "present" ? "secondary" : "outline"}

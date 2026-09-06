@@ -186,7 +186,7 @@ begin
   select p.proowner, p.prosrc into v_owner, v_source from pg_catalog.pg_proc p where p.oid = v_oid;
   v_normalized_source := regexp_replace(lower(regexp_replace(v_source, '--[^' || chr(10) || chr(13) || ']*', ' ', 'g')), '[[:space:]]', '', 'g');
   v_hash := md5(v_normalized_source);
-  if v_hash <> '69421375dbd1f70d1e03fdaa66e98224' then
+  if v_hash <> '9e2f908a2da98129183768b7fb69c4fb' then
     raise exception 'list_parent_student_attendance body differs from reviewed B7 contract: got %', v_hash;
   end if;
 
@@ -203,7 +203,7 @@ begin
       ]::oidvector
       and p.prosecdef and p.proconfig @> array['search_path=""']::text[]
       and l.lanname = 'sql' and p.provolatile = 's' and p.proretset
-      and pg_get_function_result(p.oid) = 'TABLE(record_id uuid, session_id uuid, organization_id uuid, school_id uuid, classroom_id uuid, session_date date, session_status text, status text, minutes_late integer, recorded_at timestamp with time zone)'
+      and pg_get_function_result(p.oid) = 'TABLE(record_id uuid, session_id uuid, organization_id uuid, school_id uuid, classroom_id uuid, session_date date, session_status text, status text, recorded_at timestamp with time zone)'
   ) then
     raise exception 'list_parent_student_attendance identity/security/return contract differs';
   end if;

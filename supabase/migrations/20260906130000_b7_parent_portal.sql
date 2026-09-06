@@ -52,7 +52,6 @@ returns table (
   session_date date,
   session_status text,
   status text,
-  minutes_late integer,
   recorded_at timestamptz
 )
 language sql
@@ -69,7 +68,6 @@ as $$
     s.session_date,
     s.status,
     star.status,
-    star.minutes_late,
     star.updated_at
   from public.student_attendance_records star
   join public.attendance_sessions s
