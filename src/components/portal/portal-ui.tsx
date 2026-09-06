@@ -357,7 +357,6 @@ function AttendanceSection({ child }: { child: PortalChild }) {
                 Session {r.sessionStatus}
                 {r.minutesLate ? ` · ${r.minutesLate} min late` : ""}
               </p>
-              {r.notes && <p className="mt-1 text-xs text-muted-foreground">{r.notes}</p>}
             </div>
             <Badge
               variant={r.status === "present" ? "secondary" : "outline"}
