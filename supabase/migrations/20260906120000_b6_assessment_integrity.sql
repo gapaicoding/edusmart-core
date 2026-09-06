@@ -10,6 +10,7 @@ as $$
 declare
   v_assignment public.teaching_assignments%rowtype;
   v_term public.terms%rowtype;
+  v_type_active boolean;
 begin
   select ta.* into v_assignment
   from public.teaching_assignments ta
@@ -25,6 +26,10 @@ begin
   if tg_op = 'INSERT' and v_assignment.status <> 'active' then
     raise exception using errcode = '23514', message = 'Assessment requires an active TeachingAssignment';
   end if;
+  if tg_op = 'UPDATE' and old.teaching_assignment_id is distinct from new.teaching_assignment_id
+     and v_assignment.status <> 'active' then
+    raise exception using errcode = '23514', message = 'Assessment requires an active TeachingAssignment';
+  end if;
 
   select t.* into v_term from public.terms t
   where t.id = new.term_id and t.organization_id = new.organization_id
@@ -36,9 +41,20 @@ begin
     raise exception using errcode = '23514', message = 'Assessment date must fall within the selected term';
   end if;
 
-  if not exists (select 1 from public.assessment_types at where at.id = new.assessment_type_id
-    and at.organization_id = new.organization_id and at.school_id = new.school_id) then
+  select at.is_active into v_type_active
+  from public.assessment_types at
+  where at.id = new.assessment_type_id
+    and at.organization_id = new.organization_id
+    and at.school_id = new.school_id;
+  if not found then
     raise exception using errcode = '23514', message = 'Assessment type is outside the selected school';
+  end if;
+  if tg_op = 'INSERT' and not v_type_active then
+    raise exception using errcode = '23514', message = 'Assessment requires an active AssessmentType';
+  end if;
+  if tg_op = 'UPDATE' and old.assessment_type_id is distinct from new.assessment_type_id
+     and not v_type_active then
+    raise exception using errcode = '23514', message = 'Assessment requires an active AssessmentType';
   end if;
 
   if nullif(pg_catalog.btrim(new.title), '') is null then
@@ -66,6 +82,91 @@ begin
   return new;
 end
 $$;
+
+create or replace function public.can_manage_assessment_context(
+  p_permission_code text,
+  p_organization_id uuid,
+  p_school_id uuid,
+  p_academic_year_id uuid,
+  p_term_id uuid,
+  p_teaching_assignment_id uuid
+)
+returns boolean
+language sql
+stable
+security definer
+set search_path = ''
+as $$
+  select exists (
+    select 1
+    from public.teaching_assignments ta
+    join public.staff_school_assignments ssa
+      on ssa.id = ta.staff_school_assignment_id
+     and ssa.organization_id = ta.organization_id
+     and ssa.school_id = ta.school_id
+    join public.staff_members sm
+      on sm.id = ssa.staff_member_id
+     and sm.organization_id = ssa.organization_id
+    where ta.id = p_teaching_assignment_id
+      and ta.organization_id = p_organization_id
+      and ta.school_id = p_school_id
+      and ta.academic_year_id = p_academic_year_id
+      and ta.term_id is not distinct from p_term_id
+      and public.has_permission(
+        p_permission_code,
+        p_organization_id,
+        p_school_id,
+        ta.classroom_id,
+        sm.profile_id,
+        null
+      )
+      and (
+        (
+          sm.profile_id = auth.uid()
+          and ta.status = 'active'
+          and ssa.status = 'active'
+        )
+        or public.has_staff_scope_permission(
+          p_permission_code,
+          p_organization_id,
+          p_school_id,
+          ta.classroom_id
+        )
+      )
+  )
+$$;
+
+drop policy assessments_insert on public.assessments;
+create policy assessments_insert
+on public.assessments for insert to authenticated
+with check (
+  status in ('draft','open')
+  and public.can_manage_assessment_context(
+    'assessment.create', organization_id, school_id, academic_year_id, term_id,
+    teaching_assignment_id
+  )
+);
+
+drop policy assessments_update on public.assessments;
+create policy assessments_update
+on public.assessments for update to authenticated
+using (
+  public.can_access_assessment('assessment.update_own', id)
+  and (
+    created_by_profile_id = auth.uid()
+    or public.has_permission('assessment.update_own', organization_id, school_id)
+  )
+)
+with check (
+  public.can_manage_assessment_context(
+    'assessment.update_own', organization_id, school_id, academic_year_id, term_id,
+    teaching_assignment_id
+  )
+  and (
+    created_by_profile_id = auth.uid()
+    or public.has_permission('assessment.update_own', organization_id, school_id)
+  )
+);
 
 create trigger trg_assessments_consistency before insert or update on public.assessments
 for each row execute function public.validate_assessment_consistency();
@@ -212,12 +313,14 @@ for each row execute function public.audit_row_change();
 
 -- Keep existing audit_student_scores: corrections retain before/after values with auth.uid().
 revoke all on function public.validate_assessment_consistency() from public;
+revoke all on function public.can_manage_assessment_context(text, uuid, uuid, uuid, uuid, uuid) from public;
 revoke all on function public.validate_student_score() from public;
 revoke all on function public.guard_assessment_transition() from public;
 revoke all on function public.guard_student_score_update() from public;
 revoke all on function public.can_access_assessment(text, uuid) from public;
 revoke all on function public.validate_assessment_learning_objective() from public;
 grant execute on function public.validate_assessment_consistency() to authenticated;
+grant execute on function public.can_manage_assessment_context(text, uuid, uuid, uuid, uuid, uuid) to authenticated;
 grant execute on function public.validate_student_score() to authenticated;
 grant execute on function public.guard_assessment_transition() to authenticated;
 grant execute on function public.guard_student_score_update() to authenticated;
