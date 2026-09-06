@@ -136,6 +136,69 @@ as $$
   )
 $$;
 
+create or replace function public.can_manage_assessment_update_context(
+  p_permission_code text,
+  p_assessment_id uuid,
+  p_organization_id uuid,
+  p_school_id uuid,
+  p_academic_year_id uuid,
+  p_term_id uuid,
+  p_teaching_assignment_id uuid
+)
+returns boolean
+language sql
+stable
+security definer
+set search_path = ''
+as $$
+  select exists (
+    select 1
+    from public.assessments old_assessment
+    join public.teaching_assignments ta
+      on ta.id = p_teaching_assignment_id
+     and ta.organization_id = p_organization_id
+     and ta.school_id = p_school_id
+     and ta.academic_year_id = p_academic_year_id
+     and ta.term_id is not distinct from p_term_id
+    where old_assessment.id = p_assessment_id
+      and (
+        (
+          (old_assessment.organization_id, old_assessment.school_id,
+           old_assessment.academic_year_id, old_assessment.term_id,
+           old_assessment.teaching_assignment_id)
+          is not distinct from
+          (p_organization_id, p_school_id, p_academic_year_id, p_term_id,
+           p_teaching_assignment_id)
+          and public.has_permission(
+            p_permission_code,
+            p_organization_id,
+            p_school_id,
+            ta.classroom_id,
+            old_assessment.created_by_profile_id,
+            null
+          )
+          and (
+            old_assessment.created_by_profile_id = auth.uid()
+            or public.has_staff_scope_permission(
+              p_permission_code,
+              p_organization_id,
+              p_school_id,
+              ta.classroom_id
+            )
+          )
+        )
+        or public.can_manage_assessment_context(
+          p_permission_code,
+          p_organization_id,
+          p_school_id,
+          p_academic_year_id,
+          p_term_id,
+          p_teaching_assignment_id
+        )
+      )
+  )
+$$;
+
 drop policy assessments_insert on public.assessments;
 create policy assessments_insert
 on public.assessments for insert to authenticated
@@ -158,9 +221,9 @@ using (
   )
 )
 with check (
-  public.can_manage_assessment_context(
-    'assessment.update_own', organization_id, school_id, academic_year_id, term_id,
-    teaching_assignment_id
+  public.can_manage_assessment_update_context(
+    'assessment.update_own', id, organization_id, school_id, academic_year_id,
+    term_id, teaching_assignment_id
   )
   and (
     created_by_profile_id = auth.uid()
@@ -314,6 +377,7 @@ for each row execute function public.audit_row_change();
 -- Keep existing audit_student_scores: corrections retain before/after values with auth.uid().
 revoke all on function public.validate_assessment_consistency() from public;
 revoke all on function public.can_manage_assessment_context(text, uuid, uuid, uuid, uuid, uuid) from public;
+revoke all on function public.can_manage_assessment_update_context(text, uuid, uuid, uuid, uuid, uuid, uuid) from public;
 revoke all on function public.validate_student_score() from public;
 revoke all on function public.guard_assessment_transition() from public;
 revoke all on function public.guard_student_score_update() from public;
@@ -321,6 +385,7 @@ revoke all on function public.can_access_assessment(text, uuid) from public;
 revoke all on function public.validate_assessment_learning_objective() from public;
 grant execute on function public.validate_assessment_consistency() to authenticated;
 grant execute on function public.can_manage_assessment_context(text, uuid, uuid, uuid, uuid, uuid) to authenticated;
+grant execute on function public.can_manage_assessment_update_context(text, uuid, uuid, uuid, uuid, uuid, uuid) to authenticated;
 grant execute on function public.validate_student_score() to authenticated;
 grant execute on function public.guard_assessment_transition() to authenticated;
 grant execute on function public.guard_student_score_update() to authenticated;
