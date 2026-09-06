@@ -42,7 +42,7 @@ begin
       ('public.student_attendance_records'::regclass, 3, 'student_attendance_select'),
       ('public.student_scores'::regclass, 3, 'student_scores_select'),
       ('public.assessments'::regclass, 3, 'assessments_select')
-    ) as t(tbl regclass, expected_total integer, pname text)
+    ) as t(tbl, expected_total, pname)
   loop
     select count(*) into n from pg_catalog.pg_policy where polrelid = r.tbl;
     if n <> r.expected_total then
@@ -149,7 +149,7 @@ begin
       ('public.student_attendance_records'::regclass, 'student_attendance_select', 'b7_expected_student_attendance_records'::regclass, 'b7_expected_student_attendance_records', 'student_attendance_records'),
       ('public.student_scores'::regclass, 'student_scores_select', 'b7_expected_student_scores'::regclass, 'b7_expected_student_scores', 'student_scores'),
       ('public.assessments'::regclass, 'assessments_select', 'b7_expected_assessments'::regclass, 'b7_expected_assessments', 'assessments')
-    ) as t(actual_tbl regclass, pname text, expected_tbl regclass, shadow_name text, actual_name text)
+    ) as t(actual_tbl, pname, expected_tbl, shadow_name, actual_name)
   loop
     select regexp_replace(lower(pg_get_expr(polqual, polrelid)), '[[:space:]]', '', 'g'),
            regexp_replace(lower(pg_get_expr(polwithcheck, polrelid)), '[[:space:]]', '', 'g')
