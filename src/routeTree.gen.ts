@@ -32,6 +32,10 @@ import { Route as AuthenticatedAssessmentsIdRouteImport } from './routes/_authen
 import { Route as AuthenticatedAttendanceIndexRouteImport } from './routes/_authenticated/attendance/index'
 import { Route as AuthenticatedGuardiansIndexRouteImport } from './routes/_authenticated/guardians/index'
 import { Route as AuthenticatedGuardiansGuardianIdRouteImport } from './routes/_authenticated/guardians/$guardianId'
+import { Route as AuthenticatedPortalIndexRouteImport } from './routes/_authenticated/portal/index'
+import { Route as AuthenticatedPortalAttendanceRouteImport } from './routes/_authenticated/portal/attendance'
+import { Route as AuthenticatedPortalScheduleRouteImport } from './routes/_authenticated/portal/schedule'
+import { Route as AuthenticatedPortalScoresRouteImport } from './routes/_authenticated/portal/scores'
 import { Route as AuthenticatedScheduleIndexRouteImport } from './routes/_authenticated/schedule/index'
 import { Route as AuthenticatedScheduleMyRouteImport } from './routes/_authenticated/schedule/my'
 import { Route as AuthenticatedStaffIndexRouteImport } from './routes/_authenticated/staff/index'
@@ -170,6 +174,30 @@ const AuthenticatedGuardiansGuardianIdRoute =
     path: '/guardians/$guardianId',
     getParentRoute: () => AuthenticatedRouteRoute,
   } as any)
+const AuthenticatedPortalIndexRoute =
+  AuthenticatedPortalIndexRouteImport.update({
+    id: '/portal/',
+    path: '/portal/',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
+const AuthenticatedPortalAttendanceRoute =
+  AuthenticatedPortalAttendanceRouteImport.update({
+    id: '/portal/attendance',
+    path: '/portal/attendance',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
+const AuthenticatedPortalScheduleRoute =
+  AuthenticatedPortalScheduleRouteImport.update({
+    id: '/portal/schedule',
+    path: '/portal/schedule',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
+const AuthenticatedPortalScoresRoute =
+  AuthenticatedPortalScoresRouteImport.update({
+    id: '/portal/scores',
+    path: '/portal/scores',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
 const AuthenticatedScheduleIndexRoute =
   AuthenticatedScheduleIndexRouteImport.update({
     id: '/schedule/',
@@ -237,12 +265,16 @@ export interface FileRoutesByFullPath {
   '/academic/years': typeof AuthenticatedAcademicYearsRoute
   '/assessments/$id': typeof AuthenticatedAssessmentsIdRoute
   '/guardians/$guardianId': typeof AuthenticatedGuardiansGuardianIdRoute
+  '/portal/attendance': typeof AuthenticatedPortalAttendanceRoute
+  '/portal/schedule': typeof AuthenticatedPortalScheduleRoute
+  '/portal/scores': typeof AuthenticatedPortalScoresRoute
   '/schedule/my': typeof AuthenticatedScheduleMyRoute
   '/staff/$staffId': typeof AuthenticatedStaffStaffIdRoute
   '/students/$studentId': typeof AuthenticatedStudentsStudentIdRoute
   '/assessments/': typeof AuthenticatedAssessmentsIndexRoute
   '/attendance/': typeof AuthenticatedAttendanceIndexRoute
   '/guardians/': typeof AuthenticatedGuardiansIndexRoute
+  '/portal/': typeof AuthenticatedPortalIndexRoute
   '/schedule/': typeof AuthenticatedScheduleIndexRoute
   '/staff/': typeof AuthenticatedStaffIndexRoute
   '/students/': typeof AuthenticatedStudentsIndexRoute
@@ -269,12 +301,16 @@ export interface FileRoutesByTo {
   '/academic/years': typeof AuthenticatedAcademicYearsRoute
   '/assessments/$id': typeof AuthenticatedAssessmentsIdRoute
   '/guardians/$guardianId': typeof AuthenticatedGuardiansGuardianIdRoute
+  '/portal/attendance': typeof AuthenticatedPortalAttendanceRoute
+  '/portal/schedule': typeof AuthenticatedPortalScheduleRoute
+  '/portal/scores': typeof AuthenticatedPortalScoresRoute
   '/schedule/my': typeof AuthenticatedScheduleMyRoute
   '/staff/$staffId': typeof AuthenticatedStaffStaffIdRoute
   '/students/$studentId': typeof AuthenticatedStudentsStudentIdRoute
   '/assessments': typeof AuthenticatedAssessmentsIndexRoute
   '/attendance': typeof AuthenticatedAttendanceIndexRoute
   '/guardians': typeof AuthenticatedGuardiansIndexRoute
+  '/portal': typeof AuthenticatedPortalIndexRoute
   '/schedule': typeof AuthenticatedScheduleIndexRoute
   '/staff': typeof AuthenticatedStaffIndexRoute
   '/students': typeof AuthenticatedStudentsIndexRoute
@@ -303,12 +339,16 @@ export interface FileRoutesById {
   '/_authenticated/academic/years': typeof AuthenticatedAcademicYearsRoute
   '/_authenticated/assessments/$id': typeof AuthenticatedAssessmentsIdRoute
   '/_authenticated/guardians/$guardianId': typeof AuthenticatedGuardiansGuardianIdRoute
+  '/_authenticated/portal/attendance': typeof AuthenticatedPortalAttendanceRoute
+  '/_authenticated/portal/schedule': typeof AuthenticatedPortalScheduleRoute
+  '/_authenticated/portal/scores': typeof AuthenticatedPortalScoresRoute
   '/_authenticated/schedule/my': typeof AuthenticatedScheduleMyRoute
   '/_authenticated/staff/$staffId': typeof AuthenticatedStaffStaffIdRoute
   '/_authenticated/students/$studentId': typeof AuthenticatedStudentsStudentIdRoute
   '/_authenticated/assessments/': typeof AuthenticatedAssessmentsIndexRoute
   '/_authenticated/attendance/': typeof AuthenticatedAttendanceIndexRoute
   '/_authenticated/guardians/': typeof AuthenticatedGuardiansIndexRoute
+  '/_authenticated/portal/': typeof AuthenticatedPortalIndexRoute
   '/_authenticated/schedule/': typeof AuthenticatedScheduleIndexRoute
   '/_authenticated/staff/': typeof AuthenticatedStaffIndexRoute
   '/_authenticated/students/': typeof AuthenticatedStudentsIndexRoute
@@ -337,12 +377,16 @@ export interface FileRouteTypes {
     | '/academic/years'
     | '/assessments/$id'
     | '/guardians/$guardianId'
+    | '/portal/attendance'
+    | '/portal/schedule'
+    | '/portal/scores'
     | '/schedule/my'
     | '/staff/$staffId'
     | '/students/$studentId'
     | '/assessments/'
     | '/attendance/'
     | '/guardians/'
+    | '/portal/'
     | '/schedule/'
     | '/staff/'
     | '/students/'
@@ -369,12 +413,16 @@ export interface FileRouteTypes {
     | '/academic/years'
     | '/assessments/$id'
     | '/guardians/$guardianId'
+    | '/portal/attendance'
+    | '/portal/schedule'
+    | '/portal/scores'
     | '/schedule/my'
     | '/staff/$staffId'
     | '/students/$studentId'
     | '/assessments'
     | '/attendance'
     | '/guardians'
+    | '/portal'
     | '/schedule'
     | '/staff'
     | '/students'
@@ -402,12 +450,16 @@ export interface FileRouteTypes {
     | '/_authenticated/academic/years'
     | '/_authenticated/assessments/$id'
     | '/_authenticated/guardians/$guardianId'
+    | '/_authenticated/portal/attendance'
+    | '/_authenticated/portal/schedule'
+    | '/_authenticated/portal/scores'
     | '/_authenticated/schedule/my'
     | '/_authenticated/staff/$staffId'
     | '/_authenticated/students/$studentId'
     | '/_authenticated/assessments/'
     | '/_authenticated/attendance/'
     | '/_authenticated/guardians/'
+    | '/_authenticated/portal/'
     | '/_authenticated/schedule/'
     | '/_authenticated/staff/'
     | '/_authenticated/students/'
@@ -588,6 +640,34 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedGuardiansGuardianIdRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+    '/_authenticated/portal/': {
+      id: '/_authenticated/portal/'
+      path: '/portal'
+      fullPath: '/portal/'
+      preLoaderRoute: typeof AuthenticatedPortalIndexRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/portal/attendance': {
+      id: '/_authenticated/portal/attendance'
+      path: '/portal/attendance'
+      fullPath: '/portal/attendance'
+      preLoaderRoute: typeof AuthenticatedPortalAttendanceRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/portal/schedule': {
+      id: '/_authenticated/portal/schedule'
+      path: '/portal/schedule'
+      fullPath: '/portal/schedule'
+      preLoaderRoute: typeof AuthenticatedPortalScheduleRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/portal/scores': {
+      id: '/_authenticated/portal/scores'
+      path: '/portal/scores'
+      fullPath: '/portal/scores'
+      preLoaderRoute: typeof AuthenticatedPortalScoresRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
     '/_authenticated/schedule/': {
       id: '/_authenticated/schedule/'
       path: '/schedule'
@@ -661,12 +741,16 @@ interface AuthenticatedRouteRouteChildren {
   AuthenticatedAcademicYearsRoute: typeof AuthenticatedAcademicYearsRoute
   AuthenticatedAssessmentsIdRoute: typeof AuthenticatedAssessmentsIdRoute
   AuthenticatedGuardiansGuardianIdRoute: typeof AuthenticatedGuardiansGuardianIdRoute
+  AuthenticatedPortalAttendanceRoute: typeof AuthenticatedPortalAttendanceRoute
+  AuthenticatedPortalScheduleRoute: typeof AuthenticatedPortalScheduleRoute
+  AuthenticatedPortalScoresRoute: typeof AuthenticatedPortalScoresRoute
   AuthenticatedScheduleMyRoute: typeof AuthenticatedScheduleMyRoute
   AuthenticatedStaffStaffIdRoute: typeof AuthenticatedStaffStaffIdRoute
   AuthenticatedStudentsStudentIdRoute: typeof AuthenticatedStudentsStudentIdRoute
   AuthenticatedAssessmentsIndexRoute: typeof AuthenticatedAssessmentsIndexRoute
   AuthenticatedAttendanceIndexRoute: typeof AuthenticatedAttendanceIndexRoute
   AuthenticatedGuardiansIndexRoute: typeof AuthenticatedGuardiansIndexRoute
+  AuthenticatedPortalIndexRoute: typeof AuthenticatedPortalIndexRoute
   AuthenticatedScheduleIndexRoute: typeof AuthenticatedScheduleIndexRoute
   AuthenticatedStaffIndexRoute: typeof AuthenticatedStaffIndexRoute
   AuthenticatedStudentsIndexRoute: typeof AuthenticatedStudentsIndexRoute
@@ -688,12 +772,16 @@ const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedAcademicYearsRoute: AuthenticatedAcademicYearsRoute,
   AuthenticatedAssessmentsIdRoute: AuthenticatedAssessmentsIdRoute,
   AuthenticatedGuardiansGuardianIdRoute: AuthenticatedGuardiansGuardianIdRoute,
+  AuthenticatedPortalAttendanceRoute: AuthenticatedPortalAttendanceRoute,
+  AuthenticatedPortalScheduleRoute: AuthenticatedPortalScheduleRoute,
+  AuthenticatedPortalScoresRoute: AuthenticatedPortalScoresRoute,
   AuthenticatedScheduleMyRoute: AuthenticatedScheduleMyRoute,
   AuthenticatedStaffStaffIdRoute: AuthenticatedStaffStaffIdRoute,
   AuthenticatedStudentsStudentIdRoute: AuthenticatedStudentsStudentIdRoute,
   AuthenticatedAssessmentsIndexRoute: AuthenticatedAssessmentsIndexRoute,
   AuthenticatedAttendanceIndexRoute: AuthenticatedAttendanceIndexRoute,
   AuthenticatedGuardiansIndexRoute: AuthenticatedGuardiansIndexRoute,
+  AuthenticatedPortalIndexRoute: AuthenticatedPortalIndexRoute,
   AuthenticatedScheduleIndexRoute: AuthenticatedScheduleIndexRoute,
   AuthenticatedStaffIndexRoute: AuthenticatedStaffIndexRoute,
   AuthenticatedStudentsIndexRoute: AuthenticatedStudentsIndexRoute,

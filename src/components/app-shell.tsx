@@ -45,7 +45,12 @@ import {
 } from "@/components/ui/select";
 import { cn } from "@/lib/utils";
 
-type NavItem = { to: string; label: string; icon: typeof LayoutDashboard; permission: string | null };
+type NavItem = {
+  to: string;
+  label: string;
+  icon: typeof LayoutDashboard;
+  permission: string | null;
+};
 type NavGroup = { label: string | null; items: NavItem[] };
 
 /** Permission checks here hide navigation only; RLS remains the real boundary. */
@@ -57,13 +62,38 @@ const NAV_GROUPS: NavGroup[] = [
   {
     label: "Academic Setup",
     items: [
-      { to: "/academic/years", label: "Academic Years", icon: CalendarRange, permission: "academic_year.read" },
+      {
+        to: "/academic/years",
+        label: "Academic Years",
+        icon: CalendarRange,
+        permission: "academic_year.read",
+      },
       { to: "/academic/terms", label: "Terms", icon: CalendarRange, permission: "term.read" },
-      { to: "/academic/grade-levels", label: "Grade Levels", icon: GraduationCap, permission: "grade_level.read" },
-      { to: "/academic/classrooms", label: "Classrooms", icon: School, permission: "classroom.read" },
+      {
+        to: "/academic/grade-levels",
+        label: "Grade Levels",
+        icon: GraduationCap,
+        permission: "grade_level.read",
+      },
+      {
+        to: "/academic/classrooms",
+        label: "Classrooms",
+        icon: School,
+        permission: "classroom.read",
+      },
       { to: "/academic/subjects", label: "Subjects", icon: BookOpen, permission: "subject.read" },
-      { to: "/academic/curricula", label: "Curricula", icon: Library, permission: "curriculum.read" },
-      { to: "/academic/calendar", label: "Academic Calendar", icon: CalendarDays, permission: "schedule.read" },
+      {
+        to: "/academic/curricula",
+        label: "Curricula",
+        icon: Library,
+        permission: "curriculum.read",
+      },
+      {
+        to: "/academic/calendar",
+        label: "Academic Calendar",
+        icon: CalendarDays,
+        permission: "schedule.read",
+      },
     ],
   },
   {
@@ -85,12 +115,40 @@ const NAV_GROUPS: NavGroup[] = [
       },
       { to: "/schedule", label: "Schedule", icon: CalendarClock, permission: "schedule.read" },
       { to: "/schedule/my", label: "My Schedule", icon: CalendarDays, permission: "schedule.read" },
-      { to: "/attendance", label: "Attendance", icon: CalendarCheck, permission: "attendance.read" },
-      { to: "/assessments", label: "Assessments", icon: ClipboardCheck, permission: "assessment.read" },
+      {
+        to: "/attendance",
+        label: "Attendance",
+        icon: CalendarCheck,
+        permission: "attendance.read",
+      },
+      {
+        to: "/assessments",
+        label: "Assessments",
+        icon: ClipboardCheck,
+        permission: "assessment.read",
+      },
+    ],
+  },
+  {
+    label: "Parent Portal",
+    items: [
+      { to: "/portal", label: "Overview", icon: HeartHandshake, permission: "student.read" },
+      {
+        to: "/portal/schedule",
+        label: "Schedule",
+        icon: CalendarClock,
+        permission: "schedule.read",
+      },
+      {
+        to: "/portal/attendance",
+        label: "Attendance",
+        icon: CalendarCheck,
+        permission: "attendance.read",
+      },
+      { to: "/portal/scores", label: "Scores", icon: ClipboardCheck, permission: "score.read" },
     ],
   },
 ];
-
 
 function ContextSwitchers({ compact = false }: { compact?: boolean }) {
   const {
@@ -197,7 +255,6 @@ function ContextSwitchers({ compact = false }: { compact?: boolean }) {
   );
 }
 
-
 function Sidebar({ onNavigate }: { onNavigate?: () => void }) {
   const pathname = useRouterState({ select: (s) => s.location.pathname });
   const { activeOrganization, hasPermission, contextLoading, error } = useAppContext();
@@ -207,7 +264,6 @@ function Sidebar({ onNavigate }: { onNavigate?: () => void }) {
     ...group,
     items: group.items.filter((item) => !item.permission || hasPermission(item.permission)),
   })).filter((group) => group.items.length > 0);
-
 
   return (
     <div className="flex h-full flex-col gap-6 p-4">
@@ -249,7 +305,6 @@ function Sidebar({ onNavigate }: { onNavigate?: () => void }) {
         ))}
       </nav>
 
-
       <div className="mt-auto space-y-2 rounded-md border border-border p-3">
         {orgResolving ? (
           <>
@@ -272,7 +327,6 @@ function Sidebar({ onNavigate }: { onNavigate?: () => void }) {
           </>
         )}
       </div>
-
     </div>
   );
 }
@@ -296,7 +350,6 @@ export function AppShell({ children }: { children: ReactNode }) {
     .slice(0, 2)
     .map((part) => part.charAt(0).toUpperCase())
     .join("");
-
 
   return (
     <div className="min-h-screen bg-muted/30 text-foreground">
@@ -343,35 +396,35 @@ export function AppShell({ children }: { children: ReactNode }) {
               {identityResolving ? (
                 <Skeleton className="h-8 w-32 rounded-md" />
               ) : (
-              <DropdownMenu>
-                <DropdownMenuTrigger asChild>
-                  <Button variant="outline" size="sm" className="gap-2">
-                    <span className="flex h-6 w-6 items-center justify-center rounded-full bg-primary text-[10px] font-semibold text-primary-foreground">
-                      {initials}
-                    </span>
-                    <span className="hidden sm:inline">{snapshot?.profile?.fullName ?? "Account"}</span>
-                  </Button>
-                </DropdownMenuTrigger>
-                <DropdownMenuContent align="end" className="w-56">
-                  <DropdownMenuLabel className="space-y-1">
-                    <p className="text-sm">{snapshot?.profile?.fullName ?? "Account"}</p>
-                    <p className="text-xs font-normal text-muted-foreground">
-                      {contextLoading && !error
-                        ? "Loading workspace…"
-                        : (activeOrganization?.name ?? "No active organization")}
-                    </p>
-
-                  </DropdownMenuLabel>
-                  <DropdownMenuSeparator />
-                  <DropdownMenuItem onSelect={() => void handleSignOut()}>
-                    <LogOut className="mr-2 h-4 w-4" />
-                    Sign out
-                  </DropdownMenuItem>
-                </DropdownMenuContent>
-              </DropdownMenu>
+                <DropdownMenu>
+                  <DropdownMenuTrigger asChild>
+                    <Button variant="outline" size="sm" className="gap-2">
+                      <span className="flex h-6 w-6 items-center justify-center rounded-full bg-primary text-[10px] font-semibold text-primary-foreground">
+                        {initials}
+                      </span>
+                      <span className="hidden sm:inline">
+                        {snapshot?.profile?.fullName ?? "Account"}
+                      </span>
+                    </Button>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent align="end" className="w-56">
+                    <DropdownMenuLabel className="space-y-1">
+                      <p className="text-sm">{snapshot?.profile?.fullName ?? "Account"}</p>
+                      <p className="text-xs font-normal text-muted-foreground">
+                        {contextLoading && !error
+                          ? "Loading workspace…"
+                          : (activeOrganization?.name ?? "No active organization")}
+                      </p>
+                    </DropdownMenuLabel>
+                    <DropdownMenuSeparator />
+                    <DropdownMenuItem onSelect={() => void handleSignOut()}>
+                      <LogOut className="mr-2 h-4 w-4" />
+                      Sign out
+                    </DropdownMenuItem>
+                  </DropdownMenuContent>
+                </DropdownMenu>
               )}
             </div>
-
           </div>
 
           <div className="border-t border-border px-4 py-2 md:hidden">
