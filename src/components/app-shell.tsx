@@ -9,6 +9,7 @@ import {
   CalendarCheck,
   CalendarClock,
   CalendarRange,
+  ClipboardCheck,
   ClipboardList,
   GraduationCap,
   HeartHandshake,
@@ -85,6 +86,7 @@ const NAV_GROUPS: NavGroup[] = [
       { to: "/schedule", label: "Schedule", icon: CalendarClock, permission: "schedule.read" },
       { to: "/schedule/my", label: "My Schedule", icon: CalendarDays, permission: "schedule.read" },
       { to: "/attendance", label: "Attendance", icon: CalendarCheck, permission: "attendance.read" },
+      { to: "/assessments", label: "Assessments", icon: ClipboardCheck, permission: "assessment.read" },
     ],
   },
 ];
