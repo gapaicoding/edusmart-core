@@ -195,7 +195,12 @@ begin
     join pg_catalog.pg_namespace ns on ns.oid = p.pronamespace
     join pg_catalog.pg_language l on l.oid = p.prolang
     where p.oid = v_oid and ns.nspname = 'public'
-      and pg_get_function_identity_arguments(p.oid) = 'uuid, date, date'
+      and p.pronargs = 3
+      and p.proargtypes = array[
+        'uuid'::regtype::oid,
+        'date'::regtype::oid,
+        'date'::regtype::oid
+      ]::oidvector
       and p.prosecdef and p.proconfig @> array['search_path=""']::text[]
       and l.lanname = 'sql' and p.provolatile = 's' and p.proretset
       and pg_get_function_result(p.oid) = 'TABLE(record_id uuid, session_id uuid, organization_id uuid, school_id uuid, classroom_id uuid, session_date date, session_status text, status text, minutes_late integer, recorded_at timestamp with time zone)'
