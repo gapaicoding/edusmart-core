@@ -1,6 +1,11 @@
 import { createServerFn } from "@tanstack/react-start";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
-import { translatePortalError } from "./portal.server";
+import {
+  callParentAttendanceRpc,
+  getPortalSubjectRelationship,
+  loadPortalRelationships,
+  translatePortalError,
+} from "./portal.server";
 import {
   childIdInput,
   portalAttendanceInput,
@@ -37,39 +42,28 @@ export type PortalChild = {
 export const listPortalChildren = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
   .handler(async ({ context }): Promise<{ children: PortalChild[] }> => {
-    // student_guardians_select permits: guardians.profile_id = auth.uid()
-    // → returns exactly the caller's active guardian rows (with their students).
-    const { data, error } = await context.supabase
-      .from("student_guardians")
-      .select(
-        "student_id, organization_id, relationship_type, is_primary, can_view_academic, can_view_attendance, status, students(id, full_name, status)",
-      )
-      .eq("status", "active");
-    if (error) throw new Error(translatePortalError(error, "your children"));
-    const rows = (data ?? []) as Array<{
-      student_id: string;
-      organization_id: string;
-      relationship_type: string;
-      is_primary: boolean;
-      can_view_academic: boolean;
-      can_view_attendance: boolean;
-      students: { id: string; full_name: string; status: string } | null;
-    }>;
-    const children: PortalChild[] = rows
+    // Explicit profile -> Guardian -> StudentGuardian binding is narrower than
+    // any broad student access the caller may hold elsewhere in the app.
+    const rows = await loadPortalRelationships(context.supabase, context.userId);
+    const childrenByStudent = new Map<string, PortalChild>();
+    rows
       .filter((r) => r.students && r.students.status !== "archived")
-      .map((r) => ({
-        studentId: r.student_id,
-        organizationId: r.organization_id,
-        fullName: r.students!.full_name,
-        status: r.students!.status,
-        relationship: r.relationship_type,
-        isPrimary: r.is_primary,
-        canViewAcademic: r.can_view_academic,
-        canViewAttendance: r.can_view_attendance,
-      }))
-      .sort((a, b) =>
-        a.isPrimary === b.isPrimary ? a.fullName.localeCompare(b.fullName) : a.isPrimary ? -1 : 1,
-      );
+      .forEach((r) => {
+        if (childrenByStudent.has(r.student_id)) return;
+        childrenByStudent.set(r.student_id, {
+          studentId: r.student_id,
+          organizationId: r.organization_id,
+          fullName: r.students!.full_name,
+          status: r.students!.status,
+          relationship: r.relationship_type,
+          isPrimary: r.is_primary,
+          canViewAcademic: r.can_view_academic,
+          canViewAttendance: r.can_view_attendance,
+        });
+      });
+    const children = [...childrenByStudent.values()].sort((a, b) =>
+      a.isPrimary === b.isPrimary ? a.fullName.localeCompare(b.fullName) : a.isPrimary ? -1 : 1,
+    );
     return { children };
   });
 
@@ -93,8 +87,14 @@ export const getPortalChildOverview = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
   .inputValidator((x: unknown) => childIdInput.parse(x))
   .handler(async ({ data, context }): Promise<PortalChildOverview | null> => {
-    // students_select (can_access_student) is RLS-authoritative: an unrelated
-    // student id resolves to no row.
+    const relationship = await getPortalSubjectRelationship(
+      context.supabase,
+      context.userId,
+      data.studentId,
+    );
+    if (!relationship) return null;
+
+    // The relationship guard above is independent of broader student RLS.
     const { data: student, error } = await context.supabase
       .from("students")
       .select("id, full_name, status, organization_id")
@@ -191,21 +191,15 @@ export const listPortalAttendance = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
   .inputValidator((x: unknown) => portalAttendanceInput.parse(x))
   .handler(async ({ data, context }): Promise<{ rows: PortalAttendanceRow[] }> => {
+    const relationship = await getPortalSubjectRelationship(
+      context.supabase,
+      context.userId,
+      data.studentId,
+    );
+    if (!relationship || !relationship.can_view_attendance) return { rows: [] };
+
     // SECURITY DEFINER helper enforces guardian binding + safe session filter.
-    const rpc = context.supabase.rpc as unknown as (
-      fn: string,
-      args: Record<string, unknown>,
-    ) => Promise<{
-      data: Array<{
-        record_id: string;
-        session_id: string;
-        session_date: string;
-        session_status: string;
-        status: string;
-      }> | null;
-      error: import("@supabase/supabase-js").PostgrestError | null;
-    }>;
-    const { data: rows, error } = await rpc("list_parent_student_attendance", {
+    const { data: rows, error } = await callParentAttendanceRpc(context.supabase, {
       p_student_id: data.studentId,
       p_from: data.from ?? null,
       p_to: data.to ?? null,
@@ -240,6 +234,13 @@ export const listPortalScores = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
   .inputValidator((x: unknown) => portalScoresInput.parse(x))
   .handler(async ({ data, context }): Promise<{ rows: PortalScoreRow[] }> => {
+    const relationship = await getPortalSubjectRelationship(
+      context.supabase,
+      context.userId,
+      data.studentId,
+    );
+    if (!relationship || !relationship.can_view_academic) return { rows: [] };
+
     // Find the student's enrollments (RLS: can_access_enrollment binds exact
     // student id; unrelated student → no rows).
     let seQ = context.supabase
@@ -364,6 +365,13 @@ export const listPortalSchedule = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
   .inputValidator((x: unknown) => portalScheduleInput.parse(x))
   .handler(async ({ data, context }): Promise<{ rows: PortalScheduleRow[] }> => {
+    const relationship = await getPortalSubjectRelationship(
+      context.supabase,
+      context.userId,
+      data.studentId,
+    );
+    if (!relationship || !relationship.can_view_academic) return { rows: [] };
+
     // Discover the child's active primary classroom via RLS-bound enrollment.
     const { data: enrollments, error: eErr } = await context.supabase
       .from("student_enrollments")
