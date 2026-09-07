@@ -108,6 +108,12 @@ export async function getPortalSubjectRelationship(
   return relationships[0] ?? null;
 }
 
+export function filterCurrentPublishedPortalReports<
+  T extends { status: string; studentId: string },
+>(rows: readonly T[], allowedStudentId: string) {
+  return rows.filter((row) => row.status === "published" && row.studentId === allowedStudentId);
+}
+
 export type PortalAttendanceRpcRow = {
   record_id: string;
   session_id: string;

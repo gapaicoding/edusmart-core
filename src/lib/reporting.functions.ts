@@ -44,7 +44,7 @@ export const listReportCards = createServerFn({ method: "GET" })
     const { data: enrollments, error: e } = enrollmentIds.length
       ? await context.supabase
           .from("student_enrollments")
-          .select("id,student_id,school_id")
+          .select("id,student_id,school_id,grade_level_id")
           .in("id", enrollmentIds)
       : { data: [], error: null };
     fail(e, "load enrollment context");
@@ -53,14 +53,55 @@ export const listReportCards = createServerFn({ method: "GET" })
       ? await context.supabase.from("students").select("id,full_name").in("id", studentIds)
       : { data: [], error: null };
     fail(s, "load students");
+    const gradeIds = [
+      ...new Set(
+        (enrollments ?? []).map((x) => x.grade_level_id).filter((x): x is string => Boolean(x)),
+      ),
+    ];
+    const [years, terms, grades, classEnrollments] = await Promise.all([
+      context.supabase
+        .from("academic_years")
+        .select("id,name")
+        .in("id", [...new Set((cards ?? []).map((x) => x.academic_year_id))]),
+      context.supabase
+        .from("terms")
+        .select("id,name")
+        .in("id", [...new Set((cards ?? []).map((x) => x.term_id))]),
+      gradeIds.length
+        ? context.supabase.from("grade_levels").select("id,name").in("id", gradeIds)
+        : Promise.resolve({ data: [], error: null }),
+      context.supabase
+        .from("class_enrollments")
+        .select("student_enrollment_id,classroom_id")
+        .in("student_enrollment_id", enrollmentIds)
+        .eq("is_primary", true),
+    ]);
+    for (const result of [years, terms, grades, classEnrollments])
+      fail(result.error, "load report card list context");
+    const classroomIds = [...new Set((classEnrollments.data ?? []).map((x) => x.classroom_id))];
+    const classrooms = classroomIds.length
+      ? await context.supabase.from("classrooms").select("id,name").in("id", classroomIds)
+      : { data: [], error: null };
+    fail(classrooms.error, "load classrooms");
     const em = new Map((enrollments ?? []).map((x) => [x.id, x]));
     const sm = new Map((students ?? []).map((x) => [x.id, x.full_name]));
+    const ym = new Map((years.data ?? []).map((x) => [x.id, x.name]));
+    const tm = new Map((terms.data ?? []).map((x) => [x.id, x.name]));
+    const gm = new Map((grades.data ?? []).map((x) => [x.id, x.name]));
+    const cem = new Map(
+      (classEnrollments.data ?? []).map((x) => [x.student_enrollment_id, x.classroom_id]),
+    );
+    const cm = new Map((classrooms.data ?? []).map((x) => [x.id, x.name]));
     const search = data.search?.toLowerCase();
     return {
       rows: (cards ?? [])
         .map((c) => ({
           ...c,
           studentName: sm.get(em.get(c.student_enrollment_id)?.student_id ?? "") ?? "Student",
+          academicYearName: ym.get(c.academic_year_id) ?? "Academic year",
+          termName: tm.get(c.term_id) ?? "Term",
+          gradeLevelName: gm.get(em.get(c.student_enrollment_id)?.grade_level_id ?? "") ?? null,
+          classroomName: cm.get(cem.get(c.student_enrollment_id) ?? "") ?? null,
         }))
         .filter((c) => !search || c.studentName.toLowerCase().includes(search)),
     };
@@ -86,6 +127,62 @@ export const getReportCard = createServerFn({ method: "GET" })
     fail(entries.error, "load subject snapshots");
     fail(narratives.error, "load narratives");
     if (!card.data) return null;
+    const enrollment = await context.supabase
+      .from("student_enrollments")
+      .select("id,student_id,grade_level_id")
+      .eq("id", card.data.student_enrollment_id)
+      .maybeSingle();
+    fail(enrollment.error, "load enrollment context");
+    if (!enrollment.data) return null;
+    const [student, school, year, term, grade, classEnrollment, history] = await Promise.all([
+      context.supabase
+        .from("students")
+        .select("id,full_name")
+        .eq("id", enrollment.data.student_id)
+        .maybeSingle(),
+      context.supabase
+        .from("schools")
+        .select("id,name")
+        .eq("id", card.data.school_id)
+        .maybeSingle(),
+      context.supabase
+        .from("academic_years")
+        .select("id,name")
+        .eq("id", card.data.academic_year_id)
+        .maybeSingle(),
+      context.supabase.from("terms").select("id,name").eq("id", card.data.term_id).maybeSingle(),
+      enrollment.data.grade_level_id
+        ? context.supabase
+            .from("grade_levels")
+            .select("id,name")
+            .eq("id", enrollment.data.grade_level_id)
+            .maybeSingle()
+        : Promise.resolve({ data: null, error: null }),
+      context.supabase
+        .from("class_enrollments")
+        .select("classroom_id")
+        .eq("student_enrollment_id", enrollment.data.id)
+        .eq("is_primary", true)
+        .maybeSingle(),
+      context.supabase
+        .from("report_cards")
+        .select("id,version,status,updated_at,published_at")
+        .eq("student_enrollment_id", card.data.student_enrollment_id)
+        .eq("term_id", card.data.term_id)
+        .order("version", { ascending: false }),
+    ]);
+    for (const result of [student, school, year, term, grade, classEnrollment, history])
+      fail(result.error, "load report card context");
+    let classroomName: string | null = null;
+    if (classEnrollment.data?.classroom_id) {
+      const classroom = await context.supabase
+        .from("classrooms")
+        .select("name")
+        .eq("id", classEnrollment.data.classroom_id)
+        .maybeSingle();
+      fail(classroom.error, "load classroom");
+      classroomName = classroom.data?.name ?? null;
+    }
     const subjectIds = [...new Set((entries.data ?? []).map((x) => x.subject_id))];
     const subjects = subjectIds.length
       ? await context.supabase.from("subjects").select("id,name").in("id", subjectIds)
@@ -99,6 +196,15 @@ export const getReportCard = createServerFn({ method: "GET" })
         subjectName: names.get(x.subject_id) ?? "Subject",
       })),
       narratives: narratives.data ?? [],
+      context: {
+        studentName: student.data?.full_name ?? "Student",
+        schoolName: school.data?.name ?? "School",
+        academicYearName: year.data?.name ?? "Academic year",
+        termName: term.data?.name ?? "Term",
+        gradeLevelName: grade.data?.name ?? null,
+        classroomName,
+      },
+      history: history.data ?? [],
     };
   });
 
