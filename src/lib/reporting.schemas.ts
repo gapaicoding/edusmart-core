@@ -14,6 +14,10 @@ export const REPORT_CARD_STATUSES = [
 export const reportCardIdInput = z.object({ reportCardId: uuid });
 export const portalReportCardsInput = z.object({ studentId: uuid });
 export const portalReportCardInput = portalReportCardsInput.extend({ reportCardId: uuid });
+export const reportCardDocumentInput = z.object({ reportCardId: uuid }).strict();
+export const portalReportCardDocumentInput = z
+  .object({ studentId: uuid, reportCardId: uuid })
+  .strict();
 export const reportCardListInput = z.object({
   schoolId: uuid.optional(),
   academicYearId: uuid.optional(),

@@ -54,6 +54,11 @@ import {
   updateReportSubjectNarrative,
 } from "@/lib/reporting.functions";
 import {
+  generateReportCardDocument,
+  getReportCardDocumentStatus,
+  getReportCardDownload,
+} from "@/lib/reporting.documents.functions";
+import {
   displaySnapshotScore,
   formatReportingMutationError,
   orderReportHistory,
@@ -598,6 +603,103 @@ export function ReviewPublishBar({
   );
 }
 
+function ReportCardDocumentSection({
+  reportCardId,
+  status,
+}: {
+  reportCardId: string;
+  status: string;
+}) {
+  const statusFn = useServerFn(getReportCardDocumentStatus);
+  const generateFn = useServerFn(generateReportCardDocument);
+  const downloadFn = useServerFn(getReportCardDownload);
+  const queryClient = useQueryClient();
+  const query = useQuery({
+    queryKey: ["report-card-document", reportCardId],
+    queryFn: () => statusFn({ data: { reportCardId } }),
+    retry: false,
+  });
+  const generate = useMutation({
+    mutationFn: () => generateFn({ data: { reportCardId } }),
+    onSuccess: async () => {
+      toast.success("Official PDF is available.");
+      await queryClient.invalidateQueries({ queryKey: ["report-card-document", reportCardId] });
+    },
+    onError: (error) =>
+      toast.error(error instanceof Error ? error.message : "PDF generation failed."),
+  });
+  const download = useMutation({
+    mutationFn: () => downloadFn({ data: { reportCardId } }),
+    onSuccess: (result) => window.location.assign(result.url),
+    onError: (error) =>
+      toast.error(error instanceof Error ? error.message : "Secure download failed."),
+  });
+  return (
+    <Card>
+      <CardHeader>
+        <CardTitle className="text-base">Official PDF</CardTitle>
+        <CardDescription>
+          Private, version-specific document for this immutable Report Card snapshot.
+        </CardDescription>
+      </CardHeader>
+      <CardContent className="space-y-3">
+        {query.isLoading ? (
+          <Skeleton className="h-10 w-full" />
+        ) : query.error || !query.data ? (
+          <Alert variant="destructive">
+            <AlertTitle>Document status unavailable</AlertTitle>
+            <AlertDescription>
+              {query.error instanceof Error
+                ? query.error.message
+                : "This document is outside your authorized scope."}
+            </AlertDescription>
+          </Alert>
+        ) : (
+          <>
+            <div className="flex flex-wrap items-center justify-between gap-3 rounded-md border p-3">
+              <div>
+                <p className="font-medium">
+                  {query.data.state === "available"
+                    ? "Available"
+                    : query.data.state === "failed"
+                      ? "Generation failed"
+                      : "Not generated"}
+                </p>
+                <p className="text-xs text-muted-foreground">
+                  {query.data.document?.generatedAt
+                    ? `Generated ${date(query.data.document.generatedAt)}`
+                    : status === "published"
+                      ? "Generate once for this published version."
+                      : "No new document can be generated for this lifecycle state."}
+                </p>
+              </div>
+              <div className="flex flex-wrap gap-2">
+                {query.data.state === "available" && (
+                  <Button disabled={download.isPending} onClick={() => download.mutate()}>
+                    Download PDF
+                  </Button>
+                )}
+                {status === "published" && query.data.state !== "available" && (
+                  <Button disabled={generate.isPending} onClick={() => generate.mutate()}>
+                    {generate.isPending
+                      ? "Generatingâ€¦"
+                      : query.data.state === "failed"
+                        ? "Retry Generation"
+                        : "Generate PDF"}
+                  </Button>
+                )}
+              </div>
+            </div>
+            {query.data.state === "failed" && "message" in query.data && (
+              <p className="text-sm text-destructive">{query.data.message}</p>
+            )}
+          </>
+        )}
+      </CardContent>
+    </Card>
+  );
+}
+
 export function ReportCardBuilder({ id }: { id: string }) {
   const fn = useServerFn(getReportCard);
   const queryClient = useQueryClient();
@@ -816,15 +918,7 @@ export function ReportCardBuilder({ id }: { id: string }) {
           reportCardId={id}
         />
         <ReportCardVersionHistory rows={data.history} currentId={id} />
-        <Card>
-          <CardHeader>
-            <CardTitle className="text-base">Documents</CardTitle>
-            <CardDescription>
-              No published document generated yet. Document generation is available after
-              publication in B8-R3.
-            </CardDescription>
-          </CardHeader>
-        </Card>
+        <ReportCardDocumentSection reportCardId={id} status={data.card.status} />
       </div>
     </AppShell>
   );

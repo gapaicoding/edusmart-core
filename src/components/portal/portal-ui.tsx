@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState, type ReactNode } from "react";
 import { Link, useNavigate, useRouterState } from "@tanstack/react-router";
-import { useQuery } from "@tanstack/react-query";
+import { useMutation, useQuery } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import {
   CalendarClock,
@@ -36,6 +36,10 @@ import {
   getPortalReportCard,
   type PortalChild,
 } from "@/lib/portal.functions";
+import {
+  getPortalReportCardDocumentStatus,
+  getPortalReportCardDownload,
+} from "@/lib/reporting.documents.functions";
 
 const CHILD_STORAGE_KEY = "edusmart.portal.activeChildId";
 
@@ -452,7 +456,7 @@ function ScheduleSection({ child }: { child: PortalChild }) {
     queryFn: () => fn({ data: { studentId: child.studentId } }),
     staleTime: 60_000,
   });
-  const rows = data?.rows ?? [];
+  const rows = useMemo(() => data?.rows ?? [], [data?.rows]);
   const grouped = useMemo(() => {
     const map = new Map<number, typeof rows>();
     for (const r of rows) {
@@ -537,6 +541,20 @@ function PortalReportCardsSection({ child }: { child: PortalChild }) {
     enabled: Boolean(selectedId) && child.canViewAcademic,
     retry: false,
   });
+  const documentStatusFn = useServerFn(getPortalReportCardDocumentStatus);
+  const documentDownloadFn = useServerFn(getPortalReportCardDownload);
+  const documentStatus = useQuery({
+    queryKey: ["portal-report-card-document", child.studentId, selectedId],
+    queryFn: () =>
+      documentStatusFn({ data: { studentId: child.studentId, reportCardId: selectedId! } }),
+    enabled: Boolean(selectedId) && child.canViewAcademic,
+    retry: false,
+  });
+  const documentDownload = useMutation({
+    mutationFn: () =>
+      documentDownloadFn({ data: { studentId: child.studentId, reportCardId: selectedId! } }),
+    onSuccess: (result) => window.location.assign(result.url),
+  });
   if (!child.canViewAcademic)
     return (
       <EmptyPortal
@@ -609,6 +627,35 @@ function PortalReportCardsSection({ child }: { child: PortalChild }) {
               Official frozen Report Card snapshot published{" "}
               {new Date(report.card.published_at!).toLocaleDateString()}.
             </p>
+          </CardContent>
+        </Card>
+        <Card>
+          <CardHeader>
+            <CardTitle className="text-base">Official PDF</CardTitle>
+            <CardDescription>
+              Private download link available briefly for this published version.
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            {documentStatus.isLoading ? (
+              <Skeleton className="h-10 w-full" />
+            ) : documentStatus.data?.state === "available" ? (
+              <Button
+                disabled={documentDownload.isPending}
+                onClick={() => documentDownload.mutate()}
+              >
+                Download PDF
+              </Button>
+            ) : (
+              <p className="text-sm text-muted-foreground">PDF belum tersedia.</p>
+            )}
+            {documentDownload.error && (
+              <p className="mt-2 text-sm text-destructive">
+                {documentDownload.error instanceof Error
+                  ? documentDownload.error.message
+                  : "Secure download failed."}
+              </p>
+            )}
           </CardContent>
         </Card>
         <div className="grid gap-3">
