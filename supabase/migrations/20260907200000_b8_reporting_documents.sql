@@ -10,11 +10,13 @@ begin
   if to_regclass('vault.decrypted_secrets') is null then
     raise exception 'B8 R3 requires Supabase Vault';
   end if;
-  if not exists (
-    select 1 from vault.decrypted_secrets
-    where name = 'b8_report_card_document_attestation_hmac'
-      and length(secret) >= 32
-  ) then
+  if (select count(*) from vault.decrypted_secrets
+      where name = 'b8_report_card_document_attestation_hmac') <> 1
+     or not exists (
+       select 1 from vault.decrypted_secrets
+       where name = 'b8_report_card_document_attestation_hmac'
+         and length(decrypted_secret) >= 32
+     ) then
     raise exception 'B8 R3 requires the server document attestation secret in Supabase Vault';
   end if;
 end $$;
@@ -156,15 +158,18 @@ set search_path = ''
 as $$
 declare
   v_secret text;
+  v_secret_count bigint;
   v_payload text;
   v_expected text;
   v_now bigint := floor(extract(epoch from clock_timestamp()))::bigint;
 begin
   if p_attestation_expires_at <= v_now or p_attestation_expires_at > v_now + 300 then return false; end if;
   if p_attestation !~ '^[0-9a-f]{64}$' then return false; end if;
-  select secret into v_secret from vault.decrypted_secrets
-  where name = 'b8_report_card_document_attestation_hmac';
-  if v_secret is null or length(v_secret) < 32 then return false; end if;
+  select count(*), min(ds.decrypted_secret)
+    into v_secret_count, v_secret
+  from vault.decrypted_secrets ds
+  where ds.name = 'b8_report_card_document_attestation_hmac';
+  if v_secret_count <> 1 or v_secret is null or length(v_secret) < 32 then return false; end if;
   v_payload := concat_ws(E'\n',
     'edusmart-report-card-pdf-v1', p_actor_id::text, p_report_card_id::text,
     p_version::text, p_organization_id::text, p_school_id::text,

@@ -85,7 +85,8 @@ begin
   if to_regprocedure('extensions.hmac(text,text,text)') is null or to_regclass('vault.decrypted_secrets') is null then
     raise exception 'B8 R3 cryptographic authority capability missing';
   end if;
-  if not exists (select 1 from vault.decrypted_secrets where name='b8_report_card_document_attestation_hmac' and length(secret)>=32) then
+  if (select count(*) from vault.decrypted_secrets where name='b8_report_card_document_attestation_hmac') <> 1
+     or not exists (select 1 from vault.decrypted_secrets where name='b8_report_card_document_attestation_hmac' and length(decrypted_secret)>=32) then
     raise exception 'B8 R3 document authority secret missing';
   end if;
   select pg_get_functiondef('public.register_report_card_document(uuid,text,bigint,text,bigint,text)'::regprocedure) into v_def;
@@ -97,7 +98,12 @@ begin
     raise exception 'B8 R3 registration contract incomplete';
   end if;
   select pg_get_functiondef('public.verify_report_card_document_attestation(uuid,uuid,integer,uuid,uuid,text,bigint,text,bigint,text)'::regprocedure) into v_def;
-  if v_def not ilike '%vault.decrypted_secrets%' or v_def not ilike '%extensions.hmac%'
+  if v_def not ilike '%vault.decrypted_secrets%'
+     or v_def not ilike '%min(ds.decrypted_secret)%'
+     or v_def ilike '%select secret into%'
+     or v_def ilike '%min(ds.secret)%'
+     or v_def not ilike '%v_secret_count <> 1%'
+     or v_def not ilike '%extensions.hmac%'
      or v_def not ilike '%p_report_card_id%' or v_def not ilike '%p_version%'
      or v_def not ilike '%p_organization_id%' or v_def not ilike '%p_school_id%'
      or v_def not ilike '%p_object_path%' or v_def not ilike '%p_size_bytes%'

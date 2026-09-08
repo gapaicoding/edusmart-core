@@ -221,6 +221,10 @@ test("R3 migration keeps Storage and function ACLs narrowly scoped", async () =>
     new URL("../../supabase/migrations/20260907160000_b8_reporting_integrity.sql", import.meta.url),
     "utf8",
   );
+  const validator = await readFile(
+    new URL("../../supabase/validation/validate_b8_reporting_documents.sql", import.meta.url),
+    "utf8",
+  );
   expect(sql).toContain("values ('report-cards', 'report-cards', false");
   expect(sql).toContain("where entity_type = 'report_card' and document_type = 'report_card_pdf'");
   expect(sql).toContain("create policy report_card_documents_insert");
@@ -235,6 +239,21 @@ test("R3 migration keeps Storage and function ACLs narrowly scoped", async () =>
   );
   expect(sql).toContain("public.verify_report_card_document_attestation(");
   expect(sql).toContain("vault.decrypted_secrets");
+  const verifier = sql.match(
+    /create or replace function public\.verify_report_card_document_attestation\([\s\S]*?\n\$\$;/i,
+  )?.[0];
+  expect(verifier).toBeDefined();
+  expect(verifier).toMatch(
+    /select count\(\*\), min\(ds\.decrypted_secret\)[\s\S]*from vault\.decrypted_secrets ds/i,
+  );
+  expect(verifier).not.toMatch(/select\s+secret\s+into/i);
+  expect(verifier).not.toMatch(/(?:min|max)\(ds\.secret\)/i);
+  expect(verifier).toContain("v_secret_count <> 1");
+  expect(sql).not.toMatch(/length\(secret\)\s*>=\s*32/i);
+  expect(validator).toMatch(/length\(decrypted_secret\)\s*>=\s*32/i);
+  expect(validator).not.toMatch(/length\(secret\)\s*>=\s*32/i);
+  expect(validator).toContain("v_def ilike '%select secret into%'");
+  expect(validator).toContain("v_def ilike '%min(ds.secret)%'");
   expect(sql).toContain("extensions.hmac");
   expect(sql).toContain("p_attestation_expires_at");
   expect(sql).toContain("p_object_path");
