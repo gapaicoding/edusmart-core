@@ -274,3 +274,52 @@ test("browser-facing document functions never return or read authority secrets",
   expect(functionsSource).not.toContain("REPORT_CARD_DOCUMENT_ATTESTATION_SECRET");
   expect(functionsSource).not.toMatch(/return\s*\{[^}]*attestation/is);
 });
+
+test("R3 validator recognizes the escaped canonical path contract and rejects weakened variants", async () => {
+  const validator = await readFile(
+    new URL("../../supabase/validation/validate_b8_reporting_documents.sql", import.meta.url),
+    "utf8",
+  );
+  const assertion = validator.match(
+    /select pg_get_functiondef\('public\.can_write_report_card_document_object\(text\)'::regprocedure\)[\s\S]*?raise exception 'B8 R3 path\/write contract incomplete';/i,
+  )?.[0];
+  expect(assertion).toBeDefined();
+  expect(assertion).toContain("position('/report-card\\.pdf$' in v_def) = 0");
+  expect(validator).toContain("select 'B8 reporting document validation passed' as result");
+  for (const required of [
+    "p_object_path ~",
+    "/report-cards/",
+    "/v[1-9][0-9]*/",
+    "/report-card\\.pdf$",
+    "split_part(p_object_path, '/', 4)::uuid",
+    "split_part(p_object_path, '/', 6)::uuid",
+    "p_object_path = public.report_card_document_object_path",
+    "status = 'published'",
+    "has_staff_scope_permission%report_card.download",
+  ])
+    expect(assertion).toContain(required.replaceAll("'", "''"));
+
+  const accepts = (definition) =>
+    definition.includes("p_object_path ~") &&
+    definition.includes("/report-cards/") &&
+    definition.includes("/v[1-9][0-9]*/") &&
+    definition.includes("/report-card\\.pdf$") &&
+    definition.includes("split_part(p_object_path, '/', 4)::uuid") &&
+    definition.includes("split_part(p_object_path, '/', 6)::uuid") &&
+    definition.includes("p_object_path = public.report_card_document_object_path") &&
+    definition.includes("status = 'published'") &&
+    definition.includes("has_staff_scope_permission('report_card.download'");
+  const deployedShape = `p_object_path ~ '/report-cards/x/v[1-9][0-9]*/uuid/report-card\\.pdf$'
+split_part(p_object_path, '/', 4)::uuid
+split_part(p_object_path, '/', 6)::uuid
+p_object_path = public.report_card_document_object_path
+status = 'published'
+has_staff_scope_permission('report_card.download'`;
+  expect(accepts(deployedShape)).toBe(true);
+  expect(accepts(deployedShape.replace("/report-card\\.pdf$", "/anything\\.pdf$"))).toBe(false);
+  expect(accepts(deployedShape.replace("/report-card\\.pdf$", ""))).toBe(false);
+  expect(accepts(deployedShape.replace("status = 'published'", ""))).toBe(false);
+  expect(accepts(deployedShape.replace("has_staff_scope_permission", "removed_permission"))).toBe(
+    false,
+  );
+});

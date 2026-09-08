@@ -112,7 +112,15 @@ begin
     raise exception 'B8 R3 trusted server attestation binding incomplete';
   end if;
   select pg_get_functiondef('public.can_write_report_card_document_object(text)'::regprocedure) into v_def;
-  if v_def not ilike '%status = ''published''%' or v_def not ilike '%has_staff_scope_permission%' or v_def not ilike '%report-card.pdf%' then
+  if v_def not ilike '%p_object_path ~%'
+     or v_def not like '%/report-cards/%'
+     or v_def not like '%/v[1-9][0-9]*/%'
+     or position('/report-card\.pdf$' in v_def) = 0
+     or v_def not ilike '%split_part(p_object_path, ''/'', 4)::uuid%'
+     or v_def not ilike '%split_part(p_object_path, ''/'', 6)::uuid%'
+     or v_def not ilike '%p_object_path = public.report_card_document_object_path%'
+     or v_def not ilike '%status = ''published''%'
+     or v_def not ilike '%has_staff_scope_permission%report_card.download%' then
     raise exception 'B8 R3 path/write contract incomplete';
   end if;
   select pg_get_functiondef('public.report_card_document_object_path(uuid,uuid)'::regprocedure) into v_def;
@@ -143,3 +151,4 @@ begin
 
   raise notice 'B8 reporting document validation passed';
 end $$;
+select 'B8 reporting document validation passed' as result;
