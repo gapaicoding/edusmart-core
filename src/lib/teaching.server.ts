@@ -1,4 +1,5 @@
 import type { PostgrestError, SupabaseClient } from "@supabase/supabase-js";
+import type { Database } from "@/integrations/supabase/types";
 import { translateSisError } from "./sis.server";
 
 /**
@@ -9,7 +10,11 @@ import { translateSisError } from "./sis.server";
  * service-role credential is used anywhere in this module.
  */
 
-type Db = SupabaseClient<any, "public", any>;
+type Db = SupabaseClient<Database>;
+
+export const ELIGIBLE_STAFF_ASSIGNMENT_STATUS = "active" as const;
+export const INACTIVE_STAFF_ASSIGNMENT_MESSAGE =
+  "The selected staff assignment is no longer active for this school. Choose an active staff assignment.";
 
 /**
  * Live database guards on public.teaching_assignments:
@@ -24,12 +29,41 @@ type Db = SupabaseClient<any, "public", any>;
  */
 const FRIENDLY_TRIGGER: Array<[string, string]> = [
   [
+    "TeachingAssignment cannot return to draft after publication",
+    "This teaching assignment is already part of history and cannot be returned to draft.",
+  ],
+  [
+    "TeachingAssignment material identity cannot be rewritten after activation",
+    "Active or historical teaching assignments cannot have their teacher, classroom, subject, academic year, or term rewritten. Create or replace the teaching assignment instead.",
+  ],
+  [
+    "Historical TeachingAssignment material identity cannot be changed",
+    "Historical teaching assignments cannot have their teacher, classroom, subject, academic year, or term changed. Create a new teaching assignment instead.",
+  ],
+  ["TeachingAssignment staff assignment is not active", INACTIVE_STAFF_ASSIGNMENT_MESSAGE],
+  [
+    "TeachingAssignment is unavailable for update",
+    "This teaching assignment no longer exists or you do not have permission to update it.",
+  ],
+  [
+    "TeachingAssignment update was not applied",
+    "We couldn't save this teaching assignment. Please try again.",
+  ],
+  [
+    "TeachingAssignment replacement transition was not applied",
+    "We couldn't save this teaching assignment. Please try again.",
+  ],
+  [
+    "TeachingAssignment replacement was not created",
+    "We couldn't save this teaching assignment. Please try again.",
+  ],
+  [
     "classroom academic year mismatch",
-    "That classroom belongs to a different academic year than this assignment. Pick a classroom in the selected year.",
+    "This classroom belongs to a different academic year than the teaching assignment.",
   ],
   [
     "term academic year mismatch",
-    "That term belongs to a different academic year than this assignment. Pick a term inside the selected year.",
+    "This term belongs to a different academic year than the teaching assignment.",
   ],
   [
     "teaching_assignment.archive",
@@ -42,11 +76,12 @@ const FRIENDLY_TRIGGER: Array<[string, string]> = [
 ];
 
 const FRIENDLY_CONSTRAINT: Record<string, string> = {
+  uq_teaching_assignments_active_exact:
+    "An active teaching assignment with the same teacher, classroom, subject, academic context, and role already exists.",
   teaching_assignments_role_check: "That assignment role is not supported.",
   teaching_assignments_status_check: "That assignment status is not supported.",
   teaching_assignments_dates_check: "The end date must be on or after the start date.",
-  teaching_assignments_classroom_fk:
-    "That classroom is not available in the selected school.",
+  teaching_assignments_classroom_fk: "That classroom is not available in the selected school.",
   teaching_assignments_subject_fk: "That subject is not available in the selected school.",
   teaching_assignments_term_fk: "That term is not available in the selected school.",
   teaching_assignments_year_fk: "That academic year is not available in the selected school.",
@@ -103,6 +138,7 @@ export async function assertAssignmentReferences(
     classroomId: string;
     subjectId: string;
     staffSchoolAssignmentId: string;
+    requireActiveStaffAssignment: boolean;
   },
 ): Promise<void> {
   const [year, classroom, subject, staffAssignment, term] = await Promise.all([
@@ -146,7 +182,10 @@ export async function assertAssignmentReferences(
   }
 
   if (!year.data) throw new Error("That academic year does not exist, or you cannot access it.");
-  if (year.data.school_id !== scope.schoolId || year.data.organization_id !== scope.organizationId) {
+  if (
+    year.data.school_id !== scope.schoolId ||
+    year.data.organization_id !== scope.organizationId
+  ) {
     throw new Error("That academic year belongs to a different school.");
   }
 
@@ -181,6 +220,12 @@ export async function assertAssignmentReferences(
     throw new Error(
       "That staff member is assigned to a different school. Assign them to this school before giving them a teaching responsibility.",
     );
+  }
+  if (
+    input.requireActiveStaffAssignment &&
+    staffAssignment.data.status !== ELIGIBLE_STAFF_ASSIGNMENT_STATUS
+  ) {
+    throw new Error(INACTIVE_STAFF_ASSIGNMENT_MESSAGE);
   }
 
   if (input.termId) {

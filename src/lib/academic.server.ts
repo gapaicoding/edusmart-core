@@ -1,5 +1,6 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 import type { PostgrestError } from "@supabase/supabase-js";
+import type { Database } from "@/integrations/supabase/types";
 
 /**
  * Server-only helpers for Batch 1 Academic Setup.
@@ -9,7 +10,7 @@ import type { PostgrestError } from "@supabase/supabase-js";
  * No service-role credential is used anywhere in Academic Setup.
  */
 
-type Db = SupabaseClient<any, "public", any>;
+type Db = SupabaseClient<Database>;
 
 /**
  * Resolve the organization that owns a school.
@@ -55,6 +56,13 @@ const FRIENDLY_CHECK: Record<string, string> = {
   calendar_time_shape_check: "Provide either all-day dates or a start time, not both.",
 };
 
+const FRIENDLY_TRIGGER: Record<string, string> = {
+  "Cannot change Classroom academic year: existing TeachingAssignments would no longer match":
+    "This classroom already has teaching assignments for its current academic year. Resolve those assignments before changing the classroom's academic year.",
+  "Cannot change Term academic year: existing TeachingAssignments would no longer match":
+    "This term already has teaching assignments for its current academic year. Resolve those assignments before moving the term to another academic year.",
+};
+
 /**
  * Turn Postgres/PostgREST failures into readable form messages without
  * hiding the underlying cause from server logs.
@@ -75,6 +83,9 @@ export function translateDbError(error: PostgrestError, subject: string): string
   for (const [constraint, friendly] of Object.entries(FRIENDLY_CHECK)) {
     if (text.includes(constraint)) return friendly;
   }
+  for (const [message, friendly] of Object.entries(FRIENDLY_TRIGGER)) {
+    if (text.includes(message)) return friendly;
+  }
 
   // Trigger-raised domain rules (e.g. validate_term_within_year) surface as
   // plain exceptions — pass the database wording straight through.
@@ -84,7 +95,8 @@ export function translateDbError(error: PostgrestError, subject: string): string
     return "Your current role is not allowed to perform this action (rejected by the database).";
   }
   if (error.code === "23505") return "That record already exists.";
-  if (error.code === "23503") return "A related record referenced here does not exist or is not accessible.";
+  if (error.code === "23503")
+    return "A related record referenced here does not exist or is not accessible.";
   if (error.code === "23514") {
     // Validation triggers (B1-R01 calendar/academic-year bounds) raise 23514
     // with a human-readable message — surface it instead of a generic string.
@@ -131,7 +143,9 @@ export async function assertEventWithinAcademicYear(
 
   if (error) throw new Error(translateDbError(error, "Academic year"));
   if (!data) {
-    throw new Error("The selected academic year does not exist in this school, or you cannot access it.");
+    throw new Error(
+      "The selected academic year does not exist in this school, or you cannot access it.",
+    );
   }
 
   const start = params.startsOn;

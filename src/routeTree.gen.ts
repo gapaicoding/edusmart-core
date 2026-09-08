@@ -14,6 +14,7 @@ import { Route as AuthenticatedRouteRouteImport } from './routes/_authenticated/
 import { Route as AcceptInviteRouteImport } from './routes/accept-invite'
 import { Route as AuthRouteImport } from './routes/auth'
 import { Route as ForgotPasswordRouteImport } from './routes/forgot-password'
+import { Route as HealthzRouteImport } from './routes/healthz'
 import { Route as ResetPasswordRouteImport } from './routes/reset-password'
 import { Route as AuthenticatedAccessPendingRouteImport } from './routes/_authenticated/access-pending'
 import { Route as AuthenticatedDashboardRouteImport } from './routes/_authenticated/dashboard'
@@ -26,13 +27,23 @@ import { Route as AuthenticatedAcademicGradeLevelsRouteImport } from './routes/_
 import { Route as AuthenticatedAcademicSubjectsRouteImport } from './routes/_authenticated/academic/subjects'
 import { Route as AuthenticatedAcademicTermsRouteImport } from './routes/_authenticated/academic/terms'
 import { Route as AuthenticatedAcademicYearsRouteImport } from './routes/_authenticated/academic/years'
+import { Route as AuthenticatedAssessmentsIndexRouteImport } from './routes/_authenticated/assessments/index'
+import { Route as AuthenticatedAssessmentsIdRouteImport } from './routes/_authenticated/assessments/$id'
+import { Route as AuthenticatedAttendanceIndexRouteImport } from './routes/_authenticated/attendance/index'
 import { Route as AuthenticatedGuardiansIndexRouteImport } from './routes/_authenticated/guardians/index'
 import { Route as AuthenticatedGuardiansGuardianIdRouteImport } from './routes/_authenticated/guardians/$guardianId'
+import { Route as AuthenticatedPortalIndexRouteImport } from './routes/_authenticated/portal/index'
+import { Route as AuthenticatedPortalAttendanceRouteImport } from './routes/_authenticated/portal/attendance'
+import { Route as AuthenticatedPortalScheduleRouteImport } from './routes/_authenticated/portal/schedule'
+import { Route as AuthenticatedPortalScoresRouteImport } from './routes/_authenticated/portal/scores'
+import { Route as AuthenticatedScheduleIndexRouteImport } from './routes/_authenticated/schedule/index'
+import { Route as AuthenticatedScheduleMyRouteImport } from './routes/_authenticated/schedule/my'
 import { Route as AuthenticatedStaffIndexRouteImport } from './routes/_authenticated/staff/index'
 import { Route as AuthenticatedStaffStaffIdRouteImport } from './routes/_authenticated/staff/$staffId'
 import { Route as AuthenticatedStudentsIndexRouteImport } from './routes/_authenticated/students/index'
 import { Route as AuthenticatedStudentsStudentIdRouteImport } from './routes/_authenticated/students/$studentId'
 import { Route as AuthenticatedTeachingAssignmentsIndexRouteImport } from './routes/_authenticated/teaching-assignments/index'
+import { Route as AuthenticatedAttendanceSessionIdRouteImport } from './routes/_authenticated/attendance/session/$id'
 
 const IndexRoute = IndexRouteImport.update({
   id: '/',
@@ -56,6 +67,11 @@ const AuthRoute = AuthRouteImport.update({
 const ForgotPasswordRoute = ForgotPasswordRouteImport.update({
   id: '/forgot-password',
   path: '/forgot-password',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const HealthzRoute = HealthzRouteImport.update({
+  id: '/healthz',
+  path: '/healthz',
   getParentRoute: () => rootRouteImport,
 } as any)
 const ResetPasswordRoute = ResetPasswordRouteImport.update({
@@ -128,6 +144,24 @@ const AuthenticatedAcademicYearsRoute =
     path: '/academic/years',
     getParentRoute: () => AuthenticatedRouteRoute,
   } as any)
+const AuthenticatedAssessmentsIndexRoute =
+  AuthenticatedAssessmentsIndexRouteImport.update({
+    id: '/assessments/',
+    path: '/assessments/',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
+const AuthenticatedAssessmentsIdRoute =
+  AuthenticatedAssessmentsIdRouteImport.update({
+    id: '/assessments/$id',
+    path: '/assessments/$id',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
+const AuthenticatedAttendanceIndexRoute =
+  AuthenticatedAttendanceIndexRouteImport.update({
+    id: '/attendance/',
+    path: '/attendance/',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
 const AuthenticatedGuardiansIndexRoute =
   AuthenticatedGuardiansIndexRouteImport.update({
     id: '/guardians/',
@@ -140,6 +174,41 @@ const AuthenticatedGuardiansGuardianIdRoute =
     path: '/guardians/$guardianId',
     getParentRoute: () => AuthenticatedRouteRoute,
   } as any)
+const AuthenticatedPortalIndexRoute =
+  AuthenticatedPortalIndexRouteImport.update({
+    id: '/portal/',
+    path: '/portal/',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
+const AuthenticatedPortalAttendanceRoute =
+  AuthenticatedPortalAttendanceRouteImport.update({
+    id: '/portal/attendance',
+    path: '/portal/attendance',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
+const AuthenticatedPortalScheduleRoute =
+  AuthenticatedPortalScheduleRouteImport.update({
+    id: '/portal/schedule',
+    path: '/portal/schedule',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
+const AuthenticatedPortalScoresRoute =
+  AuthenticatedPortalScoresRouteImport.update({
+    id: '/portal/scores',
+    path: '/portal/scores',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
+const AuthenticatedScheduleIndexRoute =
+  AuthenticatedScheduleIndexRouteImport.update({
+    id: '/schedule/',
+    path: '/schedule/',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
+const AuthenticatedScheduleMyRoute = AuthenticatedScheduleMyRouteImport.update({
+  id: '/schedule/my',
+  path: '/schedule/my',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
 const AuthenticatedStaffIndexRoute = AuthenticatedStaffIndexRouteImport.update({
   id: '/staff/',
   path: '/staff/',
@@ -169,12 +238,19 @@ const AuthenticatedTeachingAssignmentsIndexRoute =
     path: '/teaching-assignments/',
     getParentRoute: () => AuthenticatedRouteRoute,
   } as any)
+const AuthenticatedAttendanceSessionIdRoute =
+  AuthenticatedAttendanceSessionIdRouteImport.update({
+    id: '/attendance/session/$id',
+    path: '/attendance/session/$id',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/accept-invite': typeof AcceptInviteRoute
   '/auth': typeof AuthRoute
   '/forgot-password': typeof ForgotPasswordRoute
+  '/healthz': typeof HealthzRoute
   '/reset-password': typeof ResetPasswordRoute
   '/access-pending': typeof AuthenticatedAccessPendingRoute
   '/dashboard': typeof AuthenticatedDashboardRoute
@@ -187,19 +263,30 @@ export interface FileRoutesByFullPath {
   '/academic/subjects': typeof AuthenticatedAcademicSubjectsRoute
   '/academic/terms': typeof AuthenticatedAcademicTermsRoute
   '/academic/years': typeof AuthenticatedAcademicYearsRoute
+  '/assessments/$id': typeof AuthenticatedAssessmentsIdRoute
   '/guardians/$guardianId': typeof AuthenticatedGuardiansGuardianIdRoute
+  '/portal/attendance': typeof AuthenticatedPortalAttendanceRoute
+  '/portal/schedule': typeof AuthenticatedPortalScheduleRoute
+  '/portal/scores': typeof AuthenticatedPortalScoresRoute
+  '/schedule/my': typeof AuthenticatedScheduleMyRoute
   '/staff/$staffId': typeof AuthenticatedStaffStaffIdRoute
   '/students/$studentId': typeof AuthenticatedStudentsStudentIdRoute
+  '/assessments/': typeof AuthenticatedAssessmentsIndexRoute
+  '/attendance/': typeof AuthenticatedAttendanceIndexRoute
   '/guardians/': typeof AuthenticatedGuardiansIndexRoute
+  '/portal/': typeof AuthenticatedPortalIndexRoute
+  '/schedule/': typeof AuthenticatedScheduleIndexRoute
   '/staff/': typeof AuthenticatedStaffIndexRoute
   '/students/': typeof AuthenticatedStudentsIndexRoute
   '/teaching-assignments/': typeof AuthenticatedTeachingAssignmentsIndexRoute
+  '/attendance/session/$id': typeof AuthenticatedAttendanceSessionIdRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/accept-invite': typeof AcceptInviteRoute
   '/auth': typeof AuthRoute
   '/forgot-password': typeof ForgotPasswordRoute
+  '/healthz': typeof HealthzRoute
   '/reset-password': typeof ResetPasswordRoute
   '/access-pending': typeof AuthenticatedAccessPendingRoute
   '/dashboard': typeof AuthenticatedDashboardRoute
@@ -212,13 +299,23 @@ export interface FileRoutesByTo {
   '/academic/subjects': typeof AuthenticatedAcademicSubjectsRoute
   '/academic/terms': typeof AuthenticatedAcademicTermsRoute
   '/academic/years': typeof AuthenticatedAcademicYearsRoute
+  '/assessments/$id': typeof AuthenticatedAssessmentsIdRoute
   '/guardians/$guardianId': typeof AuthenticatedGuardiansGuardianIdRoute
+  '/portal/attendance': typeof AuthenticatedPortalAttendanceRoute
+  '/portal/schedule': typeof AuthenticatedPortalScheduleRoute
+  '/portal/scores': typeof AuthenticatedPortalScoresRoute
+  '/schedule/my': typeof AuthenticatedScheduleMyRoute
   '/staff/$staffId': typeof AuthenticatedStaffStaffIdRoute
   '/students/$studentId': typeof AuthenticatedStudentsStudentIdRoute
+  '/assessments': typeof AuthenticatedAssessmentsIndexRoute
+  '/attendance': typeof AuthenticatedAttendanceIndexRoute
   '/guardians': typeof AuthenticatedGuardiansIndexRoute
+  '/portal': typeof AuthenticatedPortalIndexRoute
+  '/schedule': typeof AuthenticatedScheduleIndexRoute
   '/staff': typeof AuthenticatedStaffIndexRoute
   '/students': typeof AuthenticatedStudentsIndexRoute
   '/teaching-assignments': typeof AuthenticatedTeachingAssignmentsIndexRoute
+  '/attendance/session/$id': typeof AuthenticatedAttendanceSessionIdRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -227,6 +324,7 @@ export interface FileRoutesById {
   '/accept-invite': typeof AcceptInviteRoute
   '/auth': typeof AuthRoute
   '/forgot-password': typeof ForgotPasswordRoute
+  '/healthz': typeof HealthzRoute
   '/reset-password': typeof ResetPasswordRoute
   '/_authenticated/access-pending': typeof AuthenticatedAccessPendingRoute
   '/_authenticated/dashboard': typeof AuthenticatedDashboardRoute
@@ -239,13 +337,23 @@ export interface FileRoutesById {
   '/_authenticated/academic/subjects': typeof AuthenticatedAcademicSubjectsRoute
   '/_authenticated/academic/terms': typeof AuthenticatedAcademicTermsRoute
   '/_authenticated/academic/years': typeof AuthenticatedAcademicYearsRoute
+  '/_authenticated/assessments/$id': typeof AuthenticatedAssessmentsIdRoute
   '/_authenticated/guardians/$guardianId': typeof AuthenticatedGuardiansGuardianIdRoute
+  '/_authenticated/portal/attendance': typeof AuthenticatedPortalAttendanceRoute
+  '/_authenticated/portal/schedule': typeof AuthenticatedPortalScheduleRoute
+  '/_authenticated/portal/scores': typeof AuthenticatedPortalScoresRoute
+  '/_authenticated/schedule/my': typeof AuthenticatedScheduleMyRoute
   '/_authenticated/staff/$staffId': typeof AuthenticatedStaffStaffIdRoute
   '/_authenticated/students/$studentId': typeof AuthenticatedStudentsStudentIdRoute
+  '/_authenticated/assessments/': typeof AuthenticatedAssessmentsIndexRoute
+  '/_authenticated/attendance/': typeof AuthenticatedAttendanceIndexRoute
   '/_authenticated/guardians/': typeof AuthenticatedGuardiansIndexRoute
+  '/_authenticated/portal/': typeof AuthenticatedPortalIndexRoute
+  '/_authenticated/schedule/': typeof AuthenticatedScheduleIndexRoute
   '/_authenticated/staff/': typeof AuthenticatedStaffIndexRoute
   '/_authenticated/students/': typeof AuthenticatedStudentsIndexRoute
   '/_authenticated/teaching-assignments/': typeof AuthenticatedTeachingAssignmentsIndexRoute
+  '/_authenticated/attendance/session/$id': typeof AuthenticatedAttendanceSessionIdRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -254,6 +362,7 @@ export interface FileRouteTypes {
     | '/accept-invite'
     | '/auth'
     | '/forgot-password'
+    | '/healthz'
     | '/reset-password'
     | '/access-pending'
     | '/dashboard'
@@ -266,19 +375,30 @@ export interface FileRouteTypes {
     | '/academic/subjects'
     | '/academic/terms'
     | '/academic/years'
+    | '/assessments/$id'
     | '/guardians/$guardianId'
+    | '/portal/attendance'
+    | '/portal/schedule'
+    | '/portal/scores'
+    | '/schedule/my'
     | '/staff/$staffId'
     | '/students/$studentId'
+    | '/assessments/'
+    | '/attendance/'
     | '/guardians/'
+    | '/portal/'
+    | '/schedule/'
     | '/staff/'
     | '/students/'
     | '/teaching-assignments/'
+    | '/attendance/session/$id'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
     | '/accept-invite'
     | '/auth'
     | '/forgot-password'
+    | '/healthz'
     | '/reset-password'
     | '/access-pending'
     | '/dashboard'
@@ -291,13 +411,23 @@ export interface FileRouteTypes {
     | '/academic/subjects'
     | '/academic/terms'
     | '/academic/years'
+    | '/assessments/$id'
     | '/guardians/$guardianId'
+    | '/portal/attendance'
+    | '/portal/schedule'
+    | '/portal/scores'
+    | '/schedule/my'
     | '/staff/$staffId'
     | '/students/$studentId'
+    | '/assessments'
+    | '/attendance'
     | '/guardians'
+    | '/portal'
+    | '/schedule'
     | '/staff'
     | '/students'
     | '/teaching-assignments'
+    | '/attendance/session/$id'
   id:
     | '__root__'
     | '/'
@@ -305,6 +435,7 @@ export interface FileRouteTypes {
     | '/accept-invite'
     | '/auth'
     | '/forgot-password'
+    | '/healthz'
     | '/reset-password'
     | '/_authenticated/access-pending'
     | '/_authenticated/dashboard'
@@ -317,13 +448,23 @@ export interface FileRouteTypes {
     | '/_authenticated/academic/subjects'
     | '/_authenticated/academic/terms'
     | '/_authenticated/academic/years'
+    | '/_authenticated/assessments/$id'
     | '/_authenticated/guardians/$guardianId'
+    | '/_authenticated/portal/attendance'
+    | '/_authenticated/portal/schedule'
+    | '/_authenticated/portal/scores'
+    | '/_authenticated/schedule/my'
     | '/_authenticated/staff/$staffId'
     | '/_authenticated/students/$studentId'
+    | '/_authenticated/assessments/'
+    | '/_authenticated/attendance/'
     | '/_authenticated/guardians/'
+    | '/_authenticated/portal/'
+    | '/_authenticated/schedule/'
     | '/_authenticated/staff/'
     | '/_authenticated/students/'
     | '/_authenticated/teaching-assignments/'
+    | '/_authenticated/attendance/session/$id'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -332,6 +473,7 @@ export interface RootRouteChildren {
   AcceptInviteRoute: typeof AcceptInviteRoute
   AuthRoute: typeof AuthRoute
   ForgotPasswordRoute: typeof ForgotPasswordRoute
+  HealthzRoute: typeof HealthzRoute
   ResetPasswordRoute: typeof ResetPasswordRoute
 }
 
@@ -370,6 +512,13 @@ declare module '@tanstack/react-router' {
       path: '/forgot-password'
       fullPath: '/forgot-password'
       preLoaderRoute: typeof ForgotPasswordRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/healthz': {
+      id: '/healthz'
+      path: '/healthz'
+      fullPath: '/healthz'
+      preLoaderRoute: typeof HealthzRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/reset-password': {
@@ -456,6 +605,27 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedAcademicYearsRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+    '/_authenticated/assessments/': {
+      id: '/_authenticated/assessments/'
+      path: '/assessments'
+      fullPath: '/assessments/'
+      preLoaderRoute: typeof AuthenticatedAssessmentsIndexRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/assessments/$id': {
+      id: '/_authenticated/assessments/$id'
+      path: '/assessments/$id'
+      fullPath: '/assessments/$id'
+      preLoaderRoute: typeof AuthenticatedAssessmentsIdRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/attendance/': {
+      id: '/_authenticated/attendance/'
+      path: '/attendance'
+      fullPath: '/attendance/'
+      preLoaderRoute: typeof AuthenticatedAttendanceIndexRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
     '/_authenticated/guardians/': {
       id: '/_authenticated/guardians/'
       path: '/guardians'
@@ -468,6 +638,48 @@ declare module '@tanstack/react-router' {
       path: '/guardians/$guardianId'
       fullPath: '/guardians/$guardianId'
       preLoaderRoute: typeof AuthenticatedGuardiansGuardianIdRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/portal/': {
+      id: '/_authenticated/portal/'
+      path: '/portal'
+      fullPath: '/portal/'
+      preLoaderRoute: typeof AuthenticatedPortalIndexRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/portal/attendance': {
+      id: '/_authenticated/portal/attendance'
+      path: '/portal/attendance'
+      fullPath: '/portal/attendance'
+      preLoaderRoute: typeof AuthenticatedPortalAttendanceRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/portal/schedule': {
+      id: '/_authenticated/portal/schedule'
+      path: '/portal/schedule'
+      fullPath: '/portal/schedule'
+      preLoaderRoute: typeof AuthenticatedPortalScheduleRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/portal/scores': {
+      id: '/_authenticated/portal/scores'
+      path: '/portal/scores'
+      fullPath: '/portal/scores'
+      preLoaderRoute: typeof AuthenticatedPortalScoresRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/schedule/': {
+      id: '/_authenticated/schedule/'
+      path: '/schedule'
+      fullPath: '/schedule/'
+      preLoaderRoute: typeof AuthenticatedScheduleIndexRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/schedule/my': {
+      id: '/_authenticated/schedule/my'
+      path: '/schedule/my'
+      fullPath: '/schedule/my'
+      preLoaderRoute: typeof AuthenticatedScheduleMyRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
     '/_authenticated/staff/': {
@@ -505,6 +717,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedTeachingAssignmentsIndexRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+    '/_authenticated/attendance/session/$id': {
+      id: '/_authenticated/attendance/session/$id'
+      path: '/attendance/session/$id'
+      fullPath: '/attendance/session/$id'
+      preLoaderRoute: typeof AuthenticatedAttendanceSessionIdRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
   }
 }
 
@@ -520,13 +739,23 @@ interface AuthenticatedRouteRouteChildren {
   AuthenticatedAcademicSubjectsRoute: typeof AuthenticatedAcademicSubjectsRoute
   AuthenticatedAcademicTermsRoute: typeof AuthenticatedAcademicTermsRoute
   AuthenticatedAcademicYearsRoute: typeof AuthenticatedAcademicYearsRoute
+  AuthenticatedAssessmentsIdRoute: typeof AuthenticatedAssessmentsIdRoute
   AuthenticatedGuardiansGuardianIdRoute: typeof AuthenticatedGuardiansGuardianIdRoute
+  AuthenticatedPortalAttendanceRoute: typeof AuthenticatedPortalAttendanceRoute
+  AuthenticatedPortalScheduleRoute: typeof AuthenticatedPortalScheduleRoute
+  AuthenticatedPortalScoresRoute: typeof AuthenticatedPortalScoresRoute
+  AuthenticatedScheduleMyRoute: typeof AuthenticatedScheduleMyRoute
   AuthenticatedStaffStaffIdRoute: typeof AuthenticatedStaffStaffIdRoute
   AuthenticatedStudentsStudentIdRoute: typeof AuthenticatedStudentsStudentIdRoute
+  AuthenticatedAssessmentsIndexRoute: typeof AuthenticatedAssessmentsIndexRoute
+  AuthenticatedAttendanceIndexRoute: typeof AuthenticatedAttendanceIndexRoute
   AuthenticatedGuardiansIndexRoute: typeof AuthenticatedGuardiansIndexRoute
+  AuthenticatedPortalIndexRoute: typeof AuthenticatedPortalIndexRoute
+  AuthenticatedScheduleIndexRoute: typeof AuthenticatedScheduleIndexRoute
   AuthenticatedStaffIndexRoute: typeof AuthenticatedStaffIndexRoute
   AuthenticatedStudentsIndexRoute: typeof AuthenticatedStudentsIndexRoute
   AuthenticatedTeachingAssignmentsIndexRoute: typeof AuthenticatedTeachingAssignmentsIndexRoute
+  AuthenticatedAttendanceSessionIdRoute: typeof AuthenticatedAttendanceSessionIdRoute
 }
 
 const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
@@ -541,14 +770,24 @@ const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedAcademicSubjectsRoute: AuthenticatedAcademicSubjectsRoute,
   AuthenticatedAcademicTermsRoute: AuthenticatedAcademicTermsRoute,
   AuthenticatedAcademicYearsRoute: AuthenticatedAcademicYearsRoute,
+  AuthenticatedAssessmentsIdRoute: AuthenticatedAssessmentsIdRoute,
   AuthenticatedGuardiansGuardianIdRoute: AuthenticatedGuardiansGuardianIdRoute,
+  AuthenticatedPortalAttendanceRoute: AuthenticatedPortalAttendanceRoute,
+  AuthenticatedPortalScheduleRoute: AuthenticatedPortalScheduleRoute,
+  AuthenticatedPortalScoresRoute: AuthenticatedPortalScoresRoute,
+  AuthenticatedScheduleMyRoute: AuthenticatedScheduleMyRoute,
   AuthenticatedStaffStaffIdRoute: AuthenticatedStaffStaffIdRoute,
   AuthenticatedStudentsStudentIdRoute: AuthenticatedStudentsStudentIdRoute,
+  AuthenticatedAssessmentsIndexRoute: AuthenticatedAssessmentsIndexRoute,
+  AuthenticatedAttendanceIndexRoute: AuthenticatedAttendanceIndexRoute,
   AuthenticatedGuardiansIndexRoute: AuthenticatedGuardiansIndexRoute,
+  AuthenticatedPortalIndexRoute: AuthenticatedPortalIndexRoute,
+  AuthenticatedScheduleIndexRoute: AuthenticatedScheduleIndexRoute,
   AuthenticatedStaffIndexRoute: AuthenticatedStaffIndexRoute,
   AuthenticatedStudentsIndexRoute: AuthenticatedStudentsIndexRoute,
   AuthenticatedTeachingAssignmentsIndexRoute:
     AuthenticatedTeachingAssignmentsIndexRoute,
+  AuthenticatedAttendanceSessionIdRoute: AuthenticatedAttendanceSessionIdRoute,
 }
 
 const AuthenticatedRouteRouteWithChildren =
@@ -560,6 +799,7 @@ const rootRouteChildren: RootRouteChildren = {
   AcceptInviteRoute: AcceptInviteRoute,
   AuthRoute: AuthRoute,
   ForgotPasswordRoute: ForgotPasswordRoute,
+  HealthzRoute: HealthzRoute,
   ResetPasswordRoute: ResetPasswordRoute,
 }
 export const routeTree = rootRouteImport
