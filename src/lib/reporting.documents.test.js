@@ -12,6 +12,9 @@ import {
   canGenerateReportCardDocument,
   isExactReportCardDocument,
   isShortLivedDocumentTtl,
+  reportCardDocumentAttestationPayload,
+  signReportCardDocumentAttestation,
+  verifyReportCardDocumentAttestationForTest,
 } from "./reporting.documents.server.ts";
 import { reportCardDocumentInput, portalReportCardDocumentInput } from "./reporting.schemas.ts";
 
@@ -41,17 +44,18 @@ const model = {
 };
 
 describe("Report Card document identity and policy model", () => {
-  test("uses deterministic version-isolated paths", () => {
+  test("uses attestation-bound random and version-isolated paths", () => {
     const base = {
       organizationId: "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa",
       schoolId: "bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb",
       reportCardId: model.reportCardId,
     };
-    expect(reportCardObjectPath({ ...base, version: 1 })).toBe(
-      `${base.organizationId}/${base.schoolId}/report-cards/${base.reportCardId}/v1/report-card.pdf`,
+    const generationId = "55555555-5555-4555-8555-555555555555";
+    expect(reportCardObjectPath({ ...base, version: 1, generationId })).toBe(
+      `${base.organizationId}/${base.schoolId}/report-cards/${base.reportCardId}/v1/${generationId}/report-card.pdf`,
     );
-    expect(reportCardObjectPath({ ...base, version: 1 })).not.toBe(
-      reportCardObjectPath({ ...base, version: 2 }),
+    expect(reportCardObjectPath({ ...base, version: 1, generationId })).not.toBe(
+      reportCardObjectPath({ ...base, version: 2, generationId }),
     );
   });
 
@@ -72,7 +76,10 @@ describe("Report Card document identity and policy model", () => {
       documentType: "report_card_pdf",
       bucket: "report-cards",
     };
-    const objectPath = reportCardObjectPath(base);
+    const objectPath = reportCardObjectPath({
+      ...base,
+      generationId: "55555555-5555-4555-8555-555555555555",
+    });
     expect(isExactReportCardDocument({ ...base, objectPath })).toBe(true);
     expect(
       isExactReportCardDocument({
@@ -108,6 +115,75 @@ describe("Report Card document identity and policy model", () => {
         generatedDocumentId: "44444444-4444-4444-8444-444444444444",
       }).success,
     ).toBe(false);
+  });
+});
+
+describe("trusted server document attestation", () => {
+  const secret = "test-only-authority-secret-with-at-least-32-bytes";
+  const input = {
+    actorId: "66666666-6666-4666-8666-666666666666",
+    reportCardId: model.reportCardId,
+    version: 1,
+    organizationId: "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa",
+    schoolId: "bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb",
+    objectPath:
+      "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa/bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb/report-cards/11111111-1111-4111-8111-111111111111/v1/55555555-5555-4555-8555-555555555555/report-card.pdf",
+    sizeBytes: 2048,
+    checksum: "a".repeat(64),
+    expiresAtEpochSeconds: 2_000_000_000,
+  };
+  const proof = signReportCardDocumentAttestation(input, secret);
+
+  test("accepts the exact server-generated contract", () => {
+    expect(verifyReportCardDocumentAttestationForTest(input, proof, secret, 1_999_999_900)).toBe(
+      true,
+    );
+    expect(reportCardDocumentAttestationPayload(input)).toContain(input.objectPath);
+  });
+
+  test("denies arbitrary PDF self-registration without trusted proof", async () => {
+    const arbitrary = new TextEncoder().encode("%PDF- arbitrary attacker bytes");
+    const attackerClaim = {
+      ...input,
+      sizeBytes: arbitrary.length,
+      checksum: await sha256Hex(arbitrary),
+    };
+    expect(
+      verifyReportCardDocumentAttestationForTest(
+        attackerClaim,
+        "0".repeat(64),
+        secret,
+        1_999_999_900,
+      ),
+    ).toBe(false);
+  });
+
+  test("binds bytes, checksum, size, Report Card, version, and path", () => {
+    const changes = [
+      { checksum: "b".repeat(64) },
+      { sizeBytes: input.sizeBytes + 1 },
+      { version: 2 },
+      { reportCardId: "22222222-2222-4222-8222-222222222222" },
+      { objectPath: input.objectPath.replace("/v1/", "/v2/") },
+    ];
+    for (const change of changes)
+      expect(
+        verifyReportCardDocumentAttestationForTest(
+          { ...input, ...change },
+          proof,
+          secret,
+          1_999_999_900,
+        ),
+      ).toBe(false);
+  });
+
+  test("denies expired or excessively future-dated proof", () => {
+    expect(verifyReportCardDocumentAttestationForTest(input, proof, secret, 2_000_000_000)).toBe(
+      false,
+    );
+    expect(verifyReportCardDocumentAttestationForTest(input, proof, secret, 1_999_999_000)).toBe(
+      false,
+    );
   });
 });
 
@@ -151,13 +227,31 @@ test("R3 migration keeps Storage and function ACLs narrowly scoped", async () =>
   expect(sql).toContain("create policy report_card_documents_select");
   expect(sql).not.toMatch(/create policy[\s\S]*for update to authenticated[\s\S]*report-cards/i);
   expect(sql).toContain(
-    "revoke all on function public.register_report_card_document(uuid,bigint,text) from public, anon, authenticated, service_role",
+    "revoke all on function public.register_report_card_document(uuid,text,bigint,text,bigint,text) from public, anon, authenticated, service_role",
   );
   expect(sql).not.toMatch(/grant execute[^;]+service_role/i);
   expect(sql).not.toContain(
-    "grant execute on function public.report_card_document_object_path(uuid) to authenticated",
+    "grant execute on function public.report_card_document_object_path(uuid,uuid) to authenticated",
+  );
+  expect(sql).toContain("public.verify_report_card_document_attestation(");
+  expect(sql).toContain("vault.decrypted_secrets");
+  expect(sql).toContain("extensions.hmac");
+  expect(sql).toContain("p_attestation_expires_at");
+  expect(sql).toContain("p_object_path");
+  expect(sql).toContain("from storage.objects o");
+  expect(sql).not.toContain(
+    "grant execute on function public.verify_report_card_document_attestation",
   );
   expect(sql).toContain("public.can_access_report_card('report_card.download', rc.id)");
   expect(r1).toContain("sg.status='active' and sg.can_view_academic");
   expect(sql).toContain("v_rc.status <> 'published'");
+});
+
+test("browser-facing document functions never return or read authority secrets", async () => {
+  const functionsSource = await readFile(
+    new URL("./reporting.documents.functions.ts", import.meta.url),
+    "utf8",
+  );
+  expect(functionsSource).not.toContain("REPORT_CARD_DOCUMENT_ATTESTATION_SECRET");
+  expect(functionsSource).not.toMatch(/return\s*\{[^}]*attestation/is);
 });

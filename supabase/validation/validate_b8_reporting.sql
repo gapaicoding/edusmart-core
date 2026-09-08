@@ -42,5 +42,7 @@ begin
   if not exists(select 1 from pg_policies where schemaname='public' and tablename='report_cards' and policyname='report_cards_select') then raise exception 'ReportCard select policy missing'; end if;
   if exists(select 1 from pg_policies where schemaname='public' and tablename in ('report_cards','report_card_subject_entries') and cmd='DELETE') then raise exception 'Broad Reporting delete policy exists'; end if;
   if not exists(select 1 from pg_policies where schemaname='public' and tablename='report_card_narratives' and policyname='report_card_narratives_delete' and cmd='DELETE') then raise exception 'Draft narrative delete policy missing'; end if;
+  if has_column_privilege('authenticated','public.report_card_subject_entries','source_calculation','SELECT') then raise exception 'Authenticated provenance exposure detected'; end if;
+  if not has_column_privilege('authenticated','public.report_card_subject_entries','final_score','SELECT') then raise exception 'Safe subject snapshot columns are not readable'; end if;
 end $$;
 select 'B8 reporting validation passed' as result;

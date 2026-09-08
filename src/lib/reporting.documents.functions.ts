@@ -8,9 +8,11 @@ import {
   createReportCardPdf,
   loadDocumentRecord,
   loadPublishedPdfModel,
-  reportCardObjectPath,
+  newReportCardDocumentPath,
   requirePortalPublishedReport,
   requireStaffDocumentAccess,
+  REPORT_CARD_ATTESTATION_TTL_SECONDS,
+  signReportCardDocumentAttestation,
 } from "./reporting.documents.server";
 
 type RegistrationRow = {
@@ -52,13 +54,10 @@ export const getReportCardDocumentStatus = createServerFn({ method: "GET" })
       .maybeSingle();
     if (card.error) throw new Error("We couldn't load the Report Card document status.");
     if (!card.data) return null;
-    const objectPath = reportCardObjectPath({
-      organizationId: card.data.organization_id,
-      schoolId: card.data.school_id,
-      reportCardId: card.data.id,
-      version: card.data.version,
-    });
-    await requireStaffDocumentAccess(context.supabase, objectPath);
+    await requireStaffDocumentAccess(
+      context.supabase,
+      `${card.data.organization_id}/${card.data.school_id}/report-cards/${card.data.id}/v${card.data.version}/00000000-0000-4000-8000-000000000000/report-card.pdf`,
+    );
     try {
       const document = await loadDocumentRecord(context.supabase, card.data);
       return {
@@ -88,7 +87,7 @@ export const generateReportCardDocument = createServerFn({ method: "POST" })
   .handler(async ({ data, context }) => {
     try {
       const { card, model } = await loadPublishedPdfModel(context.supabase, data.reportCardId);
-      const objectPath = reportCardObjectPath({
+      const objectPath = newReportCardDocumentPath({
         organizationId: card.organization_id,
         schoolId: card.school_id,
         reportCardId: card.id,
@@ -103,6 +102,22 @@ export const generateReportCardDocument = createServerFn({ method: "POST" })
           checksum: existing.checksum,
         };
       const generated = await createReportCardPdf(model);
+      const expiresAtEpochSeconds =
+        Math.floor(Date.now() / 1000) + REPORT_CARD_ATTESTATION_TTL_SECONDS;
+      const attestation = signReportCardDocumentAttestation({
+        actorId: context.userId,
+        reportCardId: card.id,
+        version: card.version,
+        organizationId: card.organization_id,
+        schoolId: card.school_id,
+        objectPath,
+        sizeBytes: generated.bytes.length,
+        checksum: generated.checksum,
+        expiresAtEpochSeconds,
+      });
+      // A random generation path prevents cross-request races; this only clears
+      // an unregistered preemption at the exact newly generated path.
+      await context.supabase.storage.from(REPORT_CARD_BUCKET).remove([objectPath]);
       const upload = await context.supabase.storage
         .from(REPORT_CARD_BUCKET)
         .upload(objectPath, generated.bytes, { contentType: "application/pdf", upsert: false });
@@ -120,18 +135,23 @@ export const generateReportCardDocument = createServerFn({ method: "POST" })
         "register_report_card_document",
         {
           p_report_card_id: card.id,
+          p_object_path: objectPath,
           p_size_bytes: generated.bytes.length,
           p_checksum: generated.checksum,
+          p_attestation_expires_at: expiresAtEpochSeconds,
+          p_attestation: attestation,
         },
       );
       if (registration.error || !registration.data?.[0]) {
         const raced = await loadDocumentRecord(context.supabase, card).catch(() => null);
-        if (raced?.checksum === generated.checksum)
+        if (raced) {
+          await context.supabase.storage.from(REPORT_CARD_BUCKET).remove([objectPath]);
           return {
             state: "available" as const,
             generatedAt: raced.generatedAt,
             checksum: raced.checksum,
           };
+        }
         await context.supabase.storage
           .from(REPORT_CARD_BUCKET)
           .remove([objectPath])
@@ -162,15 +182,9 @@ export const getReportCardDownload = createServerFn({ method: "POST" })
       .eq("id", data.reportCardId)
       .maybeSingle();
     if (card.error || !card.data) throw new Error("Report Card document not found.");
-    const expectedPath = reportCardObjectPath({
-      organizationId: card.data.organization_id,
-      schoolId: card.data.school_id,
-      reportCardId: card.data.id,
-      version: card.data.version,
-    });
-    await requireStaffDocumentAccess(context.supabase, expectedPath);
     const document = await loadDocumentRecord(context.supabase, card.data);
     if (!document) throw new Error("The Report Card PDF has not been generated yet.");
+    await requireStaffDocumentAccess(context.supabase, document.objectPath);
     const signed = await context.supabase.storage
       .from(REPORT_CARD_BUCKET)
       .createSignedUrl(document.objectPath, REPORT_CARD_SIGNED_URL_TTL_SECONDS, {

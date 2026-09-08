@@ -1,4 +1,5 @@
 import { describe, expect, test } from "bun:test";
+import { readFileSync } from "node:fs";
 import {
   calculateSubjectSnapshot,
   summarizeAttendance,
@@ -81,4 +82,15 @@ describe("reporting workflow model", () => {
     expect(guardianCanReadPublishedReport({ ...access, canViewAcademic: false })).toBe(false);
     expect(guardianCanReadPublishedReport({ ...access, reportStatus: "draft" })).toBe(false);
   });
+});
+
+test("authenticated callers cannot select raw score provenance", () => {
+  const migration = readFileSync(
+    new URL("../../supabase/migrations/20260907160000_b8_reporting_integrity.sql", import.meta.url),
+    "utf8",
+  );
+  expect(migration).toContain(
+    "revoke select on table public.report_card_subject_entries from authenticated",
+  );
+  expect(migration).not.toMatch(/grant select \([^)]*source_calculation[^)]*\)/is);
 });

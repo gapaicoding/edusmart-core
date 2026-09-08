@@ -115,7 +115,7 @@ export const getReportCard = createServerFn({ method: "GET" })
       context.supabase.from("report_cards").select("*").eq("id", data.reportCardId).maybeSingle(),
       context.supabase
         .from("report_card_subject_entries")
-        .select("id,subject_id,final_score,predicate,narrative,source_calculation,updated_at")
+        .select("id,subject_id,final_score,predicate,narrative,updated_at")
         .eq("report_card_id", data.reportCardId),
       context.supabase
         .from("report_card_narratives")

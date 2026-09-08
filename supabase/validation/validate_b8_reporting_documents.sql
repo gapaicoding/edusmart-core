@@ -23,6 +23,7 @@ begin
     'can_staff_download_report_card_document_object',
     'can_read_report_card_document_object',
     'can_delete_orphan_report_card_document_object',
+    'verify_report_card_document_attestation',
     'register_report_card_document'
   ] loop
     if not exists (
@@ -39,14 +40,14 @@ begin
     ) then
       raise exception 'B8 R3 forbidden function ACL: %', v_name;
     end if;
-    if v_name <> 'report_card_document_object_path' and not exists (
+    if v_name not in ('report_card_document_object_path','verify_report_card_document_attestation') and not exists (
       select 1
       from pg_proc p join pg_namespace n on n.oid=p.pronamespace
       cross join lateral aclexplode(coalesce(p.proacl, acldefault('f',p.proowner))) a
       where n.nspname='public' and p.proname=v_name and a.privilege_type='EXECUTE'
         and a.grantee=(select oid from pg_roles where rolname='authenticated')
     ) then raise exception 'B8 R3 authenticated function ACL missing: %', v_name; end if;
-    if v_name = 'report_card_document_object_path' and exists (
+    if v_name in ('report_card_document_object_path','verify_report_card_document_attestation') and exists (
       select 1
       from pg_proc p join pg_namespace n on n.oid=p.pronamespace
       cross join lateral aclexplode(coalesce(p.proacl, acldefault('f',p.proowner))) a
@@ -71,23 +72,45 @@ begin
   end if;
 
   select pg_get_functiondef('public.can_read_report_card_document_object(text)'::regprocedure) into v_def;
-  if v_def not ilike '%can_access_report_card%report_card.download%' then raise exception 'B8 R3 read helper authorization missing'; end if;
+  if v_def not ilike '%can_access_report_card%report_card.download%'
+     or v_def not ilike '%generated_documents%' or v_def not ilike '%file_assets%' then
+    raise exception 'B8 R3 registered-document read authorization missing';
+  end if;
   select pg_get_functiondef('public.can_access_report_card(text,uuid)'::regprocedure) into v_def;
   if v_def not ilike '%guardians%' or v_def not ilike '%student_guardians%'
      or v_def not ilike '%can_view_academic%' or v_def not ilike '%sg.status=''active''%'
      or v_def not ilike '%g.status=''active''%' or v_def not ilike '%rc.status=''published''%' then
     raise exception 'B8 R3 Parent download dependency is not exact/published';
   end if;
-  select pg_get_functiondef('public.register_report_card_document(uuid,bigint,text)'::regprocedure) into v_def;
-  if v_def not ilike '%status <> ''published''%' or v_def not ilike '%auth.uid()%' or v_def not ilike '%report_card_pdf%' or v_def not ilike '%application/pdf%' then
+  if to_regprocedure('extensions.hmac(text,text,text)') is null or to_regclass('vault.decrypted_secrets') is null then
+    raise exception 'B8 R3 cryptographic authority capability missing';
+  end if;
+  if not exists (select 1 from vault.decrypted_secrets where name='b8_report_card_document_attestation_hmac' and length(secret)>=32) then
+    raise exception 'B8 R3 document authority secret missing';
+  end if;
+  select pg_get_functiondef('public.register_report_card_document(uuid,text,bigint,text,bigint,text)'::regprocedure) into v_def;
+  if v_def not ilike '%status <> ''published''%' or v_def not ilike '%auth.uid()%'
+     or v_def not ilike '%verify_report_card_document_attestation%'
+     or v_def not ilike '%p_attestation_expires_at%' or v_def not ilike '%p_object_path%'
+     or v_def not ilike '%storage.objects%metadata%size%'
+     or v_def not ilike '%report_card_pdf%' or v_def not ilike '%application/pdf%' then
     raise exception 'B8 R3 registration contract incomplete';
+  end if;
+  select pg_get_functiondef('public.verify_report_card_document_attestation(uuid,uuid,integer,uuid,uuid,text,bigint,text,bigint,text)'::regprocedure) into v_def;
+  if v_def not ilike '%vault.decrypted_secrets%' or v_def not ilike '%extensions.hmac%'
+     or v_def not ilike '%p_report_card_id%' or v_def not ilike '%p_version%'
+     or v_def not ilike '%p_organization_id%' or v_def not ilike '%p_school_id%'
+     or v_def not ilike '%p_object_path%' or v_def not ilike '%p_size_bytes%'
+     or v_def not ilike '%p_checksum%' or v_def not ilike '%p_actor_id%'
+     or v_def not ilike '%p_attestation_expires_at%' then
+    raise exception 'B8 R3 trusted server attestation binding incomplete';
   end if;
   select pg_get_functiondef('public.can_write_report_card_document_object(text)'::regprocedure) into v_def;
   if v_def not ilike '%status = ''published''%' or v_def not ilike '%has_staff_scope_permission%' or v_def not ilike '%report-card.pdf%' then
     raise exception 'B8 R3 path/write contract incomplete';
   end if;
-  select pg_get_functiondef('public.report_card_document_object_path(uuid)'::regprocedure) into v_def;
-  if v_def not ilike '%/v%' or v_def not ilike '%rc.version%' or v_def not ilike '%rc.id%' then
+  select pg_get_functiondef('public.report_card_document_object_path(uuid,uuid)'::regprocedure) into v_def;
+  if v_def not ilike '%/v%' or v_def not ilike '%rc.version%' or v_def not ilike '%rc.id%' or v_def not ilike '%p_generation_id%' then
     raise exception 'B8 R3 version-specific path contract missing';
   end if;
   select pg_get_functiondef('public.can_read_report_card_document_object(text)'::regprocedure) into v_def;
@@ -108,7 +131,7 @@ begin
       and (gd.organization_id<>rc.organization_id or gd.school_id<>rc.school_id
         or fa.organization_id<>rc.organization_id or fa.school_id<>rc.school_id
         or fa.bucket<>'report-cards' or fa.mime_type<>'application/pdf'
-        or fa.object_path<>public.report_card_document_object_path(rc.id)
+        or fa.object_path !~ ('^' || rc.organization_id::text || '/' || rc.school_id::text || '/report-cards/' || rc.id::text || '/v' || rc.version::text || '/[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}/report-card\.pdf$')
         or gd.checksum !~ '^[0-9a-f]{64}$')
   ) then raise exception 'B8 R3 invalid Report Card document metadata detected'; end if;
 

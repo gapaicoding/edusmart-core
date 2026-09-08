@@ -332,6 +332,14 @@ with check(exists(select 1 from public.report_cards rc where rc.id=report_card_i
 create policy report_card_narratives_delete on public.report_card_narratives for delete to authenticated
 using(exists(select 1 from public.report_cards rc where rc.id=report_card_id and rc.status='draft' and public.can_access_report_card('report_card.edit_narrative',rc.id)));
 
+-- Provenance remains stored for auditability, but is never exposed through the
+-- caller-authenticated data API (including exact-subject Parent access).
+revoke select on table public.report_card_subject_entries from authenticated;
+grant select (
+  id, organization_id, school_id, report_card_id, subject_id,
+  final_score, predicate, narrative, created_at, updated_at
+) on table public.report_card_subject_entries to authenticated;
+
 revoke all on function public.can_access_report_card(text,uuid) from public,anon,authenticated,service_role;
 grant execute on function public.can_access_report_card(text,uuid) to authenticated;
 revoke all on function public.validate_report_card_consistency() from public,anon,authenticated,service_role;

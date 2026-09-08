@@ -35,8 +35,9 @@ export function reportCardObjectPath(input: {
   schoolId: string;
   reportCardId: string;
   version: number;
+  generationId: string;
 }) {
-  return `${input.organizationId}/${input.schoolId}/report-cards/${input.reportCardId}/v${input.version}/report-card.pdf`;
+  return `${input.organizationId}/${input.schoolId}/report-cards/${input.reportCardId}/v${input.version}/${input.generationId}/report-card.pdf`;
 }
 
 export function reportCardScoreText(score: number | null) {

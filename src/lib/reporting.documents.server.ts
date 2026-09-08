@@ -1,5 +1,6 @@
 import { readFile } from "node:fs/promises";
 import { fileURLToPath } from "node:url";
+import { createHmac, randomUUID, timingSafeEqual } from "node:crypto";
 import type { SupabaseClient } from "@supabase/supabase-js";
 import type { Database } from "@/integrations/supabase/types";
 import { getPortalSubjectRelationship } from "./portal.server";
@@ -14,6 +15,8 @@ export { reportCardObjectPath } from "./reporting.pdf";
 export const REPORT_CARD_BUCKET = "report-cards";
 export const REPORT_CARD_DOCUMENT_TYPE = "report_card_pdf";
 export const REPORT_CARD_SIGNED_URL_TTL_SECONDS = 120;
+export const REPORT_CARD_ATTESTATION_TTL_SECONDS = 120;
+export const REPORT_CARD_ATTESTATION_SECRET_ENV = "REPORT_CARD_DOCUMENT_ATTESTATION_SECRET";
 
 type Client = SupabaseClient<Database>;
 type RpcClient = {
@@ -42,19 +45,89 @@ export function isExactReportCardDocument(input: {
   bucket: string;
   objectPath: string;
 }) {
+  const prefix = `${input.organizationId}/${input.schoolId}/report-cards/${input.reportCardId}/v${input.version}/`;
+  const suffix = "/report-card.pdf";
+  const generationId = input.objectPath.slice(prefix.length, -suffix.length);
   return (
     input.entityId === input.reportCardId &&
     input.entityType === "report_card" &&
     input.documentType === REPORT_CARD_DOCUMENT_TYPE &&
     input.bucket === REPORT_CARD_BUCKET &&
-    input.objectPath ===
-      reportCardObjectPath({
-        organizationId: input.organizationId,
-        schoolId: input.schoolId,
-        reportCardId: input.reportCardId,
-        version: input.version,
-      })
+    input.objectPath.startsWith(prefix) &&
+    input.objectPath.endsWith(suffix) &&
+    /^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/.test(generationId)
   );
+}
+
+export type ReportCardDocumentAttestationInput = {
+  actorId: string;
+  reportCardId: string;
+  version: number;
+  organizationId: string;
+  schoolId: string;
+  objectPath: string;
+  sizeBytes: number;
+  checksum: string;
+  expiresAtEpochSeconds: number;
+};
+
+export function reportCardDocumentAttestationPayload(input: ReportCardDocumentAttestationInput) {
+  return [
+    "edusmart-report-card-pdf-v1",
+    input.actorId,
+    input.reportCardId,
+    String(input.version),
+    input.organizationId,
+    input.schoolId,
+    REPORT_CARD_BUCKET,
+    input.objectPath,
+    "application/pdf",
+    String(input.sizeBytes),
+    input.checksum,
+    String(input.expiresAtEpochSeconds),
+  ].join("\n");
+}
+
+function documentAuthoritySecret() {
+  const secret = process.env[REPORT_CARD_ATTESTATION_SECRET_ENV];
+  if (!secret || Buffer.byteLength(secret, "utf8") < 32)
+    throw new Error("Report Card document authority is not configured.");
+  return secret;
+}
+
+export function signReportCardDocumentAttestation(
+  input: ReportCardDocumentAttestationInput,
+  secret = documentAuthoritySecret(),
+) {
+  return createHmac("sha256", secret)
+    .update(reportCardDocumentAttestationPayload(input), "utf8")
+    .digest("hex");
+}
+
+export function verifyReportCardDocumentAttestationForTest(
+  input: ReportCardDocumentAttestationInput,
+  attestation: string,
+  secret: string,
+  nowEpochSeconds = Math.floor(Date.now() / 1000),
+) {
+  if (
+    input.expiresAtEpochSeconds <= nowEpochSeconds ||
+    input.expiresAtEpochSeconds > nowEpochSeconds + 300
+  )
+    return false;
+  if (!/^[0-9a-f]{64}$/.test(attestation)) return false;
+  const expected = Buffer.from(signReportCardDocumentAttestation(input, secret), "hex");
+  const supplied = Buffer.from(attestation, "hex");
+  return supplied.length === expected.length && timingSafeEqual(supplied, expected);
+}
+
+export function newReportCardDocumentPath(input: {
+  organizationId: string;
+  schoolId: string;
+  reportCardId: string;
+  version: number;
+}) {
+  return reportCardObjectPath({ ...input, generationId: randomUUID() });
 }
 
 async function callBooleanRpc(supabase: Client, name: string, args: Record<string, unknown>) {
