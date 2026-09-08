@@ -102,5 +102,11 @@ export function translateReportingError(error: PostgrestError, action: string) {
   if (error.code === "42501" || /permission/i.test(text))
     return "Your permission scope does not allow this report card action.";
   if (error.code === "23505") return "A working or published version already exists.";
+  if (
+    /versioned revision of the published|existing working reportcard is not draft|expected updated_at is required for regeneration/i.test(
+      text,
+    )
+  )
+    return "A working or published Report Card already exists for this student and term.";
   return `We couldn't ${action.toLowerCase()} right now.`;
 }

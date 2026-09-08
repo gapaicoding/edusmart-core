@@ -10,6 +10,7 @@ import {
   canApplySubjectEdit,
   nextReportCardVersion,
   guardianCanReadPublishedReport,
+  translateReportingError,
 } from "./reporting.server.ts";
 
 describe("reporting snapshot rules", () => {
@@ -81,6 +82,46 @@ describe("reporting workflow model", () => {
     expect(guardianCanReadPublishedReport({ ...access, reportStudentId: "student-b" })).toBe(false);
     expect(guardianCanReadPublishedReport({ ...access, canViewAcademic: false })).toBe(false);
     expect(guardianCanReadPublishedReport({ ...access, reportStatus: "draft" })).toBe(false);
+  });
+});
+
+describe("reporting error translation (LIVE-003 duplicate-generation UX)", () => {
+  const err = (message, extra = {}) => ({ message, details: null, hint: null, code: "", ...extra });
+
+  test("duplicate initial generation surfaces an existing-card recovery message", () => {
+    for (const message of [
+      "Create a versioned revision of the published ReportCard",
+      "Existing working ReportCard is not draft",
+      "Expected updated_at is required for regeneration",
+    ]) {
+      const text = translateReportingError(err(message), "generate report card");
+      expect(text).toMatch(/already exists/i);
+      expect(text).not.toMatch(/couldn't/i);
+    }
+  });
+
+  test("unique-violation still maps to an existing-version message", () => {
+    expect(translateReportingError(err("dup", { code: "23505" }), "generate report card")).toMatch(
+      /already exists/i,
+    );
+  });
+
+  test("permission and stale errors are unchanged", () => {
+    expect(
+      translateReportingError(err("permission denied", { code: "42501" }), "generate report card"),
+    ).toMatch(/permission scope/i);
+    expect(translateReportingError(err("Stale ReportCard"), "generate report card")).toMatch(
+      /Refresh/i,
+    );
+  });
+
+  test("unrelated failures keep the generic message and do not trigger recovery", () => {
+    expect(translateReportingError(err("connection reset"), "generate report card")).toMatch(
+      /couldn't generate report card/i,
+    );
+    expect(translateReportingError(err("connection reset"), "generate report card")).not.toMatch(
+      /already exists/i,
+    );
   });
 });
 

@@ -130,6 +130,51 @@ begin
   select pg_get_functiondef('public.can_read_report_card_document_object(text)'::regprocedure) into v_def;
   if v_def not ilike '%can_access_report_card%' then raise exception 'B8 R3 Parent/staff read binding missing'; end if;
 
+  -- LIVE-002: the deployed document path contract must accept persisted
+  -- PostgreSQL uuid tenant / report-card identifiers by canonical 8-4-4-4-12
+  -- structure only, WITHOUT assuming an RFC 4122 version ([1-5]) or variant
+  -- ([89ab]) nibble, while the trusted per-generation nonce segment stays a
+  -- strict UUIDv4.  This block also fails on regression to the old
+  -- over-strict tenant regex.  Runs against the deployed definitions, so it
+  -- only passes once 20260908190000_b8_reporting_document_path_uuid_compatibility.sql
+  -- has been applied.
+  foreach v_name in array array[
+    'can_write_report_card_document_object',
+    'can_staff_download_report_card_document_object',
+    'can_read_report_card_document_object',
+    'register_report_card_document'
+  ] loop
+    select pg_get_functiondef(
+      case v_name
+        when 'register_report_card_document'
+          then 'public.register_report_card_document(uuid,text,bigint,text,bigint,text)'::regprocedure
+        else ('public.' || v_name || '(text)')::regprocedure
+      end
+    ) into v_def;
+    if v_def like '%[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}/%' then
+      raise exception 'B8 LIVE-002 regression: over-strict RFC-version tenant UUID regex still present in %', v_name;
+    end if;
+    if v_def not like '%[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}/[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}/report-cards/%' then
+      raise exception 'B8 LIVE-002: canonical PostgreSQL UUID tenant path not accepted by %', v_name;
+    end if;
+    if v_def not like '%/v[1-9][0-9]*/[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}/report-card\.pdf$%' then
+      raise exception 'B8 LIVE-002: strict UUIDv4 generation nonce / canonical filename contract lost in %', v_name;
+    end if;
+    if v_def not ilike '%p_object_path = public.report_card_document_object_path%'
+       and v_def not ilike '%p_object_path <> public.report_card_document_object_path%' then
+      raise exception 'B8 LIVE-002: authoritative path equality binding missing in %', v_name;
+    end if;
+  end loop;
+  -- Staff generation/download paths remain published-only + scope-bound.
+  select pg_get_functiondef('public.can_staff_download_report_card_document_object(text)'::regprocedure) into v_def;
+  if v_def not ilike '%has_staff_scope_permission%report_card.download%' then
+    raise exception 'B8 LIVE-002: staff download scope binding missing';
+  end if;
+  select pg_get_functiondef('public.can_write_report_card_document_object(text)'::regprocedure) into v_def;
+  if v_def not ilike '%status = ''published''%' or v_def not ilike '%has_staff_scope_permission%report_card.download%' then
+    raise exception 'B8 LIVE-002: staff write published/scope binding missing';
+  end if;
+
   if exists (
     select 1 from public.generated_documents
     where entity_type='report_card' and document_type='report_card_pdf'

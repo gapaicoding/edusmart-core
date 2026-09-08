@@ -323,3 +323,162 @@ has_staff_scope_permission('report_card.download'`;
     false,
   );
 });
+
+// --------------------------------------------------------------------------
+// B8-LIVE-002: canonical tenant document-path compatibility
+// --------------------------------------------------------------------------
+
+// Regression fixtures ONLY (not runtime logic): real Development tenant /
+// report-card identifiers whose UUID version + variant nibbles are NOT RFC
+// 4122 version 1-5 / variant [89ab] values, plus a trusted UUIDv4 nonce.
+const LIVE_002 = {
+  organizationId: "a08b610f-9619-ad04-2d76-712dd0d7a537",
+  schoolId: "8404d1b7-28be-a36a-9f84-c07d95d37527",
+  reportCardV2Id: "9fa196ef-3eba-48cf-b890-2e69c24c8943",
+  generationV4: "55555555-5555-4555-8555-555555555555",
+};
+
+// Mirror of the corrected SQL structural pre-filter in
+// 20260908190000_b8_reporting_document_path_uuid_compatibility.sql.
+const CANONICAL_DOCUMENT_PATH =
+  /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}\/[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}\/report-cards\/[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}\/v[1-9][0-9]*\/[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}\/report-card\.pdf$/;
+
+const live002Path = (o) => {
+  const p = {
+    org: LIVE_002.organizationId,
+    school: LIVE_002.schoolId,
+    rc: LIVE_002.reportCardV2Id,
+    v: "v2",
+    gen: LIVE_002.generationV4,
+    file: "report-card.pdf",
+    ...o,
+  };
+  return `${p.org}/${p.school}/report-cards/${p.rc}/${p.v}/${p.gen}/${p.file}`;
+};
+
+describe("B8-LIVE-002 canonical tenant document path contract", () => {
+  test("accepts valid PostgreSQL UUID tenant/report-card ids without RFC-version bits", () => {
+    expect(CANONICAL_DOCUMENT_PATH.test(live002Path())).toBe(true);
+    expect(LIVE_002.organizationId[14]).toBe("a");
+    expect(LIVE_002.schoolId[14]).toBe("a");
+  });
+
+  test("keeps the strict UUIDv4 contract for the trusted generation nonce", () => {
+    expect(
+      CANONICAL_DOCUMENT_PATH.test(live002Path({ gen: "55555555-5555-1555-8555-555555555555" })),
+    ).toBe(false);
+    expect(
+      CANONICAL_DOCUMENT_PATH.test(live002Path({ gen: "55555555-5555-4555-7555-555555555555" })),
+    ).toBe(false);
+    expect(CANONICAL_DOCUMENT_PATH.test(live002Path({ gen: "not-a-uuid" }))).toBe(false);
+  });
+
+  test("still rejects tampered tenant / card / version / filename / structure", () => {
+    expect(CANONICAL_DOCUMENT_PATH.test(live002Path({ org: "not-a-uuid" }))).toBe(false);
+    expect(CANONICAL_DOCUMENT_PATH.test(live002Path({ school: "8404d1b7-28be-a36a-9f84" }))).toBe(
+      false,
+    );
+    expect(CANONICAL_DOCUMENT_PATH.test(live002Path({ rc: "" }))).toBe(false);
+    expect(CANONICAL_DOCUMENT_PATH.test(live002Path({ v: "v0" }))).toBe(false);
+    expect(CANONICAL_DOCUMENT_PATH.test(live002Path({ v: "vx" }))).toBe(false);
+    expect(CANONICAL_DOCUMENT_PATH.test(live002Path({ file: "summary.pdf" }))).toBe(false);
+    expect(CANONICAL_DOCUMENT_PATH.test(live002Path({ file: "report-card.PDF" }))).toBe(false);
+    expect(CANONICAL_DOCUMENT_PATH.test(live002Path() + "/extra")).toBe(false);
+    expect(
+      CANONICAL_DOCUMENT_PATH.test(live002Path().replace("/report-cards/", "/report-cards/../")),
+    ).toBe(false);
+    expect(
+      CANONICAL_DOCUMENT_PATH.test(live002Path().replace(`/${LIVE_002.schoolId}`, "")),
+    ).toBe(false);
+    expect(CANONICAL_DOCUMENT_PATH.test(live002Path().toUpperCase())).toBe(false);
+  });
+
+  test("server path builder already agrees with the corrected canonical contract", () => {
+    const built = reportCardObjectPath({
+      organizationId: LIVE_002.organizationId,
+      schoolId: LIVE_002.schoolId,
+      reportCardId: LIVE_002.reportCardV2Id,
+      version: 2,
+      generationId: LIVE_002.generationV4,
+    });
+    expect(CANONICAL_DOCUMENT_PATH.test(built)).toBe(true);
+    expect(
+      isExactReportCardDocument({
+        reportCardId: LIVE_002.reportCardV2Id,
+        organizationId: LIVE_002.organizationId,
+        schoolId: LIVE_002.schoolId,
+        version: 2,
+        entityId: LIVE_002.reportCardV2Id,
+        entityType: "report_card",
+        documentType: "report_card_pdf",
+        bucket: "report-cards",
+        objectPath: built,
+      }),
+    ).toBe(true);
+  });
+});
+
+test("B8-LIVE-002 forward migration replaces path helpers without weakening authority", async () => {
+  const sql = await readFile(
+    new URL(
+      "../../supabase/migrations/20260908190000_b8_reporting_document_path_uuid_compatibility.sql",
+      import.meta.url,
+    ),
+    "utf8",
+  );
+  expect(sql).not.toMatch(/drop\s+(function|policy|table)/i);
+  expect(sql).not.toMatch(/alter\s+table|create\s+table|create\s+policy/i);
+  for (const fn of [
+    "public.can_write_report_card_document_object(p_object_path text)",
+    "public.can_staff_download_report_card_document_object(p_object_path text)",
+    "public.can_read_report_card_document_object(p_object_path text)",
+    "public.register_report_card_document(",
+  ])
+    expect(sql).toContain(`create or replace function ${fn}`);
+  expect(sql).toContain(
+    "[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}/[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}/report-cards/",
+  );
+  expect(sql).toContain("4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}/report-card\\.pdf$");
+  expect(sql).not.toContain("[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab]");
+  expect(sql).toContain("p_object_path = public.report_card_document_object_path(rc.id");
+  expect(sql).toContain("rc.status = 'published'");
+  expect(sql).toContain("has_staff_scope_permission('report_card.download'");
+  expect(sql).toContain("verify_report_card_document_attestation(");
+  expect(sql).toContain(
+    "revoke all on function public.register_report_card_document(uuid,text,bigint,text,bigint,text) from public, anon, authenticated, service_role",
+  );
+  expect(sql).not.toMatch(/grant execute[^;]+service_role/i);
+  expect(sql).not.toMatch(/grant execute[^;]+ anon\b/i);
+  expect(sql).not.toContain(
+    "grant execute on function public.report_card_document_object_path(uuid,uuid) to authenticated",
+  );
+  for (const g of [
+    "public.can_write_report_card_document_object(text) to authenticated",
+    "public.can_staff_download_report_card_document_object(text) to authenticated",
+    "public.can_read_report_card_document_object(text) to authenticated",
+    "public.register_report_card_document(uuid,text,bigint,text,bigint,text) to authenticated",
+  ])
+    expect(sql).toContain(`grant execute on function ${g}`);
+});
+
+test("B8-LIVE-002 validator detects regression to the over-strict tenant UUID regex", async () => {
+  const validator = await readFile(
+    new URL("../../supabase/validation/validate_b8_reporting_documents.sql", import.meta.url),
+    "utf8",
+  );
+  expect(validator).toContain("B8 LIVE-002 regression");
+  expect(validator).toContain("[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}/");
+  expect(validator).toContain(
+    "/v[1-9][0-9]*/[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}/report-card\\.pdf$",
+  );
+  expect(validator).toContain("register_report_card_document(uuid,text,bigint,text,bigint,text)");
+});
+
+test("applied B8 migrations are byte-for-byte unchanged on this branch", async () => {
+  const { execSync } = await import("node:child_process");
+  const out = execSync(
+    'git diff --stat a887d3427199a21f3197d37b810ca8f8c7045c77 -- "supabase/migrations/20260907160000_b8_reporting_integrity.sql" "supabase/migrations/20260907200000_b8_reporting_documents.sql"',
+    { cwd: fileURLToPath(new URL("../../", import.meta.url)), encoding: "utf8" },
+  );
+  expect(out.trim()).toBe("");
+});
