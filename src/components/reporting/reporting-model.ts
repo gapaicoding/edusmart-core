@@ -36,6 +36,18 @@ export function reportActions(status: string, permissions: readonly string[]) {
   );
 }
 
+export function canGenerateReportCard(permissions: readonly string[]) {
+  return permissions.includes("report_card.generate");
+}
+
+export function eligibleTermsForEnrollment<T extends { id: string; academicYearId: string }>(
+  terms: readonly T[],
+  enrollmentAcademicYearId: string | null | undefined,
+) {
+  if (!enrollmentAcademicYearId) return [] as T[];
+  return terms.filter((t) => t.academicYearId === enrollmentAcademicYearId);
+}
+
 export function displaySnapshotScore(score: number | null) {
   return score === null ? "No published result" : String(score);
 }

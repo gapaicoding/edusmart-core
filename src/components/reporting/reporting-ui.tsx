@@ -7,10 +7,20 @@ import {
   Archive,
   BookOpenCheck,
   History,
+  Plus,
   RefreshCw,
   Send,
   ShieldCheck,
 } from "lucide-react";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog";
 import { toast } from "sonner";
 
 import { AppShell } from "@/components/app-shell";
@@ -44,8 +54,10 @@ import { useAppContext } from "@/lib/app-context";
 import {
   createReportCardRevision,
   deleteReportNarrative,
+  findExistingReportCard,
   generateReportCardDraft,
   getReportCard,
+  listReportCardGenerationCandidates,
   listReportCards,
   publishReportCardVersion,
   saveReportNarrative,
@@ -79,9 +91,210 @@ export function ReportCardStatusBadge({ status }: { status: string }) {
   return <Badge variant={variant}>{REPORT_STATUS_LABELS[status] ?? status}</Badge>;
 }
 
+export function GenerateReportCardDialog({
+  schoolId,
+  terms,
+  defaultAcademicYearId,
+  defaultTermId,
+}: {
+  schoolId: string;
+  terms: readonly { id: string; name: string; academicYearId: string }[];
+  defaultAcademicYearId?: string | null;
+  defaultTermId?: string | null;
+}) {
+  const [open, setOpen] = useState(false);
+  const [search, setSearch] = useState("");
+  const [enrollmentId, setEnrollmentId] = useState<string | null>(null);
+  const [termId, setTermId] = useState<string | null>(defaultTermId ?? null);
+  const navigate = useNavigate();
+  const queryClient = useQueryClient();
+  const candidatesFn = useServerFn(listReportCardGenerationCandidates);
+  const generateFn = useServerFn(generateReportCardDraft);
+  const findFn = useServerFn(findExistingReportCard);
+  const candidates = useQuery({
+    queryKey: ["report-card-candidates", schoolId, defaultAcademicYearId, search],
+    queryFn: () =>
+      candidatesFn({
+        data: {
+          schoolId,
+          academicYearId: defaultAcademicYearId ?? undefined,
+          search: search || undefined,
+        },
+      }),
+    enabled: open,
+  });
+  const selected =
+    candidates.data?.rows.find((r) => r.studentEnrollmentId === enrollmentId) ?? null;
+  const eligibleTerms = selected
+    ? terms.filter((t) => t.academicYearId === selected.academicYearId)
+    : [];
+  useEffect(() => {
+    if (!selected) return;
+    if (termId && eligibleTerms.some((t) => t.id === termId)) return;
+    setTermId(
+      defaultTermId && eligibleTerms.some((t) => t.id === defaultTermId)
+        ? defaultTermId
+        : (eligibleTerms[0]?.id ?? null),
+    );
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [selected?.studentEnrollmentId]);
+  const reset = () => {
+    setSearch("");
+    setEnrollmentId(null);
+    setTermId(defaultTermId ?? null);
+  };
+  const generate = useMutation({
+    mutationFn: async () => {
+      if (!enrollmentId || !termId) throw new Error("Select a student and a term.");
+      if (!eligibleTerms.some((t) => t.id === termId))
+        throw new Error("Selected term is not part of this enrollment's academic year.");
+      return generateFn({ data: { studentEnrollmentId: enrollmentId, termId } });
+    },
+    onSuccess: async (result) => {
+      await queryClient.invalidateQueries({ queryKey: ["report-cards"] });
+      toast.success("Report card draft created.");
+      setOpen(false);
+      reset();
+      navigate({ to: "/report-cards/$id", params: { id: result.id } });
+    },
+    onError: async (error) => {
+      const message = formatReportingMutationError(error);
+      if (/already exists/i.test(message) && enrollmentId && termId) {
+        try {
+          const existing = await findFn({
+            data: { studentEnrollmentId: enrollmentId, termId },
+          });
+          if (existing.card) {
+            toast.info("A report card already exists for this student and term. Opening it.");
+            setOpen(false);
+            reset();
+            navigate({ to: "/report-cards/$id", params: { id: existing.card.id } });
+            return;
+          }
+        } catch {
+          /* fall through to toast */
+        }
+      }
+      toast.error(message);
+    },
+  });
+  return (
+    <Dialog
+      open={open}
+      onOpenChange={(next) => {
+        setOpen(next);
+        if (!next) reset();
+      }}
+    >
+      <DialogTrigger asChild>
+        <Button data-testid="generate-report-card-trigger">
+          <Plus className="mr-2 h-4 w-4" />
+          Generate Report Card
+        </Button>
+      </DialogTrigger>
+      <DialogContent>
+        <DialogHeader>
+          <DialogTitle>Generate Report Card</DialogTitle>
+          <DialogDescription>
+            Create the first Report Card draft for an eligible student enrollment and term.
+          </DialogDescription>
+        </DialogHeader>
+        <div className="space-y-4">
+          <div className="space-y-2">
+            <Label>Search student</Label>
+            <Input
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+              placeholder="Search by student name"
+              aria-label="Search candidate students"
+            />
+          </div>
+          <div className="space-y-2">
+            <Label>Student enrollment</Label>
+            {candidates.isLoading ? (
+              <Skeleton className="h-10" />
+            ) : candidates.error ? (
+              <Alert variant="destructive">
+                <AlertTitle>Candidates could not be loaded</AlertTitle>
+                <AlertDescription>{(candidates.error as Error).message}</AlertDescription>
+              </Alert>
+            ) : !candidates.data?.rows.length ? (
+              <Alert>
+                <AlertTitle>No eligible student enrollments</AlertTitle>
+                <AlertDescription>
+                  No active enrollments in your authorized scope match this search.
+                </AlertDescription>
+              </Alert>
+            ) : (
+              <Select value={enrollmentId ?? ""} onValueChange={(v) => setEnrollmentId(v || null)}>
+                <SelectTrigger>
+                  <SelectValue placeholder="Select a student enrollment" />
+                </SelectTrigger>
+                <SelectContent>
+                  {candidates.data.rows.map((r) => (
+                    <SelectItem key={r.studentEnrollmentId} value={r.studentEnrollmentId}>
+                      {r.studentName} · {r.academicYearName}
+                      {r.gradeLevelName ? ` · ${r.gradeLevelName}` : ""}
+                      {r.classroomName ? ` / ${r.classroomName}` : ""}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            )}
+          </div>
+          <div className="space-y-2">
+            <Label>Term</Label>
+            <Select
+              value={termId ?? ""}
+              onValueChange={(v) => setTermId(v || null)}
+              disabled={!selected}
+            >
+              <SelectTrigger>
+                <SelectValue placeholder={selected ? "Select a term" : "Select a student first"} />
+              </SelectTrigger>
+              <SelectContent>
+                {eligibleTerms.map((t) => (
+                  <SelectItem key={t.id} value={t.id}>
+                    {t.name}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+            {selected && !eligibleTerms.length && (
+              <p className="text-xs text-muted-foreground">
+                No terms are configured for this enrollment's academic year.
+              </p>
+            )}
+          </div>
+        </div>
+        <DialogFooter>
+          <Button
+            variant="outline"
+            onClick={() => {
+              setOpen(false);
+              reset();
+            }}
+            disabled={generate.isPending}
+          >
+            Cancel
+          </Button>
+          <Button
+            data-testid="generate-report-card-submit"
+            disabled={!enrollmentId || !termId || generate.isPending}
+            onClick={() => generate.mutate()}
+          >
+            {generate.isPending ? "Generating…" : "Generate"}
+          </Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
+  );
+}
+
 export function ReportCardsPage() {
-  const { activeSchool, activeAcademicYear, activeTerm, terms } = useAppContext();
+  const { activeSchool, activeAcademicYear, activeTerm, terms, permissions } = useAppContext();
   const fn = useServerFn(listReportCards);
+  const canGenerate = permissions.includes("report_card.generate");
   const [search, setSearch] = useState("");
   const [status, setStatus] = useState("all");
   const [termId, setTermId] = useState(activeTerm?.id ?? "all");
@@ -105,12 +318,24 @@ export function ReportCardsPage() {
   return (
     <AppShell>
       <div className="mx-auto max-w-7xl space-y-5">
-        <header>
-          <p className="text-xs font-semibold uppercase tracking-[0.2em] text-primary">Reporting</p>
-          <h1 className="text-3xl font-semibold">Report Cards</h1>
-          <p className="text-sm text-muted-foreground">
-            Build and manage frozen academic snapshots through publication.
-          </p>
+        <header className="flex flex-col gap-3 md:flex-row md:items-end md:justify-between">
+          <div>
+            <p className="text-xs font-semibold uppercase tracking-[0.2em] text-primary">
+              Reporting
+            </p>
+            <h1 className="text-3xl font-semibold">Report Cards</h1>
+            <p className="text-sm text-muted-foreground">
+              Build and manage frozen academic snapshots through publication.
+            </p>
+          </div>
+          {canGenerate && activeSchool ? (
+            <GenerateReportCardDialog
+              schoolId={activeSchool.id}
+              terms={terms}
+              defaultAcademicYearId={activeAcademicYear?.id ?? null}
+              defaultTermId={activeTerm?.id ?? null}
+            />
+          ) : null}
         </header>
         <Card>
           <CardContent className="grid gap-3 p-4 md:grid-cols-3">
@@ -171,7 +396,17 @@ export function ReportCardsPage() {
         ) : !query.data?.rows.length ? (
           <Alert>
             <AlertTitle>No report cards found</AlertTitle>
-            <AlertDescription>No snapshots match the current school and filters.</AlertDescription>
+            <AlertDescription className="space-y-2">
+              <p>No snapshots match the current school and filters.</p>
+              {canGenerate && activeSchool ? (
+                <GenerateReportCardDialog
+                  schoolId={activeSchool.id}
+                  terms={terms}
+                  defaultAcademicYearId={activeAcademicYear?.id ?? null}
+                  defaultTermId={activeTerm?.id ?? null}
+                />
+              ) : null}
+            </AlertDescription>
           </Alert>
         ) : (
           <div className="grid gap-3">

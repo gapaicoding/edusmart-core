@@ -1,6 +1,8 @@
 import { describe, expect, test } from "bun:test";
 import {
+  canGenerateReportCard,
   displaySnapshotScore,
+  eligibleTermsForEnrollment,
   formatReportingMutationError,
   orderReportHistory,
   reportActions,
@@ -48,6 +50,23 @@ describe("report card UI model", () => {
     expect(
       formatReportingMutationError(new Error("This report card changed. Refresh and retry.")),
     ).toContain("another session");
+  });
+
+  test("generation entry point is gated on report_card.generate permission", () => {
+    expect(canGenerateReportCard(["report_card.generate"])).toBe(true);
+    expect(canGenerateReportCard(["report_card.read"])).toBe(false);
+    expect(canGenerateReportCard([])).toBe(false);
+  });
+
+  test("term picker exposes only terms in the enrollment's academic year", () => {
+    const terms = [
+      { id: "t1", academicYearId: "y1" },
+      { id: "t2", academicYearId: "y1" },
+      { id: "t3", academicYearId: "y2" },
+    ];
+    expect(eligibleTermsForEnrollment(terms, "y1").map((t) => t.id)).toEqual(["t1", "t2"]);
+    expect(eligibleTermsForEnrollment(terms, "y2").map((t) => t.id)).toEqual(["t3"]);
+    expect(eligibleTermsForEnrollment(terms, null)).toEqual([]);
   });
 
   test("attendance view model exposes only canonical safe counts", () => {

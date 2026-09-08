@@ -6,6 +6,8 @@ import {
   reportCardIdInput,
   reportCardListInput,
   generateReportCardInput,
+  listReportCardGenerationCandidatesInput,
+  findExistingReportCardInput,
   transitionReportCardInput,
   reportCardMutationInput,
   updateHomeroomCommentInput,
@@ -206,6 +208,84 @@ export const getReportCard = createServerFn({ method: "GET" })
       },
       history: history.data ?? [],
     };
+  });
+
+export const listReportCardGenerationCandidates = createServerFn({ method: "GET" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((x: unknown) => listReportCardGenerationCandidatesInput.parse(x))
+  .handler(async ({ data, context }) => {
+    let enrollmentQuery = context.supabase
+      .from("student_enrollments")
+      .select("id,student_id,academic_year_id,grade_level_id,school_id,status")
+      .eq("school_id", data.schoolId)
+      .eq("status", "active");
+    if (data.academicYearId)
+      enrollmentQuery = enrollmentQuery.eq("academic_year_id", data.academicYearId);
+    const { data: enrollments, error } = await enrollmentQuery.order("enrolled_on", {
+      ascending: false,
+    });
+    fail(error, "load generation candidates");
+    const rows = enrollments ?? [];
+    if (!rows.length) return { rows: [] };
+    const studentIds = [...new Set(rows.map((r) => r.student_id))];
+    const yearIds = [...new Set(rows.map((r) => r.academic_year_id))];
+    const gradeIds = [...new Set(rows.map((r) => r.grade_level_id).filter(Boolean))];
+    const enrollmentIds = rows.map((r) => r.id);
+    const [students, years, grades, classEnrollments] = await Promise.all([
+      context.supabase.from("students").select("id,full_name").in("id", studentIds),
+      context.supabase.from("academic_years").select("id,name").in("id", yearIds),
+      gradeIds.length
+        ? context.supabase.from("grade_levels").select("id,name").in("id", gradeIds)
+        : Promise.resolve({ data: [], error: null }),
+      context.supabase
+        .from("class_enrollments")
+        .select("student_enrollment_id,classroom_id")
+        .in("student_enrollment_id", enrollmentIds)
+        .eq("is_primary", true),
+    ]);
+    for (const result of [students, years, grades, classEnrollments])
+      fail(result.error, "load candidate context");
+    const classroomIds = [...new Set((classEnrollments.data ?? []).map((x) => x.classroom_id))];
+    const classrooms = classroomIds.length
+      ? await context.supabase.from("classrooms").select("id,name").in("id", classroomIds)
+      : { data: [], error: null };
+    fail(classrooms.error, "load classrooms");
+    const sm = new Map((students.data ?? []).map((x) => [x.id, x.full_name]));
+    const ym = new Map((years.data ?? []).map((x) => [x.id, x.name]));
+    const gm = new Map((grades.data ?? []).map((x) => [x.id, x.name]));
+    const cem = new Map(
+      (classEnrollments.data ?? []).map((x) => [x.student_enrollment_id, x.classroom_id]),
+    );
+    const cm = new Map((classrooms.data ?? []).map((x) => [x.id, x.name]));
+    const search = data.search?.toLowerCase();
+    return {
+      rows: rows
+        .map((r) => ({
+          studentEnrollmentId: r.id,
+          studentId: r.student_id,
+          studentName: sm.get(r.student_id) ?? "Student",
+          academicYearId: r.academic_year_id,
+          academicYearName: ym.get(r.academic_year_id) ?? "Academic year",
+          gradeLevelName: gm.get(r.grade_level_id ?? "") ?? null,
+          classroomName: cm.get(cem.get(r.id) ?? "") ?? null,
+        }))
+        .filter((r) => !search || r.studentName.toLowerCase().includes(search)),
+    };
+  });
+
+export const findExistingReportCard = createServerFn({ method: "GET" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((x: unknown) => findExistingReportCardInput.parse(x))
+  .handler(async ({ data, context }) => {
+    const { data: rows, error } = await context.supabase
+      .from("report_cards")
+      .select("id,version,status")
+      .eq("student_enrollment_id", data.studentEnrollmentId)
+      .eq("term_id", data.termId)
+      .order("version", { ascending: false })
+      .limit(1);
+    fail(error, "look up existing report card");
+    return { card: (rows ?? [])[0] ?? null };
   });
 
 export const generateReportCardDraft = createServerFn({ method: "POST" })

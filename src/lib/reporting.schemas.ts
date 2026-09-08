@@ -30,6 +30,15 @@ export const generateReportCardInput = z.object({
   termId: uuid,
   expectedUpdatedAt: timestamp.optional(),
 });
+export const listReportCardGenerationCandidatesInput = z.object({
+  schoolId: uuid,
+  academicYearId: uuid.optional(),
+  search: z.string().trim().max(120).optional(),
+});
+export const findExistingReportCardInput = z.object({
+  studentEnrollmentId: uuid,
+  termId: uuid,
+});
 export const reportCardMutationInput = z.object({
   reportCardId: uuid,
   expectedUpdatedAt: timestamp,
