@@ -168,7 +168,10 @@ begin
     or position('split_part(p_object_path, ''/'', 6)::uuid' in v_def) = 0
     or position('p_object_path = public.report_card_document_object_path' in v_def) = 0
     or position('status = ''published''' in v_def) = 0
-    or position('has_staff_scope_permission(''report_card.download''' in v_def) = 0
+    or position(
+      'has_staff_scope_permission(''report_card.download'''
+      in regexp_replace(v_def, '\s+', '', 'g')
+    ) = 0
     -- regression marker retained for source-level test readability:
     -- has_staff_scope_permission%report_card.download
   then
@@ -434,7 +437,10 @@ begin
   if position('p_expected_file_asset_id' in v_def) = 0
     or position('for update' in lower(v_def)) = 0
     or position('status <> ''published''' in v_def) = 0
-    or position('has_staff_scope_permission(''report_card.download''' in v_def) = 0
+    or position(
+      'has_staff_scope_permission(''report_card.download'''
+      in regexp_replace(v_def, '\s+', '', 'g')
+    ) = 0
     or position('public.can_write_report_card_document_object' in v_def) = 0
     or position('delete from public.generated_documents' in lower(v_def)) = 0
     or position('delete from public.file_assets' in lower(v_def)) = 0
