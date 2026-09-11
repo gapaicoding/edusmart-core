@@ -69,6 +69,7 @@ import {
   generateReportCardDocument,
   getReportCardDocumentStatus,
   getReportCardDownload,
+  regenerateReportCardDocument,
 } from "@/lib/reporting.documents.functions";
 import {
   displaySnapshotScore,
@@ -847,6 +848,7 @@ function ReportCardDocumentSection({
 }) {
   const statusFn = useServerFn(getReportCardDocumentStatus);
   const generateFn = useServerFn(generateReportCardDocument);
+  const regenerateFn = useServerFn(regenerateReportCardDocument);
   const downloadFn = useServerFn(getReportCardDownload);
   const queryClient = useQueryClient();
   const query = useQuery({
@@ -862,6 +864,19 @@ function ReportCardDocumentSection({
     },
     onError: (error) =>
       toast.error(error instanceof Error ? error.message : "PDF generation failed."),
+  });
+  const regenerate = useMutation({
+    mutationFn: () => regenerateFn({ data: { reportCardId } }),
+    onSuccess: async (result) => {
+      if (result.cleanupPending)
+        toast.warning(
+          "Official PDF regenerated. The previous non-authoritative Storage object still needs orphan cleanup.",
+        );
+      else toast.success("Official PDF regenerated.");
+      await queryClient.invalidateQueries({ queryKey: ["report-card-document", reportCardId] });
+    },
+    onError: (error) =>
+      toast.error(error instanceof Error ? error.message : "PDF regeneration failed."),
   });
   const download = useMutation({
     mutationFn: () => downloadFn({ data: { reportCardId } }),
@@ -909,15 +924,53 @@ function ReportCardDocumentSection({
                 </p>
               </div>
               <div className="flex flex-wrap gap-2">
+                {status === "published" && query.data.state === "available" && (
+                  <AlertDialog>
+                    <AlertDialogTrigger asChild>
+                      <Button
+                        variant="outline"
+                        disabled={regenerate.isPending || download.isPending}
+                      >
+                        <RefreshCw className="mr-2 h-4 w-4" />
+                        {regenerate.isPending ? "Regenerating…" : "Regenerate PDF"}
+                      </Button>
+                    </AlertDialogTrigger>
+                    <AlertDialogContent>
+                      <AlertDialogHeader>
+                        <AlertDialogTitle>Regenerate official PDF?</AlertDialogTitle>
+                        <AlertDialogDescription>
+                          This rebuilds the PDF from the same immutable published Report Card
+                          snapshot. The Report Card version does not change. The replacement is
+                          uploaded to a new private object path and becomes authoritative only after
+                          the server attestation is verified.
+                        </AlertDialogDescription>
+                      </AlertDialogHeader>
+                      <AlertDialogFooter>
+                        <AlertDialogCancel disabled={regenerate.isPending}>
+                          Cancel
+                        </AlertDialogCancel>
+                        <AlertDialogAction
+                          disabled={regenerate.isPending}
+                          onClick={() => regenerate.mutate()}
+                        >
+                          Regenerate official PDF
+                        </AlertDialogAction>
+                      </AlertDialogFooter>
+                    </AlertDialogContent>
+                  </AlertDialog>
+                )}
                 {query.data.state === "available" && (
-                  <Button disabled={download.isPending} onClick={() => download.mutate()}>
+                  <Button
+                    disabled={download.isPending || regenerate.isPending}
+                    onClick={() => download.mutate()}
+                  >
                     Download PDF
                   </Button>
                 )}
                 {status === "published" && query.data.state !== "available" && (
                   <Button disabled={generate.isPending} onClick={() => generate.mutate()}>
                     {generate.isPending
-                      ? "Generatingâ€¦"
+                      ? "Generating…"
                       : query.data.state === "failed"
                         ? "Retry Generation"
                         : "Generate PDF"}
