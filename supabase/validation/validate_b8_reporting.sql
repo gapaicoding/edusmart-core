@@ -1,5 +1,8 @@
 do $$
-declare v_count integer;
+declare
+  v_count integer;
+  v_qa_v1 public.report_cards%rowtype;
+  v_qa_v2 public.report_cards%rowtype;
 begin
   select count(*) into v_count from pg_class c join pg_namespace n on n.oid=c.relnamespace where n.nspname='public' and c.relname in ('report_cards','report_card_subject_entries','report_card_narratives');
   if v_count<>3 then raise exception 'B8 reporting tables missing'; end if;
@@ -8,7 +11,21 @@ begin
   if exists(select 1 from public.report_cards where status in ('draft','submitted','reviewed') group by student_enrollment_id,term_id having count(*)>1) then raise exception 'Duplicate working versions'; end if;
   if exists(select 1 from public.report_cards where status='published' group by student_enrollment_id,term_id having count(*)>1) then raise exception 'Duplicate published versions'; end if;
   if exists(select 1 from public.report_cards rc join public.student_enrollments se on se.id=rc.student_enrollment_id join public.terms t on t.id=rc.term_id where (rc.organization_id,rc.school_id,rc.academic_year_id) is distinct from (se.organization_id,se.school_id,se.academic_year_id) or (rc.organization_id,rc.school_id,rc.academic_year_id) is distinct from (t.organization_id,t.school_id,t.academic_year_id)) then raise exception 'ReportCard context mismatch'; end if;
-  if (select count(*) from public.report_cards)<>36 then raise exception 'Expected 36 existing ReportCards'; end if;
+  if exists(select 1 from public.report_cards where version < 1 or status::text not in ('draft','submitted','reviewed','published','revised')) then raise exception 'Invalid ReportCard lifecycle structure'; end if;
+
+  select * into strict v_qa_v1
+  from public.report_cards
+  where id='8c834555-e06c-451b-b4b2-e9ccbde0eab6'::uuid
+    and student_enrollment_id='b086747d-af34-483d-b795-3d9bfa944f08'::uuid;
+  if v_qa_v1.version<>1 or v_qa_v1.status<>'revised' then raise exception 'QA ReportCard v1 lifecycle mismatch'; end if;
+
+  select * into strict v_qa_v2
+  from public.report_cards
+  where id='9fa196ef-3eba-48cf-b890-2e69c24c8943'::uuid
+    and student_enrollment_id='b086747d-af34-483d-b795-3d9bfa944f08'::uuid;
+  if v_qa_v2.version<>2 or v_qa_v2.status<>'published' then raise exception 'QA ReportCard v2 lifecycle mismatch'; end if;
+  if (v_qa_v1.student_enrollment_id,v_qa_v1.term_id) is distinct from (v_qa_v2.student_enrollment_id,v_qa_v2.term_id) then raise exception 'QA ReportCard version chain mismatch'; end if;
+  if exists(select 1 from public.report_cards where student_enrollment_id=v_qa_v2.student_enrollment_id and term_id=v_qa_v2.term_id and version>2) then raise exception 'Unexpected QA ReportCard v3'; end if;
 end $$;
 
 do $$

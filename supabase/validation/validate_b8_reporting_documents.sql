@@ -157,7 +157,7 @@ begin
     if v_def not like '%[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}/[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}/report-cards/%' then
       raise exception 'B8 LIVE-002: canonical PostgreSQL UUID tenant path not accepted by %', v_name;
     end if;
-    if v_def not like '%/v[1-9][0-9]*/[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}/report-card\.pdf$%' then
+    if position('/v[1-9][0-9]*/[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}/report-card\.pdf$' in v_def) = 0 then
       raise exception 'B8 LIVE-002: strict UUIDv4 generation nonce / canonical filename contract lost in %', v_name;
     end if;
     if v_def not ilike '%p_object_path = public.report_card_document_object_path%'
