@@ -28,6 +28,7 @@ Runtime variables are configured in Coolify:
 - `SUPABASE_URL`
 - `SUPABASE_PUBLISHABLE_KEY`
 - `SUPABASE_SERVICE_ROLE_KEY`
+- `REPORT_CARD_DOCUMENT_ATTESTATION_SECRET`
 - `HOST`
 - `PORT`
 - `NODE_ENV`
@@ -36,6 +37,13 @@ Runtime variables are configured in Coolify:
 a `VITE_` prefix, use it as a Docker build argument, bake it into an image, or
 commit it. Coolify must hold all real environment bindings. The repository's
 `.env.example` contains names and safe fixed process settings only.
+
+`REPORT_CARD_DOCUMENT_ATTESTATION_SECRET` is a separate server-only HMAC key for
+authoritative Report Card PDF registration. Configure the identical value in
+Supabase Vault under the name `b8_report_card_document_attestation_hmac` before
+applying the Batch 8 document migration. Use at least 32 random bytes. Never
+give this value a `VITE_` prefix, expose it to browser code, place it in build
+arguments, log it, or commit it.
 
 `SUPABASE_PROJECT_ID` and `VITE_SUPABASE_PROJECT_ID` are intentionally omitted:
 the application does not read them.

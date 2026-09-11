@@ -12,6 +12,7 @@ import {
   portalScheduleInput,
   portalScoresInput,
 } from "./portal.schemas";
+import { portalReportCardInput, portalReportCardsInput } from "./reporting.schemas";
 
 /**
  * Batch 7 — Parent Portal server functions.
@@ -38,6 +39,138 @@ export type PortalChild = {
   canViewAcademic: boolean;
   canViewAttendance: boolean;
 };
+
+export type PortalReportCardSummary = {
+  id: string;
+  studentName: string;
+  academicYearName: string;
+  termName: string;
+  version: number;
+  publishedAt: string;
+};
+
+export const listPortalReportCards = createServerFn({ method: "GET" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((x: unknown) => portalReportCardsInput.parse(x))
+  .handler(async ({ data, context }): Promise<{ rows: PortalReportCardSummary[] }> => {
+    const relationship = await getPortalSubjectRelationship(
+      context.supabase,
+      context.userId,
+      data.studentId,
+    );
+    if (!relationship || !relationship.can_view_academic) return { rows: [] };
+    const enrollments = await context.supabase
+      .from("student_enrollments")
+      .select("id")
+      .eq("student_id", data.studentId);
+    if (enrollments.error) throw new Error(translatePortalError(enrollments.error, "report cards"));
+    const enrollmentIds = (enrollments.data ?? []).map((row) => row.id);
+    if (!enrollmentIds.length) return { rows: [] };
+    const cards = await context.supabase
+      .from("report_cards")
+      .select("id,academic_year_id,term_id,version,published_at,status")
+      .in("student_enrollment_id", enrollmentIds)
+      .eq("status", "published")
+      .not("published_at", "is", null)
+      .order("published_at", { ascending: false });
+    if (cards.error) throw new Error(translatePortalError(cards.error, "report cards"));
+    const yearIds = [...new Set((cards.data ?? []).map((row) => row.academic_year_id))];
+    const termIds = [...new Set((cards.data ?? []).map((row) => row.term_id))];
+    const [years, terms] = await Promise.all([
+      yearIds.length
+        ? context.supabase.from("academic_years").select("id,name").in("id", yearIds)
+        : Promise.resolve({ data: [], error: null }),
+      termIds.length
+        ? context.supabase.from("terms").select("id,name").in("id", termIds)
+        : Promise.resolve({ data: [], error: null }),
+    ]);
+    if (years.error) throw new Error(translatePortalError(years.error, "academic years"));
+    if (terms.error) throw new Error(translatePortalError(terms.error, "terms"));
+    const yearMap = new Map((years.data ?? []).map((row) => [row.id, row.name]));
+    const termMap = new Map((terms.data ?? []).map((row) => [row.id, row.name]));
+    return {
+      rows: (cards.data ?? []).map((row) => ({
+        id: row.id,
+        studentName: relationship.students?.full_name ?? "Student",
+        academicYearName: yearMap.get(row.academic_year_id) ?? "Academic year",
+        termName: termMap.get(row.term_id) ?? "Term",
+        version: row.version,
+        publishedAt: row.published_at!,
+      })),
+    };
+  });
+
+export const getPortalReportCard = createServerFn({ method: "GET" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((x: unknown) => portalReportCardInput.parse(x))
+  .handler(async ({ data, context }) => {
+    const relationship = await getPortalSubjectRelationship(
+      context.supabase,
+      context.userId,
+      data.studentId,
+    );
+    if (!relationship || !relationship.can_view_academic) return null;
+    const card = await context.supabase
+      .from("report_cards")
+      .select(
+        "id,school_id,academic_year_id,term_id,student_enrollment_id,version,status,published_at,homeroom_comment,attendance_summary",
+      )
+      .eq("id", data.reportCardId)
+      .eq("status", "published")
+      .maybeSingle();
+    if (card.error) throw new Error(translatePortalError(card.error, "report card"));
+    if (!card.data) return null;
+    const enrollment = await context.supabase
+      .from("student_enrollments")
+      .select("student_id")
+      .eq("id", card.data.student_enrollment_id)
+      .eq("student_id", data.studentId)
+      .maybeSingle();
+    if (enrollment.error)
+      throw new Error(translatePortalError(enrollment.error, "report card enrollment"));
+    if (!enrollment.data) return null;
+    const [entries, narratives, school, year, term] = await Promise.all([
+      context.supabase
+        .from("report_card_subject_entries")
+        .select("id,subject_id,final_score,predicate,narrative")
+        .eq("report_card_id", card.data.id),
+      context.supabase
+        .from("report_card_narratives")
+        .select("id,section_code,title,content,sequence")
+        .eq("report_card_id", card.data.id)
+        .order("sequence"),
+      context.supabase.from("schools").select("name").eq("id", card.data.school_id).maybeSingle(),
+      context.supabase
+        .from("academic_years")
+        .select("name")
+        .eq("id", card.data.academic_year_id)
+        .maybeSingle(),
+      context.supabase.from("terms").select("name").eq("id", card.data.term_id).maybeSingle(),
+    ]);
+    for (const result of [entries, narratives, school, year, term])
+      if (result.error) throw new Error(translatePortalError(result.error, "report card details"));
+    const subjectIds = [...new Set((entries.data ?? []).map((row) => row.subject_id))];
+    const subjects = subjectIds.length
+      ? await context.supabase.from("subjects").select("id,name").in("id", subjectIds)
+      : { data: [], error: null };
+    if (subjects.error)
+      throw new Error(translatePortalError(subjects.error, "report card subjects"));
+    const subjectMap = new Map((subjects.data ?? []).map((row) => [row.id, row.name]));
+    return {
+      card: {
+        ...card.data,
+        studentName: relationship.students?.full_name ?? "Student",
+        schoolName: school.data?.name ?? "School",
+        academicYearName: year.data?.name ?? "Academic year",
+        termName: term.data?.name ?? "Term",
+      },
+      entries: (entries.data ?? []).map((row) => ({
+        ...row,
+        subjectName: subjectMap.get(row.subject_id) ?? "Subject",
+      })),
+      narratives: narratives.data ?? [],
+    };
+  });
 
 export const listPortalChildren = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])

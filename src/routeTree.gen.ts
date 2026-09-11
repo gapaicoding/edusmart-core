@@ -34,8 +34,11 @@ import { Route as AuthenticatedGuardiansIndexRouteImport } from './routes/_authe
 import { Route as AuthenticatedGuardiansGuardianIdRouteImport } from './routes/_authenticated/guardians/$guardianId'
 import { Route as AuthenticatedPortalIndexRouteImport } from './routes/_authenticated/portal/index'
 import { Route as AuthenticatedPortalAttendanceRouteImport } from './routes/_authenticated/portal/attendance'
+import { Route as AuthenticatedPortalReportCardsRouteImport } from './routes/_authenticated/portal/report-cards'
 import { Route as AuthenticatedPortalScheduleRouteImport } from './routes/_authenticated/portal/schedule'
 import { Route as AuthenticatedPortalScoresRouteImport } from './routes/_authenticated/portal/scores'
+import { Route as AuthenticatedReportCardsIndexRouteImport } from './routes/_authenticated/report-cards/index'
+import { Route as AuthenticatedReportCardsIdRouteImport } from './routes/_authenticated/report-cards/$id'
 import { Route as AuthenticatedScheduleIndexRouteImport } from './routes/_authenticated/schedule/index'
 import { Route as AuthenticatedScheduleMyRouteImport } from './routes/_authenticated/schedule/my'
 import { Route as AuthenticatedStaffIndexRouteImport } from './routes/_authenticated/staff/index'
@@ -186,6 +189,12 @@ const AuthenticatedPortalAttendanceRoute =
     path: '/portal/attendance',
     getParentRoute: () => AuthenticatedRouteRoute,
   } as any)
+const AuthenticatedPortalReportCardsRoute =
+  AuthenticatedPortalReportCardsRouteImport.update({
+    id: '/portal/report-cards',
+    path: '/portal/report-cards',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
 const AuthenticatedPortalScheduleRoute =
   AuthenticatedPortalScheduleRouteImport.update({
     id: '/portal/schedule',
@@ -196,6 +205,18 @@ const AuthenticatedPortalScoresRoute =
   AuthenticatedPortalScoresRouteImport.update({
     id: '/portal/scores',
     path: '/portal/scores',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
+const AuthenticatedReportCardsIndexRoute =
+  AuthenticatedReportCardsIndexRouteImport.update({
+    id: '/report-cards/',
+    path: '/report-cards/',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
+const AuthenticatedReportCardsIdRoute =
+  AuthenticatedReportCardsIdRouteImport.update({
+    id: '/report-cards/$id',
+    path: '/report-cards/$id',
     getParentRoute: () => AuthenticatedRouteRoute,
   } as any)
 const AuthenticatedScheduleIndexRoute =
@@ -266,8 +287,10 @@ export interface FileRoutesByFullPath {
   '/assessments/$id': typeof AuthenticatedAssessmentsIdRoute
   '/guardians/$guardianId': typeof AuthenticatedGuardiansGuardianIdRoute
   '/portal/attendance': typeof AuthenticatedPortalAttendanceRoute
+  '/portal/report-cards': typeof AuthenticatedPortalReportCardsRoute
   '/portal/schedule': typeof AuthenticatedPortalScheduleRoute
   '/portal/scores': typeof AuthenticatedPortalScoresRoute
+  '/report-cards/$id': typeof AuthenticatedReportCardsIdRoute
   '/schedule/my': typeof AuthenticatedScheduleMyRoute
   '/staff/$staffId': typeof AuthenticatedStaffStaffIdRoute
   '/students/$studentId': typeof AuthenticatedStudentsStudentIdRoute
@@ -275,6 +298,7 @@ export interface FileRoutesByFullPath {
   '/attendance/': typeof AuthenticatedAttendanceIndexRoute
   '/guardians/': typeof AuthenticatedGuardiansIndexRoute
   '/portal/': typeof AuthenticatedPortalIndexRoute
+  '/report-cards/': typeof AuthenticatedReportCardsIndexRoute
   '/schedule/': typeof AuthenticatedScheduleIndexRoute
   '/staff/': typeof AuthenticatedStaffIndexRoute
   '/students/': typeof AuthenticatedStudentsIndexRoute
@@ -302,8 +326,10 @@ export interface FileRoutesByTo {
   '/assessments/$id': typeof AuthenticatedAssessmentsIdRoute
   '/guardians/$guardianId': typeof AuthenticatedGuardiansGuardianIdRoute
   '/portal/attendance': typeof AuthenticatedPortalAttendanceRoute
+  '/portal/report-cards': typeof AuthenticatedPortalReportCardsRoute
   '/portal/schedule': typeof AuthenticatedPortalScheduleRoute
   '/portal/scores': typeof AuthenticatedPortalScoresRoute
+  '/report-cards/$id': typeof AuthenticatedReportCardsIdRoute
   '/schedule/my': typeof AuthenticatedScheduleMyRoute
   '/staff/$staffId': typeof AuthenticatedStaffStaffIdRoute
   '/students/$studentId': typeof AuthenticatedStudentsStudentIdRoute
@@ -311,6 +337,7 @@ export interface FileRoutesByTo {
   '/attendance': typeof AuthenticatedAttendanceIndexRoute
   '/guardians': typeof AuthenticatedGuardiansIndexRoute
   '/portal': typeof AuthenticatedPortalIndexRoute
+  '/report-cards': typeof AuthenticatedReportCardsIndexRoute
   '/schedule': typeof AuthenticatedScheduleIndexRoute
   '/staff': typeof AuthenticatedStaffIndexRoute
   '/students': typeof AuthenticatedStudentsIndexRoute
@@ -340,8 +367,10 @@ export interface FileRoutesById {
   '/_authenticated/assessments/$id': typeof AuthenticatedAssessmentsIdRoute
   '/_authenticated/guardians/$guardianId': typeof AuthenticatedGuardiansGuardianIdRoute
   '/_authenticated/portal/attendance': typeof AuthenticatedPortalAttendanceRoute
+  '/_authenticated/portal/report-cards': typeof AuthenticatedPortalReportCardsRoute
   '/_authenticated/portal/schedule': typeof AuthenticatedPortalScheduleRoute
   '/_authenticated/portal/scores': typeof AuthenticatedPortalScoresRoute
+  '/_authenticated/report-cards/$id': typeof AuthenticatedReportCardsIdRoute
   '/_authenticated/schedule/my': typeof AuthenticatedScheduleMyRoute
   '/_authenticated/staff/$staffId': typeof AuthenticatedStaffStaffIdRoute
   '/_authenticated/students/$studentId': typeof AuthenticatedStudentsStudentIdRoute
@@ -349,6 +378,7 @@ export interface FileRoutesById {
   '/_authenticated/attendance/': typeof AuthenticatedAttendanceIndexRoute
   '/_authenticated/guardians/': typeof AuthenticatedGuardiansIndexRoute
   '/_authenticated/portal/': typeof AuthenticatedPortalIndexRoute
+  '/_authenticated/report-cards/': typeof AuthenticatedReportCardsIndexRoute
   '/_authenticated/schedule/': typeof AuthenticatedScheduleIndexRoute
   '/_authenticated/staff/': typeof AuthenticatedStaffIndexRoute
   '/_authenticated/students/': typeof AuthenticatedStudentsIndexRoute
@@ -378,8 +408,10 @@ export interface FileRouteTypes {
     | '/assessments/$id'
     | '/guardians/$guardianId'
     | '/portal/attendance'
+    | '/portal/report-cards'
     | '/portal/schedule'
     | '/portal/scores'
+    | '/report-cards/$id'
     | '/schedule/my'
     | '/staff/$staffId'
     | '/students/$studentId'
@@ -387,6 +419,7 @@ export interface FileRouteTypes {
     | '/attendance/'
     | '/guardians/'
     | '/portal/'
+    | '/report-cards/'
     | '/schedule/'
     | '/staff/'
     | '/students/'
@@ -414,8 +447,10 @@ export interface FileRouteTypes {
     | '/assessments/$id'
     | '/guardians/$guardianId'
     | '/portal/attendance'
+    | '/portal/report-cards'
     | '/portal/schedule'
     | '/portal/scores'
+    | '/report-cards/$id'
     | '/schedule/my'
     | '/staff/$staffId'
     | '/students/$studentId'
@@ -423,6 +458,7 @@ export interface FileRouteTypes {
     | '/attendance'
     | '/guardians'
     | '/portal'
+    | '/report-cards'
     | '/schedule'
     | '/staff'
     | '/students'
@@ -451,8 +487,10 @@ export interface FileRouteTypes {
     | '/_authenticated/assessments/$id'
     | '/_authenticated/guardians/$guardianId'
     | '/_authenticated/portal/attendance'
+    | '/_authenticated/portal/report-cards'
     | '/_authenticated/portal/schedule'
     | '/_authenticated/portal/scores'
+    | '/_authenticated/report-cards/$id'
     | '/_authenticated/schedule/my'
     | '/_authenticated/staff/$staffId'
     | '/_authenticated/students/$studentId'
@@ -460,6 +498,7 @@ export interface FileRouteTypes {
     | '/_authenticated/attendance/'
     | '/_authenticated/guardians/'
     | '/_authenticated/portal/'
+    | '/_authenticated/report-cards/'
     | '/_authenticated/schedule/'
     | '/_authenticated/staff/'
     | '/_authenticated/students/'
@@ -654,6 +693,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedPortalAttendanceRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+    '/_authenticated/portal/report-cards': {
+      id: '/_authenticated/portal/report-cards'
+      path: '/portal/report-cards'
+      fullPath: '/portal/report-cards'
+      preLoaderRoute: typeof AuthenticatedPortalReportCardsRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
     '/_authenticated/portal/schedule': {
       id: '/_authenticated/portal/schedule'
       path: '/portal/schedule'
@@ -666,6 +712,20 @@ declare module '@tanstack/react-router' {
       path: '/portal/scores'
       fullPath: '/portal/scores'
       preLoaderRoute: typeof AuthenticatedPortalScoresRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/report-cards/': {
+      id: '/_authenticated/report-cards/'
+      path: '/report-cards'
+      fullPath: '/report-cards/'
+      preLoaderRoute: typeof AuthenticatedReportCardsIndexRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/report-cards/$id': {
+      id: '/_authenticated/report-cards/$id'
+      path: '/report-cards/$id'
+      fullPath: '/report-cards/$id'
+      preLoaderRoute: typeof AuthenticatedReportCardsIdRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
     '/_authenticated/schedule/': {
@@ -742,8 +802,10 @@ interface AuthenticatedRouteRouteChildren {
   AuthenticatedAssessmentsIdRoute: typeof AuthenticatedAssessmentsIdRoute
   AuthenticatedGuardiansGuardianIdRoute: typeof AuthenticatedGuardiansGuardianIdRoute
   AuthenticatedPortalAttendanceRoute: typeof AuthenticatedPortalAttendanceRoute
+  AuthenticatedPortalReportCardsRoute: typeof AuthenticatedPortalReportCardsRoute
   AuthenticatedPortalScheduleRoute: typeof AuthenticatedPortalScheduleRoute
   AuthenticatedPortalScoresRoute: typeof AuthenticatedPortalScoresRoute
+  AuthenticatedReportCardsIdRoute: typeof AuthenticatedReportCardsIdRoute
   AuthenticatedScheduleMyRoute: typeof AuthenticatedScheduleMyRoute
   AuthenticatedStaffStaffIdRoute: typeof AuthenticatedStaffStaffIdRoute
   AuthenticatedStudentsStudentIdRoute: typeof AuthenticatedStudentsStudentIdRoute
@@ -751,6 +813,7 @@ interface AuthenticatedRouteRouteChildren {
   AuthenticatedAttendanceIndexRoute: typeof AuthenticatedAttendanceIndexRoute
   AuthenticatedGuardiansIndexRoute: typeof AuthenticatedGuardiansIndexRoute
   AuthenticatedPortalIndexRoute: typeof AuthenticatedPortalIndexRoute
+  AuthenticatedReportCardsIndexRoute: typeof AuthenticatedReportCardsIndexRoute
   AuthenticatedScheduleIndexRoute: typeof AuthenticatedScheduleIndexRoute
   AuthenticatedStaffIndexRoute: typeof AuthenticatedStaffIndexRoute
   AuthenticatedStudentsIndexRoute: typeof AuthenticatedStudentsIndexRoute
@@ -773,8 +836,10 @@ const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedAssessmentsIdRoute: AuthenticatedAssessmentsIdRoute,
   AuthenticatedGuardiansGuardianIdRoute: AuthenticatedGuardiansGuardianIdRoute,
   AuthenticatedPortalAttendanceRoute: AuthenticatedPortalAttendanceRoute,
+  AuthenticatedPortalReportCardsRoute: AuthenticatedPortalReportCardsRoute,
   AuthenticatedPortalScheduleRoute: AuthenticatedPortalScheduleRoute,
   AuthenticatedPortalScoresRoute: AuthenticatedPortalScoresRoute,
+  AuthenticatedReportCardsIdRoute: AuthenticatedReportCardsIdRoute,
   AuthenticatedScheduleMyRoute: AuthenticatedScheduleMyRoute,
   AuthenticatedStaffStaffIdRoute: AuthenticatedStaffStaffIdRoute,
   AuthenticatedStudentsStudentIdRoute: AuthenticatedStudentsStudentIdRoute,
@@ -782,6 +847,7 @@ const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedAttendanceIndexRoute: AuthenticatedAttendanceIndexRoute,
   AuthenticatedGuardiansIndexRoute: AuthenticatedGuardiansIndexRoute,
   AuthenticatedPortalIndexRoute: AuthenticatedPortalIndexRoute,
+  AuthenticatedReportCardsIndexRoute: AuthenticatedReportCardsIndexRoute,
   AuthenticatedScheduleIndexRoute: AuthenticatedScheduleIndexRoute,
   AuthenticatedStaffIndexRoute: AuthenticatedStaffIndexRoute,
   AuthenticatedStudentsIndexRoute: AuthenticatedStudentsIndexRoute,

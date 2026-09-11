@@ -11,6 +11,7 @@ import {
   CalendarRange,
   ClipboardCheck,
   ClipboardList,
+  FileText,
   GraduationCap,
   HeartHandshake,
   LayoutDashboard,
@@ -127,6 +128,12 @@ const NAV_GROUPS: NavGroup[] = [
         icon: ClipboardCheck,
         permission: "assessment.read",
       },
+      {
+        to: "/report-cards",
+        label: "Report Cards",
+        icon: FileText,
+        permission: "report_card.read",
+      },
     ],
   },
   {
@@ -146,6 +153,12 @@ const NAV_GROUPS: NavGroup[] = [
         permission: "attendance.read",
       },
       { to: "/portal/scores", label: "Scores", icon: ClipboardCheck, permission: "score.read" },
+      {
+        to: "/portal/report-cards",
+        label: "Report Cards",
+        icon: FileText,
+        permission: "report_card.read",
+      },
     ],
   },
 ];

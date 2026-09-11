@@ -1,11 +1,12 @@
 import { useEffect, useMemo, useState, type ReactNode } from "react";
 import { Link, useNavigate, useRouterState } from "@tanstack/react-router";
-import { useQuery } from "@tanstack/react-query";
+import { useMutation, useQuery } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import {
   CalendarClock,
   CalendarDays,
   ClipboardCheck,
+  FileText,
   GraduationCap,
   UserRound,
 } from "lucide-react";
@@ -13,6 +14,7 @@ import {
 import { AppShell } from "@/components/app-shell";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import {
@@ -30,8 +32,14 @@ import {
   listPortalChildren,
   listPortalScores,
   listPortalSchedule,
+  listPortalReportCards,
+  getPortalReportCard,
   type PortalChild,
 } from "@/lib/portal.functions";
+import {
+  getPortalReportCardDocumentStatus,
+  getPortalReportCardDownload,
+} from "@/lib/reporting.documents.functions";
 
 const CHILD_STORAGE_KEY = "edusmart.portal.activeChildId";
 
@@ -71,6 +79,7 @@ const PORTAL_TABS = [
   { to: "/portal/schedule", label: "Schedule", icon: CalendarClock, exact: false },
   { to: "/portal/attendance", label: "Attendance", icon: CalendarDays, exact: false },
   { to: "/portal/scores", label: "Scores", icon: ClipboardCheck, exact: false },
+  { to: "/portal/report-cards", label: "Report Cards", icon: FileText, exact: false },
 ];
 
 function PortalTabs() {
@@ -225,19 +234,23 @@ function PortalShell({
   );
 }
 
-function useChildrenQuery() {
+function useChildrenQuery(academicOnly = false) {
   const fn = useServerFn(listPortalChildren);
   const query = useQuery({
     queryKey: ["portal-children"],
     queryFn: () => fn(),
     staleTime: 60_000,
   });
-  const [selectedId, setSelectedId] = useSelectedChild(query.data?.children);
+  const children = academicOnly
+    ? query.data?.children.filter((child) => child.canViewAcademic)
+    : query.data?.children;
+  const [selectedId, setSelectedId] = useSelectedChild(children);
   return {
     ...query,
+    data: query.data ? { children: children ?? [] } : undefined,
     selectedId,
     setSelectedId,
-    activeChild: query.data?.children.find((c) => c.studentId === selectedId) ?? null,
+    activeChild: children?.find((c) => c.studentId === selectedId) ?? null,
   };
 }
 
@@ -443,7 +456,7 @@ function ScheduleSection({ child }: { child: PortalChild }) {
     queryFn: () => fn({ data: { studentId: child.studentId } }),
     staleTime: 60_000,
   });
-  const rows = data?.rows ?? [];
+  const rows = useMemo(() => data?.rows ?? [], [data?.rows]);
   const grouped = useMemo(() => {
     const map = new Map<number, typeof rows>();
     for (const r of rows) {
@@ -509,6 +522,240 @@ function ScheduleSection({ child }: { child: PortalChild }) {
   );
 }
 
+function PortalReportCardsSection({ child }: { child: PortalChild }) {
+  const listFn = useServerFn(listPortalReportCards);
+  const detailFn = useServerFn(getPortalReportCard);
+  const [selectedId, setSelectedId] = useState<string | null>(null);
+  const list = useQuery({
+    queryKey: ["portal-report-cards", child.studentId],
+    queryFn: () => listFn({ data: { studentId: child.studentId } }),
+    enabled: child.canViewAcademic,
+    staleTime: 60_000,
+  });
+  useEffect(() => {
+    setSelectedId(null);
+  }, [child.studentId]);
+  const detail = useQuery({
+    queryKey: ["portal-report-card", child.studentId, selectedId],
+    queryFn: () => detailFn({ data: { studentId: child.studentId, reportCardId: selectedId! } }),
+    enabled: Boolean(selectedId) && child.canViewAcademic,
+    retry: false,
+  });
+  const documentStatusFn = useServerFn(getPortalReportCardDocumentStatus);
+  const documentDownloadFn = useServerFn(getPortalReportCardDownload);
+  const documentStatus = useQuery({
+    queryKey: ["portal-report-card-document", child.studentId, selectedId],
+    queryFn: () =>
+      documentStatusFn({ data: { studentId: child.studentId, reportCardId: selectedId! } }),
+    enabled: Boolean(selectedId) && child.canViewAcademic,
+    retry: false,
+  });
+  const documentDownload = useMutation({
+    mutationFn: () =>
+      documentDownloadFn({ data: { studentId: child.studentId, reportCardId: selectedId! } }),
+    onSuccess: (result) => window.location.assign(result.url),
+  });
+  if (!child.canViewAcademic)
+    return (
+      <EmptyPortal
+        title="Report Cards not shared with this guardian"
+        description="Your guardian record does not include academic visibility. Contact the school if this needs to change."
+      />
+    );
+  if (list.error)
+    return (
+      <Alert variant="destructive">
+        <AlertTitle>We couldn't load Report Cards</AlertTitle>
+        <AlertDescription>{(list.error as Error).message}</AlertDescription>
+      </Alert>
+    );
+  if (list.isLoading) return <Skeleton className="h-40 w-full" />;
+  const rows = list.data?.rows ?? [];
+  if (!rows.length)
+    return (
+      <EmptyPortal
+        title="No published Report Cards yet"
+        description="Only the current official Report Card published by the school appears here."
+      />
+    );
+  if (selectedId) {
+    if (detail.isLoading) return <Skeleton className="h-80 w-full" />;
+    if (detail.error || !detail.data)
+      return (
+        <div className="space-y-3">
+          <Button variant="ghost" onClick={() => setSelectedId(null)}>
+            ← Report Cards
+          </Button>
+          <EmptyPortal
+            title="Report Card unavailable"
+            description="This Report Card is unknown, no longer published, or not linked to this child."
+          />
+        </div>
+      );
+    const report = detail.data;
+    const attendance =
+      report.card.attendance_summary &&
+      typeof report.card.attendance_summary === "object" &&
+      !Array.isArray(report.card.attendance_summary)
+        ? (report.card.attendance_summary as Record<string, unknown>)
+        : {};
+    const counts =
+      attendance["counts"] &&
+      typeof attendance["counts"] === "object" &&
+      !Array.isArray(attendance["counts"])
+        ? (attendance["counts"] as Record<string, unknown>)
+        : {};
+    return (
+      <div className="space-y-4">
+        <Button variant="ghost" onClick={() => setSelectedId(null)}>
+          ← Report Cards
+        </Button>
+        <Card>
+          <CardHeader>
+            <div className="flex flex-wrap items-start justify-between gap-2">
+              <div>
+                <CardTitle>{report.card.studentName}</CardTitle>
+                <CardDescription>
+                  {report.card.schoolName} · {report.card.academicYearName} · {report.card.termName}
+                </CardDescription>
+              </div>
+              <Badge>Published · Version {report.card.version}</Badge>
+            </div>
+          </CardHeader>
+          <CardContent>
+            <p className="text-sm text-muted-foreground">
+              Official frozen Report Card snapshot published{" "}
+              {new Date(report.card.published_at!).toLocaleDateString()}.
+            </p>
+          </CardContent>
+        </Card>
+        <Card>
+          <CardHeader>
+            <CardTitle className="text-base">Official PDF</CardTitle>
+            <CardDescription>
+              Private download link available briefly for this published version.
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            {documentStatus.isLoading ? (
+              <Skeleton className="h-10 w-full" />
+            ) : documentStatus.data?.state === "available" ? (
+              <Button
+                disabled={documentDownload.isPending}
+                onClick={() => documentDownload.mutate()}
+              >
+                Download PDF
+              </Button>
+            ) : (
+              <p className="text-sm text-muted-foreground">PDF belum tersedia.</p>
+            )}
+            {documentDownload.error && (
+              <p className="mt-2 text-sm text-destructive">
+                {documentDownload.error instanceof Error
+                  ? documentDownload.error.message
+                  : "Secure download failed."}
+              </p>
+            )}
+          </CardContent>
+        </Card>
+        <div className="grid gap-3">
+          {report.entries.map((entry) => (
+            <Card key={entry.id}>
+              <CardContent className="grid gap-3 p-4 sm:grid-cols-[1fr_auto] sm:items-start">
+                <div>
+                  <p className="font-semibold">{entry.subjectName}</p>
+                  <p className="mt-2 whitespace-pre-wrap text-sm text-muted-foreground">
+                    {entry.narrative || "No subject narrative."}
+                  </p>
+                </div>
+                <div className="sm:text-right">
+                  <p className="text-xl font-semibold">
+                    {entry.final_score === null ? (
+                      <span className="text-sm font-normal text-muted-foreground">
+                        No published result
+                      </span>
+                    ) : (
+                      entry.final_score
+                    )}
+                  </p>
+                  <p className="text-xs text-muted-foreground">
+                    {entry.predicate ?? "No predicate"}
+                  </p>
+                </div>
+              </CardContent>
+            </Card>
+          ))}
+        </div>
+        <Card>
+          <CardHeader>
+            <CardTitle className="text-base">Attendance summary</CardTitle>
+            <CardDescription>
+              {typeof attendance["finalizedSessionCount"] === "number"
+                ? attendance["finalizedSessionCount"]
+                : 0}{" "}
+              finalized sessions
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="grid grid-cols-2 gap-2 sm:grid-cols-3">
+            {["present", "late", "excused", "sick", "absent", "other"].map((key) => (
+              <div key={key} className="rounded-md bg-muted p-3">
+                <p className="text-xs capitalize text-muted-foreground">{key}</p>
+                <p className="text-lg font-semibold">
+                  {typeof counts[key] === "number" ? (counts[key] as number) : 0}
+                </p>
+              </div>
+            ))}
+          </CardContent>
+        </Card>
+        <Card>
+          <CardHeader>
+            <CardTitle className="text-base">Homeroom comment</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <p className="whitespace-pre-wrap text-sm">
+              {report.card.homeroom_comment || "No homeroom comment."}
+            </p>
+          </CardContent>
+        </Card>
+        {report.narratives.map((n) => (
+          <Card key={n.id}>
+            <CardHeader>
+              <CardTitle className="text-base">{n.title}</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <p className="whitespace-pre-wrap text-sm">{n.content}</p>
+            </CardContent>
+          </Card>
+        ))}
+      </div>
+    );
+  }
+  return (
+    <div className="grid gap-3">
+      {rows.map((row) => (
+        <button key={row.id} className="text-left" onClick={() => setSelectedId(row.id)}>
+          <Card className="transition-colors hover:border-primary/50">
+            <CardContent className="flex flex-col gap-3 p-4 sm:flex-row sm:items-center sm:justify-between">
+              <div>
+                <p className="font-semibold">{row.termName}</p>
+                <p className="text-sm text-muted-foreground">
+                  {row.studentName} · {row.academicYearName}
+                </p>
+              </div>
+              <div className="sm:text-right">
+                <Badge>Published · Version {row.version}</Badge>
+                <p className="mt-1 text-xs text-muted-foreground">
+                  {new Date(row.publishedAt).toLocaleDateString()}
+                </p>
+              </div>
+            </CardContent>
+          </Card>
+        </button>
+      ))}
+    </div>
+  );
+}
+
 export function PortalOverviewPage() {
   const state = useChildrenQuery();
   return (
@@ -541,6 +788,15 @@ export function PortalSchedulePage() {
   return (
     <PortalShell activeChild={state.activeChild} childListState={state}>
       {(child) => <ScheduleSection child={child} />}
+    </PortalShell>
+  );
+}
+
+export function PortalReportCardsPage() {
+  const state = useChildrenQuery(true);
+  return (
+    <PortalShell activeChild={state.activeChild} childListState={state}>
+      {(child) => <PortalReportCardsSection child={child} />}
     </PortalShell>
   );
 }

@@ -1,6 +1,10 @@
 import { describe, expect, test } from "bun:test";
 
-import { callParentAttendanceRpc, filterCanonicalPortalRelationships } from "./portal.server.ts";
+import {
+  callParentAttendanceRpc,
+  filterCanonicalPortalRelationships,
+  filterCurrentPublishedPortalReports,
+} from "./portal.server.ts";
 
 const linked = {
   guardian_id: "guardian-a",
@@ -56,6 +60,29 @@ describe("canonical Parent Portal subject binding", () => {
       ]),
     ).toEqual([]);
   });
+
+  test("can_view_academic=false remains linked but cannot authorize academic surfaces", () => {
+    const visible = filterCanonicalPortalRelationships(currentProfileGuardians, [
+      { ...linked, can_view_academic: false },
+    ]);
+    expect(visible).toHaveLength(1);
+    expect(visible[0].can_view_academic).toBe(false);
+  });
+});
+
+test("Parent current Report Cards include only published exact-child rows", () => {
+  const rows = [
+    { id: "published-child", studentId: "QA Student B2 Retry", status: "published" },
+    { id: "draft-child", studentId: "QA Student B2 Retry", status: "draft" },
+    { id: "submitted-child", studentId: "QA Student B2 Retry", status: "submitted" },
+    { id: "reviewed-child", studentId: "QA Student B2 Retry", status: "reviewed" },
+    { id: "revised-child", studentId: "QA Student B2 Retry", status: "revised" },
+    { id: "unrelated", studentId: "Siswa Demo 01", status: "published" },
+  ];
+  expect(
+    filterCurrentPublishedPortalReports(rows, "QA Student B2 Retry").map((row) => row.id),
+  ).toEqual(["published-child"]);
+  expect(filterCurrentPublishedPortalReports(rows, "unknown-subject")).toEqual([]);
 });
 
 test("attendance RPC retains the Supabase client receiver", async () => {
