@@ -387,9 +387,9 @@ describe("B8-LIVE-002 canonical tenant document path contract", () => {
     expect(
       CANONICAL_DOCUMENT_PATH.test(live002Path().replace("/report-cards/", "/report-cards/../")),
     ).toBe(false);
-    expect(
-      CANONICAL_DOCUMENT_PATH.test(live002Path().replace(`/${LIVE_002.schoolId}`, "")),
-    ).toBe(false);
+    expect(CANONICAL_DOCUMENT_PATH.test(live002Path().replace(`/${LIVE_002.schoolId}`, ""))).toBe(
+      false,
+    );
     expect(CANONICAL_DOCUMENT_PATH.test(live002Path().toUpperCase())).toBe(false);
   });
 
