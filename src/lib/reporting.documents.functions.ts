@@ -1,6 +1,7 @@
 import { createServerFn } from "@tanstack/react-start";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import { reportCardDocumentInput, portalReportCardDocumentInput } from "./reporting.schemas";
+import { studentReportCardDocumentInput } from "./student-portal.schemas";
 import {
   REPORT_CARD_BUCKET,
   REPORT_CARD_DOCUMENT_TYPE,
@@ -11,6 +12,7 @@ import {
   newReportCardDocumentPath,
   requirePortalPublishedReport,
   requireStaffDocumentAccess,
+  requireStudentPublishedReport,
   REPORT_CARD_ATTESTATION_TTL_SECONDS,
   signReportCardDocumentAttestation,
 } from "./reporting.documents.server";
@@ -336,6 +338,62 @@ export const getPortalReportCardDownload = createServerFn({ method: "POST" })
     if (!card) throw new Error("Report Card document not found or unavailable.");
     const document = await loadDocumentRecord(context.supabase, card);
     if (!document) throw new Error("PDF belum tersedia.");
+    const signed = await context.supabase.storage
+      .from(REPORT_CARD_BUCKET)
+      .createSignedUrl(document.objectPath, REPORT_CARD_SIGNED_URL_TTL_SECONDS, {
+        download: `report-card-v${card.version}.pdf`,
+      });
+    if (signed.error || !signed.data?.signedUrl)
+      throw new Error("We couldn't create a secure Report Card download link.");
+    return {
+      url: signed.data.signedUrl,
+      expiresIn: REPORT_CARD_SIGNED_URL_TTL_SECONDS,
+      documentType: REPORT_CARD_DOCUMENT_TYPE,
+    };
+  });
+
+/**
+ * Batch 9 — Student document access.
+ *
+ * Deliberately uses requireStudentPublishedReport, never
+ * requirePortalPublishedReport (Parent) and never requireStaffDocumentAccess
+ * (staff). No regeneration capability is exposed to the Student persona —
+ * only status + a short-lived signed download URL for the existing
+ * authoritative B8 document.
+ */
+export const getStudentReportCardDocumentStatus = createServerFn({ method: "GET" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((x: unknown) => studentReportCardDocumentInput.parse(x))
+  .handler(async ({ data, context }) => {
+    const card = await requireStudentPublishedReport(
+      context.supabase,
+      context.userId,
+      data.reportCardId,
+    );
+    if (!card) return null;
+    try {
+      const document = await loadDocumentRecord(context.supabase, card);
+      return {
+        state: document ? ("available" as const) : ("not_generated" as const),
+        generatedAt: document?.generatedAt ?? null,
+      };
+    } catch {
+      return { state: "failed" as const, generatedAt: null };
+    }
+  });
+
+export const getStudentReportCardDownload = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((x: unknown) => studentReportCardDocumentInput.parse(x))
+  .handler(async ({ data, context }) => {
+    const card = await requireStudentPublishedReport(
+      context.supabase,
+      context.userId,
+      data.reportCardId,
+    );
+    if (!card) throw new Error("Report Card document not found or unavailable.");
+    const document = await loadDocumentRecord(context.supabase, card);
+    if (!document) throw new Error("The Report Card PDF has not been generated yet.");
     const signed = await context.supabase.storage
       .from(REPORT_CARD_BUCKET)
       .createSignedUrl(document.objectPath, REPORT_CARD_SIGNED_URL_TTL_SECONDS, {

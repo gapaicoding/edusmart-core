@@ -888,6 +888,7 @@ export type Database = {
           organization_id: string;
           revoked_at: string | null;
           school_id: string | null;
+          target_student_id: string | null;
           token_hash: string;
         };
         Insert: {
@@ -903,6 +904,7 @@ export type Database = {
           organization_id: string;
           revoked_at?: string | null;
           school_id?: string | null;
+          target_student_id?: string | null;
           token_hash: string;
         };
         Update: {
@@ -918,9 +920,17 @@ export type Database = {
           organization_id?: string;
           revoked_at?: string | null;
           school_id?: string | null;
+          target_student_id?: string | null;
           token_hash?: string;
         };
         Relationships: [
+          {
+            foreignKeyName: "invitations_target_student_fk";
+            columns: ["target_student_id", "organization_id"];
+            isOneToOne: false;
+            referencedRelation: "students";
+            referencedColumns: ["id", "organization_id"];
+          },
           {
             foreignKeyName: "invitations_invited_by_profile_id_fkey";
             columns: ["invited_by_profile_id"];
@@ -2620,6 +2630,18 @@ export type Database = {
         Returns: boolean;
       };
       is_own_membership: { Args: { p_membership_id: string }; Returns: boolean };
+      list_student_published_schedule: {
+        Args: { p_organization_id: string };
+        Returns: {
+          classroom_name: string;
+          day_of_week: number;
+          ends_at: string;
+          entry_id: string;
+          starts_at: string;
+          subject_name: string;
+          teacher_name: string;
+        }[];
+      };
       owns_teaching_assignment: {
         Args: { p_assignment_id: string };
         Returns: boolean;

@@ -43,6 +43,11 @@ import { Route as AuthenticatedScheduleIndexRouteImport } from './routes/_authen
 import { Route as AuthenticatedScheduleMyRouteImport } from './routes/_authenticated/schedule/my'
 import { Route as AuthenticatedStaffIndexRouteImport } from './routes/_authenticated/staff/index'
 import { Route as AuthenticatedStaffStaffIdRouteImport } from './routes/_authenticated/staff/$staffId'
+import { Route as AuthenticatedStudentIndexRouteImport } from './routes/_authenticated/student/index'
+import { Route as AuthenticatedStudentAttendanceRouteImport } from './routes/_authenticated/student/attendance'
+import { Route as AuthenticatedStudentReportCardsRouteImport } from './routes/_authenticated/student/report-cards'
+import { Route as AuthenticatedStudentScheduleRouteImport } from './routes/_authenticated/student/schedule'
+import { Route as AuthenticatedStudentScoresRouteImport } from './routes/_authenticated/student/scores'
 import { Route as AuthenticatedStudentsIndexRouteImport } from './routes/_authenticated/students/index'
 import { Route as AuthenticatedStudentsStudentIdRouteImport } from './routes/_authenticated/students/$studentId'
 import { Route as AuthenticatedTeachingAssignmentsIndexRouteImport } from './routes/_authenticated/teaching-assignments/index'
@@ -241,6 +246,36 @@ const AuthenticatedStaffStaffIdRoute =
     path: '/staff/$staffId',
     getParentRoute: () => AuthenticatedRouteRoute,
   } as any)
+const AuthenticatedStudentIndexRoute =
+  AuthenticatedStudentIndexRouteImport.update({
+    id: '/student/',
+    path: '/student/',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
+const AuthenticatedStudentAttendanceRoute =
+  AuthenticatedStudentAttendanceRouteImport.update({
+    id: '/student/attendance',
+    path: '/student/attendance',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
+const AuthenticatedStudentReportCardsRoute =
+  AuthenticatedStudentReportCardsRouteImport.update({
+    id: '/student/report-cards',
+    path: '/student/report-cards',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
+const AuthenticatedStudentScheduleRoute =
+  AuthenticatedStudentScheduleRouteImport.update({
+    id: '/student/schedule',
+    path: '/student/schedule',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
+const AuthenticatedStudentScoresRoute =
+  AuthenticatedStudentScoresRouteImport.update({
+    id: '/student/scores',
+    path: '/student/scores',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
 const AuthenticatedStudentsIndexRoute =
   AuthenticatedStudentsIndexRouteImport.update({
     id: '/students/',
@@ -293,6 +328,10 @@ export interface FileRoutesByFullPath {
   '/report-cards/$id': typeof AuthenticatedReportCardsIdRoute
   '/schedule/my': typeof AuthenticatedScheduleMyRoute
   '/staff/$staffId': typeof AuthenticatedStaffStaffIdRoute
+  '/student/attendance': typeof AuthenticatedStudentAttendanceRoute
+  '/student/report-cards': typeof AuthenticatedStudentReportCardsRoute
+  '/student/schedule': typeof AuthenticatedStudentScheduleRoute
+  '/student/scores': typeof AuthenticatedStudentScoresRoute
   '/students/$studentId': typeof AuthenticatedStudentsStudentIdRoute
   '/assessments/': typeof AuthenticatedAssessmentsIndexRoute
   '/attendance/': typeof AuthenticatedAttendanceIndexRoute
@@ -301,6 +340,7 @@ export interface FileRoutesByFullPath {
   '/report-cards/': typeof AuthenticatedReportCardsIndexRoute
   '/schedule/': typeof AuthenticatedScheduleIndexRoute
   '/staff/': typeof AuthenticatedStaffIndexRoute
+  '/student/': typeof AuthenticatedStudentIndexRoute
   '/students/': typeof AuthenticatedStudentsIndexRoute
   '/teaching-assignments/': typeof AuthenticatedTeachingAssignmentsIndexRoute
   '/attendance/session/$id': typeof AuthenticatedAttendanceSessionIdRoute
@@ -332,6 +372,10 @@ export interface FileRoutesByTo {
   '/report-cards/$id': typeof AuthenticatedReportCardsIdRoute
   '/schedule/my': typeof AuthenticatedScheduleMyRoute
   '/staff/$staffId': typeof AuthenticatedStaffStaffIdRoute
+  '/student/attendance': typeof AuthenticatedStudentAttendanceRoute
+  '/student/report-cards': typeof AuthenticatedStudentReportCardsRoute
+  '/student/schedule': typeof AuthenticatedStudentScheduleRoute
+  '/student/scores': typeof AuthenticatedStudentScoresRoute
   '/students/$studentId': typeof AuthenticatedStudentsStudentIdRoute
   '/assessments': typeof AuthenticatedAssessmentsIndexRoute
   '/attendance': typeof AuthenticatedAttendanceIndexRoute
@@ -340,6 +384,7 @@ export interface FileRoutesByTo {
   '/report-cards': typeof AuthenticatedReportCardsIndexRoute
   '/schedule': typeof AuthenticatedScheduleIndexRoute
   '/staff': typeof AuthenticatedStaffIndexRoute
+  '/student': typeof AuthenticatedStudentIndexRoute
   '/students': typeof AuthenticatedStudentsIndexRoute
   '/teaching-assignments': typeof AuthenticatedTeachingAssignmentsIndexRoute
   '/attendance/session/$id': typeof AuthenticatedAttendanceSessionIdRoute
@@ -373,6 +418,10 @@ export interface FileRoutesById {
   '/_authenticated/report-cards/$id': typeof AuthenticatedReportCardsIdRoute
   '/_authenticated/schedule/my': typeof AuthenticatedScheduleMyRoute
   '/_authenticated/staff/$staffId': typeof AuthenticatedStaffStaffIdRoute
+  '/_authenticated/student/attendance': typeof AuthenticatedStudentAttendanceRoute
+  '/_authenticated/student/report-cards': typeof AuthenticatedStudentReportCardsRoute
+  '/_authenticated/student/schedule': typeof AuthenticatedStudentScheduleRoute
+  '/_authenticated/student/scores': typeof AuthenticatedStudentScoresRoute
   '/_authenticated/students/$studentId': typeof AuthenticatedStudentsStudentIdRoute
   '/_authenticated/assessments/': typeof AuthenticatedAssessmentsIndexRoute
   '/_authenticated/attendance/': typeof AuthenticatedAttendanceIndexRoute
@@ -381,6 +430,7 @@ export interface FileRoutesById {
   '/_authenticated/report-cards/': typeof AuthenticatedReportCardsIndexRoute
   '/_authenticated/schedule/': typeof AuthenticatedScheduleIndexRoute
   '/_authenticated/staff/': typeof AuthenticatedStaffIndexRoute
+  '/_authenticated/student/': typeof AuthenticatedStudentIndexRoute
   '/_authenticated/students/': typeof AuthenticatedStudentsIndexRoute
   '/_authenticated/teaching-assignments/': typeof AuthenticatedTeachingAssignmentsIndexRoute
   '/_authenticated/attendance/session/$id': typeof AuthenticatedAttendanceSessionIdRoute
@@ -414,6 +464,10 @@ export interface FileRouteTypes {
     | '/report-cards/$id'
     | '/schedule/my'
     | '/staff/$staffId'
+    | '/student/attendance'
+    | '/student/report-cards'
+    | '/student/schedule'
+    | '/student/scores'
     | '/students/$studentId'
     | '/assessments/'
     | '/attendance/'
@@ -422,6 +476,7 @@ export interface FileRouteTypes {
     | '/report-cards/'
     | '/schedule/'
     | '/staff/'
+    | '/student/'
     | '/students/'
     | '/teaching-assignments/'
     | '/attendance/session/$id'
@@ -453,6 +508,10 @@ export interface FileRouteTypes {
     | '/report-cards/$id'
     | '/schedule/my'
     | '/staff/$staffId'
+    | '/student/attendance'
+    | '/student/report-cards'
+    | '/student/schedule'
+    | '/student/scores'
     | '/students/$studentId'
     | '/assessments'
     | '/attendance'
@@ -461,6 +520,7 @@ export interface FileRouteTypes {
     | '/report-cards'
     | '/schedule'
     | '/staff'
+    | '/student'
     | '/students'
     | '/teaching-assignments'
     | '/attendance/session/$id'
@@ -493,6 +553,10 @@ export interface FileRouteTypes {
     | '/_authenticated/report-cards/$id'
     | '/_authenticated/schedule/my'
     | '/_authenticated/staff/$staffId'
+    | '/_authenticated/student/attendance'
+    | '/_authenticated/student/report-cards'
+    | '/_authenticated/student/schedule'
+    | '/_authenticated/student/scores'
     | '/_authenticated/students/$studentId'
     | '/_authenticated/assessments/'
     | '/_authenticated/attendance/'
@@ -501,6 +565,7 @@ export interface FileRouteTypes {
     | '/_authenticated/report-cards/'
     | '/_authenticated/schedule/'
     | '/_authenticated/staff/'
+    | '/_authenticated/student/'
     | '/_authenticated/students/'
     | '/_authenticated/teaching-assignments/'
     | '/_authenticated/attendance/session/$id'
@@ -756,6 +821,41 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedStaffStaffIdRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+    '/_authenticated/student/': {
+      id: '/_authenticated/student/'
+      path: '/student'
+      fullPath: '/student/'
+      preLoaderRoute: typeof AuthenticatedStudentIndexRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/student/attendance': {
+      id: '/_authenticated/student/attendance'
+      path: '/student/attendance'
+      fullPath: '/student/attendance'
+      preLoaderRoute: typeof AuthenticatedStudentAttendanceRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/student/report-cards': {
+      id: '/_authenticated/student/report-cards'
+      path: '/student/report-cards'
+      fullPath: '/student/report-cards'
+      preLoaderRoute: typeof AuthenticatedStudentReportCardsRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/student/schedule': {
+      id: '/_authenticated/student/schedule'
+      path: '/student/schedule'
+      fullPath: '/student/schedule'
+      preLoaderRoute: typeof AuthenticatedStudentScheduleRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/student/scores': {
+      id: '/_authenticated/student/scores'
+      path: '/student/scores'
+      fullPath: '/student/scores'
+      preLoaderRoute: typeof AuthenticatedStudentScoresRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
     '/_authenticated/students/': {
       id: '/_authenticated/students/'
       path: '/students'
@@ -808,6 +908,10 @@ interface AuthenticatedRouteRouteChildren {
   AuthenticatedReportCardsIdRoute: typeof AuthenticatedReportCardsIdRoute
   AuthenticatedScheduleMyRoute: typeof AuthenticatedScheduleMyRoute
   AuthenticatedStaffStaffIdRoute: typeof AuthenticatedStaffStaffIdRoute
+  AuthenticatedStudentAttendanceRoute: typeof AuthenticatedStudentAttendanceRoute
+  AuthenticatedStudentReportCardsRoute: typeof AuthenticatedStudentReportCardsRoute
+  AuthenticatedStudentScheduleRoute: typeof AuthenticatedStudentScheduleRoute
+  AuthenticatedStudentScoresRoute: typeof AuthenticatedStudentScoresRoute
   AuthenticatedStudentsStudentIdRoute: typeof AuthenticatedStudentsStudentIdRoute
   AuthenticatedAssessmentsIndexRoute: typeof AuthenticatedAssessmentsIndexRoute
   AuthenticatedAttendanceIndexRoute: typeof AuthenticatedAttendanceIndexRoute
@@ -816,6 +920,7 @@ interface AuthenticatedRouteRouteChildren {
   AuthenticatedReportCardsIndexRoute: typeof AuthenticatedReportCardsIndexRoute
   AuthenticatedScheduleIndexRoute: typeof AuthenticatedScheduleIndexRoute
   AuthenticatedStaffIndexRoute: typeof AuthenticatedStaffIndexRoute
+  AuthenticatedStudentIndexRoute: typeof AuthenticatedStudentIndexRoute
   AuthenticatedStudentsIndexRoute: typeof AuthenticatedStudentsIndexRoute
   AuthenticatedTeachingAssignmentsIndexRoute: typeof AuthenticatedTeachingAssignmentsIndexRoute
   AuthenticatedAttendanceSessionIdRoute: typeof AuthenticatedAttendanceSessionIdRoute
@@ -842,6 +947,10 @@ const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedReportCardsIdRoute: AuthenticatedReportCardsIdRoute,
   AuthenticatedScheduleMyRoute: AuthenticatedScheduleMyRoute,
   AuthenticatedStaffStaffIdRoute: AuthenticatedStaffStaffIdRoute,
+  AuthenticatedStudentAttendanceRoute: AuthenticatedStudentAttendanceRoute,
+  AuthenticatedStudentReportCardsRoute: AuthenticatedStudentReportCardsRoute,
+  AuthenticatedStudentScheduleRoute: AuthenticatedStudentScheduleRoute,
+  AuthenticatedStudentScoresRoute: AuthenticatedStudentScoresRoute,
   AuthenticatedStudentsStudentIdRoute: AuthenticatedStudentsStudentIdRoute,
   AuthenticatedAssessmentsIndexRoute: AuthenticatedAssessmentsIndexRoute,
   AuthenticatedAttendanceIndexRoute: AuthenticatedAttendanceIndexRoute,
@@ -850,6 +959,7 @@ const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedReportCardsIndexRoute: AuthenticatedReportCardsIndexRoute,
   AuthenticatedScheduleIndexRoute: AuthenticatedScheduleIndexRoute,
   AuthenticatedStaffIndexRoute: AuthenticatedStaffIndexRoute,
+  AuthenticatedStudentIndexRoute: AuthenticatedStudentIndexRoute,
   AuthenticatedStudentsIndexRoute: AuthenticatedStudentsIndexRoute,
   AuthenticatedTeachingAssignmentsIndexRoute:
     AuthenticatedTeachingAssignmentsIndexRoute,
