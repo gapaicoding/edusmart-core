@@ -20,6 +20,7 @@ import {
   Menu,
   School,
   ShieldCheck,
+  UserRound,
   Users,
   X,
 } from "lucide-react";
@@ -52,16 +53,44 @@ type NavItem = {
   icon: typeof LayoutDashboard;
   permission: string | null;
 };
-type NavGroup = { label: string | null; items: NavItem[] };
+/**
+ * `audience` is UX-only navigation grouping derived from the caller's role
+ * codes (activeOrganization.roles). It never replaces PermissionGate/RLS —
+ * every item is still hidden unless `permission` also passes, and the
+ * database enforces every read/write regardless of what the sidebar shows.
+ * `null` means the group is shown to every signed-in persona (Dashboard).
+ */
+type NavGroup = { label: string | null; audience: "staff" | "parent" | "student" | null; items: NavItem[] };
+
+/** Staff persona codes: seeing the operational navigation groups. */
+const STAFF_ROLE_CODES = [
+  "ORG_OWNER",
+  "SCHOOL_ADMIN",
+  "PRINCIPAL",
+  "VICE_PRINCIPAL_CURRICULUM",
+  "TEACHER",
+  "HOMEROOM_TEACHER",
+];
+
+export function derivePersonas(roles: { code: string }[]) {
+  const codes = new Set(roles.map((r) => r.code));
+  return {
+    isStaff: STAFF_ROLE_CODES.some((code) => codes.has(code)),
+    isParent: codes.has("PARENT"),
+    isStudent: codes.has("STUDENT"),
+  };
+}
 
 /** Permission checks here hide navigation only; RLS remains the real boundary. */
 const NAV_GROUPS: NavGroup[] = [
   {
     label: null,
+    audience: null,
     items: [{ to: "/dashboard", label: "Dashboard", icon: LayoutDashboard, permission: null }],
   },
   {
     label: "Academic Setup",
+    audience: "staff",
     items: [
       {
         to: "/academic/years",
@@ -99,6 +128,7 @@ const NAV_GROUPS: NavGroup[] = [
   },
   {
     label: "Student Information",
+    audience: "staff",
     items: [
       { to: "/students", label: "Students", icon: Users, permission: "student.read" },
       { to: "/guardians", label: "Guardians", icon: HeartHandshake, permission: "guardian.read" },
@@ -107,6 +137,7 @@ const NAV_GROUPS: NavGroup[] = [
   },
   {
     label: "Academic Operations",
+    audience: "staff",
     items: [
       {
         to: "/teaching-assignments",
@@ -138,6 +169,7 @@ const NAV_GROUPS: NavGroup[] = [
   },
   {
     label: "Parent Portal",
+    audience: "parent",
     items: [
       { to: "/portal", label: "Overview", icon: HeartHandshake, permission: "student.read" },
       {
@@ -155,6 +187,32 @@ const NAV_GROUPS: NavGroup[] = [
       { to: "/portal/scores", label: "Scores", icon: ClipboardCheck, permission: "score.read" },
       {
         to: "/portal/report-cards",
+        label: "Report Cards",
+        icon: FileText,
+        permission: "report_card.read",
+      },
+    ],
+  },
+  {
+    label: "Student Portal",
+    audience: "student",
+    items: [
+      { to: "/student", label: "Overview", icon: UserRound, permission: "student.read" },
+      {
+        to: "/student/schedule",
+        label: "Schedule",
+        icon: CalendarClock,
+        permission: "schedule.read",
+      },
+      {
+        to: "/student/attendance",
+        label: "Attendance",
+        icon: CalendarCheck,
+        permission: "attendance.read",
+      },
+      { to: "/student/scores", label: "Scores", icon: ClipboardCheck, permission: "score.read" },
+      {
+        to: "/student/report-cards",
         label: "Report Cards",
         icon: FileText,
         permission: "report_card.read",
@@ -273,10 +331,22 @@ function Sidebar({ onNavigate }: { onNavigate?: () => void }) {
   const { activeOrganization, hasPermission, contextLoading, error } = useAppContext();
   const orgResolving = contextLoading && !error;
 
-  const groups = NAV_GROUPS.map((group) => ({
-    ...group,
-    items: group.items.filter((item) => !item.permission || hasPermission(item.permission)),
-  })).filter((group) => group.items.length > 0);
+  // UX-only persona gate: hides operational groups from PARENT/STUDENT
+  // accounts (and vice versa) even when overlapping read permissions would
+  // otherwise let the raw permission check pass. RLS remains the real
+  // boundary regardless of what this sidebar renders.
+  const personas = derivePersonas(activeOrganization?.roles ?? []);
+  const groups = NAV_GROUPS.filter((group) => {
+    if (!group.audience) return true;
+    if (group.audience === "staff") return personas.isStaff;
+    if (group.audience === "parent") return personas.isParent;
+    return personas.isStudent;
+  })
+    .map((group) => ({
+      ...group,
+      items: group.items.filter((item) => !item.permission || hasPermission(item.permission)),
+    }))
+    .filter((group) => group.items.length > 0);
 
   return (
     <div className="flex h-full flex-col gap-6 p-4">

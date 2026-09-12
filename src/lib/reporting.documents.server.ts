@@ -4,6 +4,7 @@ import { createHmac, randomUUID, timingSafeEqual } from "node:crypto";
 import type { SupabaseClient } from "@supabase/supabase-js";
 import type { Database } from "@/integrations/supabase/types";
 import { getPortalSubjectRelationship } from "./portal.server";
+import { getAuthenticatedStudentSubject } from "./student-portal.server";
 import {
   generateReportCardPdf,
   reportCardObjectPath,
@@ -478,6 +479,57 @@ export async function requirePortalPublishedReport(
     .select("student_id")
     .eq("id", card.data.student_enrollment_id)
     .eq("student_id", studentId)
+    .maybeSingle();
+
+  if (enrollment.error || !enrollment.data) {
+    return null;
+  }
+
+  return card.data;
+}
+
+/**
+ * requireStudentPublishedReport
+ *
+ * B9 Student equivalent of requirePortalPublishedReport — deliberately NOT
+ * shared with the Parent Portal helper above. Derives the authenticated
+ * student server-side (auth.uid() -> students.profile_id), never trusts a
+ * client-supplied student id, and only ever returns a report belonging to
+ * that exact student's own enrollment with status = published.
+ *
+ * Input is only `reportCardId` — the organization is derived from the report
+ * card itself so this helper works regardless of the caller's currently
+ * selected workspace, without ever widening which student can be resolved
+ * (getAuthenticatedStudentSubject still scopes strictly to that organization).
+ */
+export async function requireStudentPublishedReport(
+  supabase: Client,
+  userId: string,
+  reportCardId: string,
+) {
+  const card = await supabase
+    .from("report_cards")
+    .select("id,organization_id,school_id,student_enrollment_id,version,status")
+    .eq("id", reportCardId)
+    .eq("status", "published")
+    .maybeSingle();
+
+  if (card.error || !card.data) {
+    return null;
+  }
+
+  const subject = await getAuthenticatedStudentSubject(supabase, userId, {
+    organizationId: card.data.organization_id,
+  });
+  if (!subject) {
+    return null;
+  }
+
+  const enrollment = await supabase
+    .from("student_enrollments")
+    .select("student_id")
+    .eq("id", card.data.student_enrollment_id)
+    .eq("student_id", subject.studentId)
     .maybeSingle();
 
   if (enrollment.error || !enrollment.data) {

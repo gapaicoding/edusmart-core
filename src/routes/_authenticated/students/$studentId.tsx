@@ -13,6 +13,7 @@ import {
   saveEnrollment,
   saveStudentGuardian,
 } from "@/lib/sis.functions";
+import { createStudentPortalInvitation } from "@/lib/student-portal.functions";
 import { listAcademicYears, listClassrooms, listGradeLevels } from "@/lib/academic.functions";
 import {
   CLASS_ENROLLMENT_STATUSES,
@@ -111,6 +112,7 @@ function StudentDetailPage() {
   const persistEnrollment = useServerFn(saveEnrollment);
   const persistPlacement = useServerFn(saveClassEnrollment);
   const persistLink = useServerFn(saveStudentGuardian);
+  const issueStudentInvitation = useServerFn(createStudentPortalInvitation);
 
   const organizationId = activeOrganization?.organizationId ?? null;
   const schools = activeOrganization?.schools ?? [];
@@ -165,6 +167,14 @@ function StudentDetailPage() {
     status: "active",
   });
   const [linkError, setLinkError] = useState<string | null>(null);
+
+  const [invitationOpen, setInvitationOpen] = useState(false);
+  const [invitationEmail, setInvitationEmail] = useState("");
+  const [invitationSchoolId, setInvitationSchoolId] = useState("");
+  const [invitationError, setInvitationError] = useState<string | null>(null);
+  const [invitationResult, setInvitationResult] = useState<{ token: string; expiresAt: string } | null>(
+    null,
+  );
 
   const yearsQuery = useQuery({
     queryKey: ["academic", "years", enrollmentForm.schoolId],
@@ -282,6 +292,38 @@ function StudentDetailPage() {
   const canManageEnrollment = hasPermission("enrollment.manage");
   const canManageClass = hasPermission("class_enrollment.manage");
   const canManageGuardian = hasPermission("guardian.manage");
+  const canInviteStudent = hasPermission("membership.invite");
+
+  const invitationMutation = useMutation({
+    mutationFn: () =>
+      issueStudentInvitation({
+        data: {
+          organizationId: organizationId!,
+          schoolId: invitationSchoolId,
+          studentId,
+          email: invitationEmail,
+        },
+      }),
+    onSuccess: (result) => {
+      setInvitationError(null);
+      setInvitationResult(result);
+      toast.success("Student Portal invitation created");
+    },
+    onError: (error: unknown) =>
+      setInvitationError(
+        error instanceof Error ? error.message : "We couldn't create this invitation.",
+      ),
+  });
+
+  function submitInvitation(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    if (!invitationSchoolId || !invitationEmail.trim()) {
+      setInvitationError("School and email are required.");
+      return;
+    }
+    setInvitationResult(null);
+    invitationMutation.mutate();
+  }
 
   const schoolName = (id: string) => schools.find((s) => s.id === id)?.name ?? id;
 
@@ -362,6 +404,51 @@ function StudentDetailPage() {
                 <p className="text-xs text-muted-foreground">Status</p>
                 {student && <StatusBadge status={student.status} />}
               </div>
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardHeader>
+              <CardTitle className="text-base">Student Portal account</CardTitle>
+              <CardDescription>
+                Access is bound server-side (auth.uid() → students.profile_id) and can only be
+                granted through this workflow — never by a generic invitation.
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-3 text-sm">
+              {student?.hasLogin ? (
+                <p className="text-sm">
+                  Portal access is <span className="font-medium">linked</span>. This student can
+                  sign in and see their own schedule, attendance, scores and published report
+                  cards.
+                </p>
+              ) : (
+                <>
+                  <p className="text-muted-foreground">
+                    No Student Portal account is linked yet.
+                  </p>
+                  {canInviteStudent ? (
+                    <Button
+                      size="sm"
+                      onClick={() => {
+                        setInvitationEmail("");
+                        setInvitationSchoolId(
+                          detailQuery.data?.enrollments[0]?.schoolId ?? schools[0]?.id ?? "",
+                        );
+                        setInvitationError(null);
+                        setInvitationResult(null);
+                        setInvitationOpen(true);
+                      }}
+                    >
+                      Invite to Student Portal
+                    </Button>
+                  ) : (
+                    <p className="text-xs text-muted-foreground">
+                      You do not have permission to issue Student Portal invitations.
+                    </p>
+                  )}
+                </>
+              )}
             </CardContent>
           </Card>
 
@@ -948,6 +1035,50 @@ function StudentDetailPage() {
             </div>
           ))}
         </div>
+      </FormDialog>
+      <FormDialog
+        open={invitationOpen}
+        onOpenChange={setInvitationOpen}
+        title="Invite to Student Portal"
+        description="The server independently verifies enrolment and resolves the STUDENT role — this form only submits the school and email."
+        submitting={invitationMutation.isPending}
+        error={invitationError}
+        onSubmit={submitInvitation}
+      >
+        <Field label="School">
+          <Select value={invitationSchoolId} onValueChange={setInvitationSchoolId}>
+            <SelectTrigger>
+              <SelectValue placeholder="Select a school" />
+            </SelectTrigger>
+            <SelectContent>
+              {schools.map((s) => (
+                <SelectItem key={s.id} value={s.id}>
+                  {s.name}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </Field>
+        <Field label="Email" htmlFor="invitationEmail" hint="The student's own sign-in email.">
+          <Input
+            id="invitationEmail"
+            type="email"
+            value={invitationEmail}
+            onChange={(e) => setInvitationEmail(e.target.value)}
+            required
+          />
+        </Field>
+        {invitationResult && (
+          <div className="rounded-md border border-border bg-muted/50 p-3 text-xs">
+            <p className="font-medium">Invitation created.</p>
+            <p className="mt-1 break-all">
+              Link: {window.location.origin}/accept-invite?token={invitationResult.token}
+            </p>
+            <p className="mt-1 text-muted-foreground">
+              Expires {new Date(invitationResult.expiresAt).toLocaleString()}
+            </p>
+          </div>
+        )}
       </FormDialog>
     </SisPage>
   );
