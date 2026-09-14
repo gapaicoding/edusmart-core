@@ -20,6 +20,7 @@ import { Route as AuthenticatedAccessPendingRouteImport } from './routes/_authen
 import { Route as AuthenticatedDashboardRouteImport } from './routes/_authenticated/dashboard'
 import { Route as AuthenticatedSelectOrganizationRouteImport } from './routes/_authenticated/select-organization'
 import { Route as AuthenticatedSelectSchoolRouteImport } from './routes/_authenticated/select-school'
+import { Route as AuthenticatedSisExportRouteImport } from './routes/_authenticated/sis-export'
 import { Route as AuthenticatedAcademicCalendarRouteImport } from './routes/_authenticated/academic/calendar'
 import { Route as AuthenticatedAcademicClassroomsRouteImport } from './routes/_authenticated/academic/classrooms'
 import { Route as AuthenticatedAcademicCurriculaRouteImport } from './routes/_authenticated/academic/curricula'
@@ -41,6 +42,9 @@ import { Route as AuthenticatedReportCardsIndexRouteImport } from './routes/_aut
 import { Route as AuthenticatedReportCardsIdRouteImport } from './routes/_authenticated/report-cards/$id'
 import { Route as AuthenticatedScheduleIndexRouteImport } from './routes/_authenticated/schedule/index'
 import { Route as AuthenticatedScheduleMyRouteImport } from './routes/_authenticated/schedule/my'
+import { Route as AuthenticatedSisImportsIndexRouteImport } from './routes/_authenticated/sis-imports/index'
+import { Route as AuthenticatedSisImportsJobIdRouteImport } from './routes/_authenticated/sis-imports/$jobId'
+import { Route as AuthenticatedSisImportsNewRouteImport } from './routes/_authenticated/sis-imports/new'
 import { Route as AuthenticatedStaffIndexRouteImport } from './routes/_authenticated/staff/index'
 import { Route as AuthenticatedStaffStaffIdRouteImport } from './routes/_authenticated/staff/$staffId'
 import { Route as AuthenticatedStudentIndexRouteImport } from './routes/_authenticated/student/index'
@@ -110,6 +114,11 @@ const AuthenticatedSelectSchoolRoute =
     path: '/select-school',
     getParentRoute: () => AuthenticatedRouteRoute,
   } as any)
+const AuthenticatedSisExportRoute = AuthenticatedSisExportRouteImport.update({
+  id: '/sis-export',
+  path: '/sis-export',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
 const AuthenticatedAcademicCalendarRoute =
   AuthenticatedAcademicCalendarRouteImport.update({
     id: '/academic/calendar',
@@ -235,6 +244,24 @@ const AuthenticatedScheduleMyRoute = AuthenticatedScheduleMyRouteImport.update({
   path: '/schedule/my',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
+const AuthenticatedSisImportsIndexRoute =
+  AuthenticatedSisImportsIndexRouteImport.update({
+    id: '/sis-imports/',
+    path: '/sis-imports/',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
+const AuthenticatedSisImportsJobIdRoute =
+  AuthenticatedSisImportsJobIdRouteImport.update({
+    id: '/sis-imports/$jobId',
+    path: '/sis-imports/$jobId',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
+const AuthenticatedSisImportsNewRoute =
+  AuthenticatedSisImportsNewRouteImport.update({
+    id: '/sis-imports/new',
+    path: '/sis-imports/new',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
 const AuthenticatedStaffIndexRoute = AuthenticatedStaffIndexRouteImport.update({
   id: '/staff/',
   path: '/staff/',
@@ -312,6 +339,7 @@ export interface FileRoutesByFullPath {
   '/dashboard': typeof AuthenticatedDashboardRoute
   '/select-organization': typeof AuthenticatedSelectOrganizationRoute
   '/select-school': typeof AuthenticatedSelectSchoolRoute
+  '/sis-export': typeof AuthenticatedSisExportRoute
   '/academic/calendar': typeof AuthenticatedAcademicCalendarRoute
   '/academic/classrooms': typeof AuthenticatedAcademicClassroomsRoute
   '/academic/curricula': typeof AuthenticatedAcademicCurriculaRoute
@@ -327,6 +355,8 @@ export interface FileRoutesByFullPath {
   '/portal/scores': typeof AuthenticatedPortalScoresRoute
   '/report-cards/$id': typeof AuthenticatedReportCardsIdRoute
   '/schedule/my': typeof AuthenticatedScheduleMyRoute
+  '/sis-imports/$jobId': typeof AuthenticatedSisImportsJobIdRoute
+  '/sis-imports/new': typeof AuthenticatedSisImportsNewRoute
   '/staff/$staffId': typeof AuthenticatedStaffStaffIdRoute
   '/student/attendance': typeof AuthenticatedStudentAttendanceRoute
   '/student/report-cards': typeof AuthenticatedStudentReportCardsRoute
@@ -339,6 +369,7 @@ export interface FileRoutesByFullPath {
   '/portal/': typeof AuthenticatedPortalIndexRoute
   '/report-cards/': typeof AuthenticatedReportCardsIndexRoute
   '/schedule/': typeof AuthenticatedScheduleIndexRoute
+  '/sis-imports/': typeof AuthenticatedSisImportsIndexRoute
   '/staff/': typeof AuthenticatedStaffIndexRoute
   '/student/': typeof AuthenticatedStudentIndexRoute
   '/students/': typeof AuthenticatedStudentsIndexRoute
@@ -356,6 +387,7 @@ export interface FileRoutesByTo {
   '/dashboard': typeof AuthenticatedDashboardRoute
   '/select-organization': typeof AuthenticatedSelectOrganizationRoute
   '/select-school': typeof AuthenticatedSelectSchoolRoute
+  '/sis-export': typeof AuthenticatedSisExportRoute
   '/academic/calendar': typeof AuthenticatedAcademicCalendarRoute
   '/academic/classrooms': typeof AuthenticatedAcademicClassroomsRoute
   '/academic/curricula': typeof AuthenticatedAcademicCurriculaRoute
@@ -371,6 +403,8 @@ export interface FileRoutesByTo {
   '/portal/scores': typeof AuthenticatedPortalScoresRoute
   '/report-cards/$id': typeof AuthenticatedReportCardsIdRoute
   '/schedule/my': typeof AuthenticatedScheduleMyRoute
+  '/sis-imports/$jobId': typeof AuthenticatedSisImportsJobIdRoute
+  '/sis-imports/new': typeof AuthenticatedSisImportsNewRoute
   '/staff/$staffId': typeof AuthenticatedStaffStaffIdRoute
   '/student/attendance': typeof AuthenticatedStudentAttendanceRoute
   '/student/report-cards': typeof AuthenticatedStudentReportCardsRoute
@@ -383,6 +417,7 @@ export interface FileRoutesByTo {
   '/portal': typeof AuthenticatedPortalIndexRoute
   '/report-cards': typeof AuthenticatedReportCardsIndexRoute
   '/schedule': typeof AuthenticatedScheduleIndexRoute
+  '/sis-imports': typeof AuthenticatedSisImportsIndexRoute
   '/staff': typeof AuthenticatedStaffIndexRoute
   '/student': typeof AuthenticatedStudentIndexRoute
   '/students': typeof AuthenticatedStudentsIndexRoute
@@ -402,6 +437,7 @@ export interface FileRoutesById {
   '/_authenticated/dashboard': typeof AuthenticatedDashboardRoute
   '/_authenticated/select-organization': typeof AuthenticatedSelectOrganizationRoute
   '/_authenticated/select-school': typeof AuthenticatedSelectSchoolRoute
+  '/_authenticated/sis-export': typeof AuthenticatedSisExportRoute
   '/_authenticated/academic/calendar': typeof AuthenticatedAcademicCalendarRoute
   '/_authenticated/academic/classrooms': typeof AuthenticatedAcademicClassroomsRoute
   '/_authenticated/academic/curricula': typeof AuthenticatedAcademicCurriculaRoute
@@ -417,6 +453,8 @@ export interface FileRoutesById {
   '/_authenticated/portal/scores': typeof AuthenticatedPortalScoresRoute
   '/_authenticated/report-cards/$id': typeof AuthenticatedReportCardsIdRoute
   '/_authenticated/schedule/my': typeof AuthenticatedScheduleMyRoute
+  '/_authenticated/sis-imports/$jobId': typeof AuthenticatedSisImportsJobIdRoute
+  '/_authenticated/sis-imports/new': typeof AuthenticatedSisImportsNewRoute
   '/_authenticated/staff/$staffId': typeof AuthenticatedStaffStaffIdRoute
   '/_authenticated/student/attendance': typeof AuthenticatedStudentAttendanceRoute
   '/_authenticated/student/report-cards': typeof AuthenticatedStudentReportCardsRoute
@@ -429,6 +467,7 @@ export interface FileRoutesById {
   '/_authenticated/portal/': typeof AuthenticatedPortalIndexRoute
   '/_authenticated/report-cards/': typeof AuthenticatedReportCardsIndexRoute
   '/_authenticated/schedule/': typeof AuthenticatedScheduleIndexRoute
+  '/_authenticated/sis-imports/': typeof AuthenticatedSisImportsIndexRoute
   '/_authenticated/staff/': typeof AuthenticatedStaffIndexRoute
   '/_authenticated/student/': typeof AuthenticatedStudentIndexRoute
   '/_authenticated/students/': typeof AuthenticatedStudentsIndexRoute
@@ -448,6 +487,7 @@ export interface FileRouteTypes {
     | '/dashboard'
     | '/select-organization'
     | '/select-school'
+    | '/sis-export'
     | '/academic/calendar'
     | '/academic/classrooms'
     | '/academic/curricula'
@@ -463,6 +503,8 @@ export interface FileRouteTypes {
     | '/portal/scores'
     | '/report-cards/$id'
     | '/schedule/my'
+    | '/sis-imports/$jobId'
+    | '/sis-imports/new'
     | '/staff/$staffId'
     | '/student/attendance'
     | '/student/report-cards'
@@ -475,6 +517,7 @@ export interface FileRouteTypes {
     | '/portal/'
     | '/report-cards/'
     | '/schedule/'
+    | '/sis-imports/'
     | '/staff/'
     | '/student/'
     | '/students/'
@@ -492,6 +535,7 @@ export interface FileRouteTypes {
     | '/dashboard'
     | '/select-organization'
     | '/select-school'
+    | '/sis-export'
     | '/academic/calendar'
     | '/academic/classrooms'
     | '/academic/curricula'
@@ -507,6 +551,8 @@ export interface FileRouteTypes {
     | '/portal/scores'
     | '/report-cards/$id'
     | '/schedule/my'
+    | '/sis-imports/$jobId'
+    | '/sis-imports/new'
     | '/staff/$staffId'
     | '/student/attendance'
     | '/student/report-cards'
@@ -519,6 +565,7 @@ export interface FileRouteTypes {
     | '/portal'
     | '/report-cards'
     | '/schedule'
+    | '/sis-imports'
     | '/staff'
     | '/student'
     | '/students'
@@ -537,6 +584,7 @@ export interface FileRouteTypes {
     | '/_authenticated/dashboard'
     | '/_authenticated/select-organization'
     | '/_authenticated/select-school'
+    | '/_authenticated/sis-export'
     | '/_authenticated/academic/calendar'
     | '/_authenticated/academic/classrooms'
     | '/_authenticated/academic/curricula'
@@ -552,6 +600,8 @@ export interface FileRouteTypes {
     | '/_authenticated/portal/scores'
     | '/_authenticated/report-cards/$id'
     | '/_authenticated/schedule/my'
+    | '/_authenticated/sis-imports/$jobId'
+    | '/_authenticated/sis-imports/new'
     | '/_authenticated/staff/$staffId'
     | '/_authenticated/student/attendance'
     | '/_authenticated/student/report-cards'
@@ -564,6 +614,7 @@ export interface FileRouteTypes {
     | '/_authenticated/portal/'
     | '/_authenticated/report-cards/'
     | '/_authenticated/schedule/'
+    | '/_authenticated/sis-imports/'
     | '/_authenticated/staff/'
     | '/_authenticated/student/'
     | '/_authenticated/students/'
@@ -658,6 +709,13 @@ declare module '@tanstack/react-router' {
       path: '/select-school'
       fullPath: '/select-school'
       preLoaderRoute: typeof AuthenticatedSelectSchoolRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/sis-export': {
+      id: '/_authenticated/sis-export'
+      path: '/sis-export'
+      fullPath: '/sis-export'
+      preLoaderRoute: typeof AuthenticatedSisExportRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
     '/_authenticated/academic/calendar': {
@@ -807,6 +865,27 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedScheduleMyRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+    '/_authenticated/sis-imports/': {
+      id: '/_authenticated/sis-imports/'
+      path: '/sis-imports'
+      fullPath: '/sis-imports/'
+      preLoaderRoute: typeof AuthenticatedSisImportsIndexRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/sis-imports/$jobId': {
+      id: '/_authenticated/sis-imports/$jobId'
+      path: '/sis-imports/$jobId'
+      fullPath: '/sis-imports/$jobId'
+      preLoaderRoute: typeof AuthenticatedSisImportsJobIdRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/sis-imports/new': {
+      id: '/_authenticated/sis-imports/new'
+      path: '/sis-imports/new'
+      fullPath: '/sis-imports/new'
+      preLoaderRoute: typeof AuthenticatedSisImportsNewRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
     '/_authenticated/staff/': {
       id: '/_authenticated/staff/'
       path: '/staff'
@@ -892,6 +971,7 @@ interface AuthenticatedRouteRouteChildren {
   AuthenticatedDashboardRoute: typeof AuthenticatedDashboardRoute
   AuthenticatedSelectOrganizationRoute: typeof AuthenticatedSelectOrganizationRoute
   AuthenticatedSelectSchoolRoute: typeof AuthenticatedSelectSchoolRoute
+  AuthenticatedSisExportRoute: typeof AuthenticatedSisExportRoute
   AuthenticatedAcademicCalendarRoute: typeof AuthenticatedAcademicCalendarRoute
   AuthenticatedAcademicClassroomsRoute: typeof AuthenticatedAcademicClassroomsRoute
   AuthenticatedAcademicCurriculaRoute: typeof AuthenticatedAcademicCurriculaRoute
@@ -907,6 +987,8 @@ interface AuthenticatedRouteRouteChildren {
   AuthenticatedPortalScoresRoute: typeof AuthenticatedPortalScoresRoute
   AuthenticatedReportCardsIdRoute: typeof AuthenticatedReportCardsIdRoute
   AuthenticatedScheduleMyRoute: typeof AuthenticatedScheduleMyRoute
+  AuthenticatedSisImportsJobIdRoute: typeof AuthenticatedSisImportsJobIdRoute
+  AuthenticatedSisImportsNewRoute: typeof AuthenticatedSisImportsNewRoute
   AuthenticatedStaffStaffIdRoute: typeof AuthenticatedStaffStaffIdRoute
   AuthenticatedStudentAttendanceRoute: typeof AuthenticatedStudentAttendanceRoute
   AuthenticatedStudentReportCardsRoute: typeof AuthenticatedStudentReportCardsRoute
@@ -919,6 +1001,7 @@ interface AuthenticatedRouteRouteChildren {
   AuthenticatedPortalIndexRoute: typeof AuthenticatedPortalIndexRoute
   AuthenticatedReportCardsIndexRoute: typeof AuthenticatedReportCardsIndexRoute
   AuthenticatedScheduleIndexRoute: typeof AuthenticatedScheduleIndexRoute
+  AuthenticatedSisImportsIndexRoute: typeof AuthenticatedSisImportsIndexRoute
   AuthenticatedStaffIndexRoute: typeof AuthenticatedStaffIndexRoute
   AuthenticatedStudentIndexRoute: typeof AuthenticatedStudentIndexRoute
   AuthenticatedStudentsIndexRoute: typeof AuthenticatedStudentsIndexRoute
@@ -931,6 +1014,7 @@ const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedDashboardRoute: AuthenticatedDashboardRoute,
   AuthenticatedSelectOrganizationRoute: AuthenticatedSelectOrganizationRoute,
   AuthenticatedSelectSchoolRoute: AuthenticatedSelectSchoolRoute,
+  AuthenticatedSisExportRoute: AuthenticatedSisExportRoute,
   AuthenticatedAcademicCalendarRoute: AuthenticatedAcademicCalendarRoute,
   AuthenticatedAcademicClassroomsRoute: AuthenticatedAcademicClassroomsRoute,
   AuthenticatedAcademicCurriculaRoute: AuthenticatedAcademicCurriculaRoute,
@@ -946,6 +1030,8 @@ const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedPortalScoresRoute: AuthenticatedPortalScoresRoute,
   AuthenticatedReportCardsIdRoute: AuthenticatedReportCardsIdRoute,
   AuthenticatedScheduleMyRoute: AuthenticatedScheduleMyRoute,
+  AuthenticatedSisImportsJobIdRoute: AuthenticatedSisImportsJobIdRoute,
+  AuthenticatedSisImportsNewRoute: AuthenticatedSisImportsNewRoute,
   AuthenticatedStaffStaffIdRoute: AuthenticatedStaffStaffIdRoute,
   AuthenticatedStudentAttendanceRoute: AuthenticatedStudentAttendanceRoute,
   AuthenticatedStudentReportCardsRoute: AuthenticatedStudentReportCardsRoute,
@@ -958,6 +1044,7 @@ const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedPortalIndexRoute: AuthenticatedPortalIndexRoute,
   AuthenticatedReportCardsIndexRoute: AuthenticatedReportCardsIndexRoute,
   AuthenticatedScheduleIndexRoute: AuthenticatedScheduleIndexRoute,
+  AuthenticatedSisImportsIndexRoute: AuthenticatedSisImportsIndexRoute,
   AuthenticatedStaffIndexRoute: AuthenticatedStaffIndexRoute,
   AuthenticatedStudentIndexRoute: AuthenticatedStudentIndexRoute,
   AuthenticatedStudentsIndexRoute: AuthenticatedStudentsIndexRoute,
