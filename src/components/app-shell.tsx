@@ -12,6 +12,8 @@ import {
   ClipboardCheck,
   ClipboardList,
   FileText,
+  FileUp,
+  FileDown,
   GraduationCap,
   HeartHandshake,
   LayoutDashboard,
@@ -52,6 +54,7 @@ type NavItem = {
   label: string;
   icon: typeof LayoutDashboard;
   permission: string | null;
+  anyOf?: string[];
 };
 /**
  * `audience` is UX-only navigation grouping derived from the caller's role
@@ -133,6 +136,8 @@ const NAV_GROUPS: NavGroup[] = [
       { to: "/students", label: "Students", icon: Users, permission: "student.read" },
       { to: "/guardians", label: "Guardians", icon: HeartHandshake, permission: "guardian.read" },
       { to: "/staff", label: "Staff", icon: Briefcase, permission: "staff.read" },
+      { to: "/sis-imports", label: "SIS Imports", icon: FileUp, permission: null, anyOf: ["student.import", "guardian.import", "staff.import", "enrollment.import"] },
+      { to: "/sis-export", label: "SIS Export", icon: FileDown, permission: null, anyOf: ["student.export", "guardian.export", "staff.export"] },
     ],
   },
   {
@@ -344,7 +349,12 @@ function Sidebar({ onNavigate }: { onNavigate?: () => void }) {
   })
     .map((group) => ({
       ...group,
-      items: group.items.filter((item) => !item.permission || hasPermission(item.permission)),
+      items: group.items.filter(
+        (item) =>
+          (!item.permission && !item.anyOf) ||
+          Boolean(item.permission && hasPermission(item.permission)) ||
+          Boolean(item.anyOf?.some(hasPermission)),
+      ),
     }))
     .filter((group) => group.items.length > 0);
 
