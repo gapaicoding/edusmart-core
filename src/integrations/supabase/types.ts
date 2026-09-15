@@ -328,6 +328,141 @@ export type Database = {
           },
         ]
       }
+      attendance_command_requests: {
+        Row: {
+          actor_profile_id: string
+          command_kind: string
+          completed_at: string | null
+          created_at: string
+          id: string
+          organization_id: string
+          request_fingerprint: string
+          request_id: string
+          result: Json | null
+          retained_until: string
+          school_id: string
+          target_id: string | null
+        }
+        Insert: {
+          actor_profile_id: string
+          command_kind: string
+          completed_at?: string | null
+          created_at?: string
+          id?: string
+          organization_id: string
+          request_fingerprint: string
+          request_id: string
+          result?: Json | null
+          retained_until?: string
+          school_id: string
+          target_id?: string | null
+        }
+        Update: {
+          actor_profile_id?: string
+          command_kind?: string
+          completed_at?: string | null
+          created_at?: string
+          id?: string
+          organization_id?: string
+          request_fingerprint?: string
+          request_id?: string
+          result?: Json | null
+          retained_until?: string
+          school_id?: string
+          target_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "attendance_command_requests_actor_profile_id_fkey"
+            columns: ["actor_profile_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "attendance_command_school_fk"
+            columns: ["school_id", "organization_id"]
+            isOneToOne: false
+            referencedRelation: "schools"
+            referencedColumns: ["id", "organization_id"]
+          },
+        ]
+      }
+      attendance_session_roster_members: {
+        Row: {
+          attendance_session_id: string
+          created_by_profile_id: string | null
+          id: string
+          organization_id: string
+          school_id: string
+          snapshot_source: string
+          snapshotted_at: string
+          student_enrollment_id: string
+          student_id: string
+        }
+        Insert: {
+          attendance_session_id: string
+          created_by_profile_id?: string | null
+          id?: string
+          organization_id: string
+          school_id: string
+          snapshot_source: string
+          snapshotted_at?: string
+          student_enrollment_id: string
+          student_id: string
+        }
+        Update: {
+          attendance_session_id?: string
+          created_by_profile_id?: string | null
+          id?: string
+          organization_id?: string
+          school_id?: string
+          snapshot_source?: string
+          snapshotted_at?: string
+          student_enrollment_id?: string
+          student_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "attendance_roster_enrollment_student_fk"
+            columns: [
+              "student_enrollment_id",
+              "student_id",
+              "organization_id",
+              "school_id",
+            ]
+            isOneToOne: false
+            referencedRelation: "student_enrollments"
+            referencedColumns: [
+              "id",
+              "student_id",
+              "organization_id",
+              "school_id",
+            ]
+          },
+          {
+            foreignKeyName: "attendance_roster_session_fk"
+            columns: ["attendance_session_id", "organization_id", "school_id"]
+            isOneToOne: false
+            referencedRelation: "attendance_sessions"
+            referencedColumns: ["id", "organization_id", "school_id"]
+          },
+          {
+            foreignKeyName: "attendance_roster_student_fk"
+            columns: ["student_id", "organization_id"]
+            isOneToOne: false
+            referencedRelation: "students"
+            referencedColumns: ["id", "organization_id"]
+          },
+          {
+            foreignKeyName: "attendance_session_roster_members_created_by_profile_id_fkey"
+            columns: ["created_by_profile_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       attendance_sessions: {
         Row: {
           academic_year_id: string
@@ -2220,6 +2355,23 @@ export type Database = {
             referencedColumns: ["id"]
           },
           {
+            foreignKeyName: "student_attendance_roster_member_fk"
+            columns: [
+              "attendance_session_id",
+              "student_enrollment_id",
+              "organization_id",
+              "school_id",
+            ]
+            isOneToOne: false
+            referencedRelation: "attendance_session_roster_members"
+            referencedColumns: [
+              "attendance_session_id",
+              "student_enrollment_id",
+              "organization_id",
+              "school_id",
+            ]
+          },
+          {
             foreignKeyName: "student_attendance_session_fk"
             columns: ["attendance_session_id", "organization_id", "school_id"]
             isOneToOne: false
@@ -2870,6 +3022,26 @@ export type Database = {
         }
         Returns: undefined
       }
+      attendance_school_timezone: {
+        Args: { p_school_id: string }
+        Returns: string
+      }
+      b11_attendance_fingerprint: { Args: { p_payload: Json }; Returns: string }
+      b11_attendance_request_begin: {
+        Args: {
+          p_command_kind: string
+          p_fingerprint: string
+          p_organization_id: string
+          p_request_id: string
+          p_school_id: string
+          p_target_id: string
+        }
+        Returns: Json
+      }
+      b11_attendance_request_finish: {
+        Args: { p_request_id: string; p_result: Json }
+        Returns: undefined
+      }
       can_access_assessment: {
         Args: { p_assessment_id: string; p_permission_code: string }
         Returns: boolean
@@ -2979,6 +3151,21 @@ export type Database = {
           job_id: string
           status: string
           totals: Json
+        }[]
+      }
+      correct_attendance_record: {
+        Args: {
+          p_correction_reason: string
+          p_expected_updated_at: string
+          p_note: string
+          p_record_id: string
+          p_request_id: string
+          p_status: string
+        }
+        Returns: {
+          record_id: string
+          record_status: string
+          record_updated_at: string
         }[]
       }
       create_report_card_revision: {
@@ -3116,6 +3303,51 @@ export type Database = {
         Returns: string
       }
       is_own_membership: { Args: { p_membership_id: string }; Returns: boolean }
+      list_attendance_corrections: {
+        Args: { p_offset?: number; p_page_size?: number; p_record_id: string }
+        Returns: {
+          actor_name: string
+          actor_profile_id: string
+          changed_at: string
+          new_status: string
+          old_status: string
+          reason: string
+          record_id: string
+          session_id: string
+          student_id: string
+          student_name: string
+        }[]
+      }
+      list_attendance_history: {
+        Args: {
+          p_classroom_id?: string
+          p_from: string
+          p_offset?: number
+          p_page_size?: number
+          p_school_id: string
+          p_status?: string
+          p_student_id?: string
+          p_to: string
+        }
+        Returns: {
+          absent_count: number
+          classroom_id: string
+          classroom_name: string
+          excused_count: number
+          late_count: number
+          lifecycle: string
+          marked_count: number
+          origin: string
+          other_count: number
+          present_count: number
+          roster_count: number
+          session_date: string
+          session_id: string
+          sick_count: number
+          teaching_assignment_id: string
+          timetable_entry_id: string
+        }[]
+      }
       list_parent_student_attendance: {
         Args: { p_from?: string; p_student_id: string; p_to?: string }
         Returns: {
@@ -3133,6 +3365,27 @@ export type Database = {
       list_sis_import_jobs: {
         Args: { p_limit?: number; p_offset?: number; p_school_id: string }
         Returns: Json
+      }
+      list_staff_student_attendance_history: {
+        Args: {
+          p_from: string
+          p_offset?: number
+          p_page_size?: number
+          p_student_id: string
+          p_to: string
+        }
+        Returns: {
+          classroom_id: string
+          classroom_name: string
+          note: string
+          origin: string
+          record_id: string
+          session_date: string
+          session_id: string
+          status: string
+          updated_at: string
+          was_corrected: boolean
+        }[]
       }
       list_student_own_attendance: {
         Args: {
@@ -3165,6 +3418,18 @@ export type Database = {
           teacher_name: string
         }[]
       }
+      lock_attendance_session: {
+        Args: {
+          p_expected_updated_at: string
+          p_request_id: string
+          p_session_id: string
+        }
+        Returns: {
+          locked_at: string
+          session_id: string
+          session_status: string
+        }[]
+      }
       mint_sis_entity_ref: {
         Args: {
           p_created_by_import_job_id?: string
@@ -3176,6 +3441,29 @@ export type Database = {
           p_student_id?: string
         }
         Returns: string
+      }
+      open_attendance_session: {
+        Args: {
+          p_acknowledge_collision?: boolean
+          p_acknowledge_non_instructional?: boolean
+          p_classroom_id?: string
+          p_ends_at?: string
+          p_manual_reason?: string
+          p_request_id: string
+          p_session_date: string
+          p_starts_at?: string
+          p_teaching_assignment_id?: string
+          p_term_id?: string
+          p_timetable_entry_id?: string
+        }
+        Returns: {
+          calendar_warning: boolean
+          collision_warning: boolean
+          roster_count: number
+          school_timezone: string
+          session_id: string
+          session_status: string
+        }[]
       }
       owns_teaching_assignment: {
         Args: { p_assignment_id: string }
@@ -3359,6 +3647,18 @@ export type Database = {
         }
         Returns: string
       }
+      save_attendance_draft: {
+        Args: {
+          p_expected_session_updated_at: string
+          p_records: Json
+          p_request_id: string
+          p_session_id: string
+        }
+        Returns: {
+          saved_count: number
+          session_id: string
+        }[]
+      }
       scrub_expired_sis_import_payloads: { Args: never; Returns: number }
       sis_entity_export_permission_codes: {
         Args: { p_entity_type: string }
@@ -3367,6 +3667,18 @@ export type Database = {
       sis_entity_import_permission_codes: {
         Args: { p_entity_type: string }
         Returns: string[]
+      }
+      submit_attendance_session: {
+        Args: {
+          p_expected_updated_at: string
+          p_request_id: string
+          p_session_id: string
+        }
+        Returns: {
+          session_id: string
+          session_status: string
+          submitted_at: string
+        }[]
       }
       transition_report_card: {
         Args: {

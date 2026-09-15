@@ -1,10 +1,22 @@
 import { createServerFn } from "@tanstack/react-start";
 import type { SupabaseClient } from "@supabase/supabase-js";
+import { z } from "zod";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import type { Database } from "@/integrations/supabase/types";
-import { insertWithoutReturning } from "./sis.server";
-import { translateAttendanceError } from "./attendance.server";
 import {
+  callB11Rpc,
+  readB11RosterSnapshot,
+  type B11RpcArgs,
+  type B11RpcName,
+} from "./attendance-b11-db";
+import {
+  attendanceCommandError,
+  translateAttendanceError,
+  unexpectedAttendanceShape,
+} from "./attendance.server";
+import {
+  attendanceCorrectionsInput,
+  attendanceHistoryInput,
   attendanceLifecycleInput,
   attendanceListInput,
   attendanceOptionsInput,
@@ -12,7 +24,109 @@ import {
   attendanceSessionInput,
   openAttendanceSessionInput,
   saveAttendanceRecordInput,
+  saveAttendanceDraftInput,
+  staffStudentAttendanceHistoryInput,
 } from "./attendance.schemas";
+
+const uuidResult = z.string().uuid();
+const timestampResult = z.string().datetime({ offset: true });
+const openResultSchema = z
+  .array(
+    z.object({
+      session_id: uuidResult,
+      session_status: z.string(),
+      roster_count: z.coerce.number().int().nonnegative(),
+      school_timezone: z.string().min(1),
+      calendar_warning: z.boolean(),
+      collision_warning: z.boolean(),
+    }),
+  )
+  .length(1);
+const saveResultSchema = z
+  .array(z.object({ session_id: uuidResult, saved_count: z.number().int().nonnegative() }))
+  .length(1);
+const submitResultSchema = z
+  .array(
+    z.object({ session_id: uuidResult, session_status: z.string(), submitted_at: timestampResult }),
+  )
+  .length(1);
+const lockResultSchema = z
+  .array(
+    z.object({ session_id: uuidResult, session_status: z.string(), locked_at: timestampResult }),
+  )
+  .length(1);
+const correctionResultSchema = z
+  .array(
+    z.object({
+      record_id: uuidResult,
+      record_status: z.string(),
+      record_updated_at: timestampResult,
+    }),
+  )
+  .length(1);
+const rosterSnapshotSchema = z.array(
+  z.object({ student_enrollment_id: uuidResult, student_id: uuidResult }),
+);
+const historyRowSchema = z.object({
+  session_id: uuidResult,
+  session_date: z.string(),
+  classroom_id: uuidResult,
+  classroom_name: z.string(),
+  origin: z.enum(["manual", "timetable"]),
+  lifecycle: z.string(),
+  roster_count: z.coerce.number().int().nonnegative(),
+  marked_count: z.coerce.number().int().nonnegative(),
+  present_count: z.coerce.number().int().nonnegative(),
+  late_count: z.coerce.number().int().nonnegative(),
+  excused_count: z.coerce.number().int().nonnegative(),
+  sick_count: z.coerce.number().int().nonnegative(),
+  absent_count: z.coerce.number().int().nonnegative(),
+  other_count: z.coerce.number().int().nonnegative(),
+  teaching_assignment_id: uuidResult.nullable(),
+  timetable_entry_id: uuidResult.nullable(),
+});
+const studentHistoryRowSchema = z.object({
+  record_id: uuidResult,
+  session_id: uuidResult,
+  session_date: z.string(),
+  classroom_id: uuidResult,
+  classroom_name: z.string(),
+  status: z.string(),
+  note: z.string().nullable(),
+  was_corrected: z.boolean(),
+  origin: z.enum(["manual", "timetable"]),
+  updated_at: timestampResult,
+});
+const correctionHistoryRowSchema = z.object({
+  record_id: uuidResult,
+  session_id: uuidResult,
+  student_id: uuidResult,
+  student_name: z.string(),
+  old_status: z.string().nullable(),
+  new_status: z.string().nullable(),
+  reason: z.string(),
+  actor_profile_id: uuidResult.nullable(),
+  actor_name: z.string().nullable(),
+  changed_at: timestampResult,
+});
+const timezoneSchema = z.string().min(1);
+
+function commandRequestId(value?: string): string {
+  return value ?? crypto.randomUUID();
+}
+
+async function checkedRpc<N extends B11RpcName, T>(
+  client: Db,
+  name: N,
+  args: B11RpcArgs<N>,
+  schema: z.ZodType<T>,
+  subject: string,
+): Promise<T> {
+  const result = await callB11Rpc(client, name, args, schema);
+  if (result.error) throw attendanceCommandError(result.error, subject);
+  if (result.shapeError || result.data === null) throw unexpectedAttendanceShape(subject);
+  return result.data;
+}
 
 export type AttendanceSessionSummary = {
   id: string;
@@ -49,6 +163,9 @@ export type AttendanceSessionDetail = AttendanceSessionSummary & {
   submittedAt: string | null;
   lockedAt: string | null;
 };
+export type AttendanceHistoryRow = z.infer<typeof historyRowSchema>;
+export type StaffStudentAttendanceHistoryRow = z.infer<typeof studentHistoryRowSchema>;
+export type AttendanceCorrectionHistoryRow = z.infer<typeof correctionHistoryRowSchema>;
 
 type Db = SupabaseClient<Database>;
 type SessionRow = Database["public"]["Tables"]["attendance_sessions"]["Row"];
@@ -235,55 +352,39 @@ export const openAttendanceSession = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((input: unknown) => openAttendanceSessionInput.parse(input))
   .handler(async ({ data, context }) => {
-    let payload: Record<string, unknown> = {
-      organization_id: data.organizationId,
-      school_id: data.schoolId,
-      academic_year_id: data.academicYearId,
-      term_id: data.termId,
-      session_date: data.sessionDate,
-      status: "open",
-    };
-    if (data.origin === "timetable") {
-      const { data: entry, error } = await context.supabase
-        .from("timetable_entries")
-        .select("id, teaching_assignment_id, start_time, end_time")
-        .eq("id", data.timetableEntryId)
-        .eq("organization_id", data.organizationId)
-        .eq("school_id", data.schoolId)
-        .maybeSingle();
-      if (error) throw new Error(translateAttendanceError(error, "Timetable entry"));
-      if (!entry) throw new Error("That timetable entry is unavailable in the selected scope.");
-      const { data: assignment, error: assignmentError } = await context.supabase
-        .from("teaching_assignments")
-        .select("classroom_id")
-        .eq("id", entry.teaching_assignment_id)
-        .maybeSingle();
-      if (assignmentError)
-        throw new Error(translateAttendanceError(assignmentError, "Teaching assignment"));
-      if (!assignment) throw new Error("That teaching assignment is unavailable.");
-      payload = {
-        ...payload,
-        timetable_entry_id: entry.id,
-        teaching_assignment_id: entry.teaching_assignment_id,
-        classroom_id: assignment.classroom_id,
-        starts_at: new Date(`${data.sessionDate}T${entry.start_time}+07:00`).toISOString(),
-        ends_at: new Date(`${data.sessionDate}T${entry.end_time}+07:00`).toISOString(),
-      };
-    } else
-      payload = {
-        ...payload,
-        classroom_id: data.classroomId,
-        teaching_assignment_id: data.teachingAssignmentId ?? null,
-        starts_at: data.startsAt || null,
-        ends_at: data.endsAt || null,
-        manual_reason: data.manualReason,
-      };
-    return insertWithoutReturning(
+    const rows = await checkedRpc(
       context.supabase,
-      "attendance_sessions",
-      payload,
+      "open_attendance_session",
+      {
+        p_request_id: commandRequestId(data.requestId),
+        p_session_date: data.sessionDate,
+        ...(data.origin === "timetable"
+          ? { p_timetable_entry_id: data.timetableEntryId }
+          : {
+              p_classroom_id: data.classroomId,
+              p_term_id: data.termId,
+              ...(data.teachingAssignmentId
+                ? { p_teaching_assignment_id: data.teachingAssignmentId }
+                : {}),
+              ...(data.startsAt ? { p_starts_at: data.startsAt } : {}),
+              ...(data.endsAt ? { p_ends_at: data.endsAt } : {}),
+              p_manual_reason: data.manualReason,
+            }),
+        p_acknowledge_non_instructional: data.acknowledgeCalendarImpact ?? false,
+        p_acknowledge_collision: data.acknowledgeCollision ?? false,
+      },
+      openResultSchema,
       "Attendance session",
     );
+    const row = rows[0]!;
+    return {
+      id: row.session_id,
+      status: row.session_status,
+      rosterCount: row.roster_count,
+      schoolTimezone: row.school_timezone,
+      calendarWarning: row.calendar_warning,
+      collisionWarning: row.collision_warning,
+    };
   });
 
 export const getAttendanceSession = createServerFn({ method: "GET" })
@@ -304,29 +405,25 @@ export const getAttendanceSession = createServerFn({ method: "GET" })
       throw new Error(
         "This attendance session does not exist or is outside your permission scope.",
       );
-    const { data: placements, error: placementError } = await context.supabase
-      .from("class_enrollments")
-      .select("student_enrollment_id")
-      .eq("organization_id", data.organizationId)
-      .eq("school_id", data.schoolId)
-      .eq("classroom_id", session.classroom_id)
-      .eq("is_primary", true)
-      .lte("starts_on", session.session_date)
-      .or(`ends_on.is.null,ends_on.gte.${session.session_date}`);
-    if (placementError) throw new Error(translateAttendanceError(placementError, "Class roster"));
-    const enrollmentIds = [...new Set((placements ?? []).map((row) => row.student_enrollment_id))];
+    const snapshot = await readB11RosterSnapshot(
+      context.supabase,
+      { organizationId: data.organizationId, schoolId: data.schoolId, sessionId: session.id },
+      rosterSnapshotSchema,
+    );
+    if (snapshot.error)
+      throw new Error(translateAttendanceError(snapshot.error, "Attendance roster"));
+    if (snapshot.shapeError || snapshot.data === null)
+      throw unexpectedAttendanceShape("Attendance roster");
+    const enrollmentIds = snapshot.data.map((row) => row.student_enrollment_id);
     const enrollments = enrollmentIds.length
       ? await context.supabase
           .from("student_enrollments")
           .select("id, student_id, student_number")
           .in("id", enrollmentIds)
-          .eq("academic_year_id", data.academicYearId)
-          .lte("enrolled_on", session.session_date)
-          .or(`ended_on.is.null,ended_on.gte.${session.session_date}`)
       : { data: [], error: null };
     if (enrollments.error)
       throw new Error(translateAttendanceError(enrollments.error, "Student enrolments"));
-    const studentIds = (enrollments.data ?? []).map((row) => row.student_id);
+    const studentIds = snapshot.data.map((row) => row.student_id);
     const [students, records] = await Promise.all([
       studentIds.length
         ? context.supabase
@@ -346,15 +443,17 @@ export const getAttendanceSession = createServerFn({ method: "GET" })
       throw new Error(translateAttendanceError(records.error, "Attendance records"));
     const studentMap = new Map((students.data ?? []).map((row) => [row.id, row]));
     const recordMap = new Map((records.data ?? []).map((row) => [row.student_enrollment_id, row]));
-    const roster = (enrollments.data ?? [])
-      .map((enrollment) => {
-        const student = studentMap.get(enrollment.student_id);
-        const record = recordMap.get(enrollment.id);
+    const enrollmentMap = new Map((enrollments.data ?? []).map((row) => [row.id, row]));
+    const roster = snapshot.data
+      .map((member) => {
+        const enrollment = enrollmentMap.get(member.student_enrollment_id);
+        const student = studentMap.get(member.student_id);
+        const record = recordMap.get(member.student_enrollment_id);
         return {
-          studentEnrollmentId: enrollment.id,
-          studentId: enrollment.student_id,
+          studentEnrollmentId: member.student_enrollment_id,
+          studentId: member.student_id,
           studentName: student?.preferred_name || student?.full_name || "Student",
-          studentNumber: enrollment.student_number,
+          studentNumber: enrollment?.student_number ?? null,
           recordId: record?.id ?? null,
           status: record?.status ?? null,
           note: record?.note ?? null,
@@ -372,64 +471,174 @@ export const saveStudentAttendanceRecord = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((input: unknown) => saveAttendanceRecordInput.parse(input))
   .handler(async ({ data, context }) => {
-    const payload = {
-      status: data.status,
-      note: data.note ?? null,
-      correction_reason: data.correctionReason ?? null,
-    };
-    if (!data.recordId)
-      return insertWithoutReturning(
+    const requestId = commandRequestId(data.requestId);
+    if (data.sessionStatus !== "open") {
+      if (!data.recordId || !data.expectedUpdatedAt || !data.correctionReason)
+        throw new Error("Finalized attendance requires a current record and correction reason.");
+      const rows = await checkedRpc(
         context.supabase,
-        "student_attendance_records",
+        "correct_attendance_record",
         {
-          ...payload,
-          organization_id: data.organizationId,
-          school_id: data.schoolId,
-          attendance_session_id: data.sessionId,
-          student_enrollment_id: data.studentEnrollmentId,
+          p_record_id: data.recordId,
+          p_expected_updated_at: data.expectedUpdatedAt,
+          p_request_id: requestId,
+          p_status: data.status,
+          p_note: data.note ?? "",
+          p_correction_reason: data.correctionReason,
         },
-        "Student attendance",
+        correctionResultSchema,
+        "Attendance correction",
       );
-    if (!data.expectedUpdatedAt)
-      throw new Error(
-        "Updating an existing attendance record requires the current updated_at token.",
-      );
-    const { data: rows, error } = await context.supabase
-      .from("student_attendance_records")
-      .update(payload)
-      .eq("id", data.recordId)
-      .eq("attendance_session_id", data.sessionId)
-      .eq("organization_id", data.organizationId)
-      .eq("school_id", data.schoolId)
-      .eq("updated_at", data.expectedUpdatedAt)
-      .select("id");
-    if (error) throw new Error(translateAttendanceError(error, "Student attendance"));
-    if (!rows?.[0])
-      throw new Error(
-        "This attendance record was modified by another user. Refresh and retry.",
-      );
-    return { id: rows[0].id };
+      return { id: rows[0]!.record_id, updatedAt: rows[0]!.record_updated_at };
+    }
+    const rows = await checkedRpc(
+      context.supabase,
+      "save_attendance_draft",
+      {
+        p_session_id: data.sessionId,
+        p_expected_session_updated_at: data.expectedSessionUpdatedAt,
+        p_request_id: requestId,
+        p_records: [
+          {
+            student_enrollment_id: data.studentEnrollmentId,
+            status: data.status,
+            note: data.note ?? null,
+            ...(data.expectedUpdatedAt ? { expected_updated_at: data.expectedUpdatedAt } : {}),
+          },
+        ],
+      },
+      saveResultSchema,
+      "Attendance draft",
+    );
+    return { id: rows[0]!.session_id, savedCount: rows[0]!.saved_count };
+  });
+
+export const saveAttendanceDraft = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((input: unknown) => saveAttendanceDraftInput.parse(input))
+  .handler(async ({ data, context }) => {
+    const rows = await checkedRpc(
+      context.supabase,
+      "save_attendance_draft",
+      {
+        p_session_id: data.sessionId,
+        p_expected_session_updated_at: data.expectedSessionUpdatedAt,
+        p_request_id: data.requestId,
+        p_records: data.records.map((record) => ({
+          student_enrollment_id: record.studentEnrollmentId,
+          status: record.status,
+          note: record.note ?? null,
+          ...(record.expectedUpdatedAt ? { expected_updated_at: record.expectedUpdatedAt } : {}),
+        })),
+      },
+      saveResultSchema,
+      "Attendance draft",
+    );
+    return { id: rows[0]!.session_id, savedCount: rows[0]!.saved_count };
   });
 
 export const changeAttendanceSessionLifecycle = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((input: unknown) => attendanceLifecycleInput.parse(input))
   .handler(async ({ data, context }) => {
-    const status = data.action === "submit" ? "submitted" : "locked";
-    const { data: rows, error } = await context.supabase
-      .from("attendance_sessions")
-      .update({ status })
-      .eq("id", data.id)
-      .eq("organization_id", data.organizationId)
-      .eq("school_id", data.schoolId)
-      .eq("academic_year_id", data.academicYearId)
-      .eq("term_id", data.termId)
-      .eq("updated_at", data.expectedUpdatedAt)
-      .select("id");
-    if (error) throw new Error(translateAttendanceError(error, "Attendance session"));
-    if (!rows?.[0])
-      throw new Error(
-        "This session changed after it loaded or your permission scope does not allow this action. Refresh and retry.",
+    const requestId = commandRequestId(data.requestId);
+    if (data.action === "submit") {
+      const rows = await checkedRpc(
+        context.supabase,
+        "submit_attendance_session",
+        {
+          p_session_id: data.id,
+          p_expected_updated_at: data.expectedUpdatedAt,
+          p_request_id: requestId,
+        },
+        submitResultSchema,
+        "Attendance submission",
       );
-    return { id: rows[0].id };
+      return { id: rows[0]!.session_id, status: rows[0]!.session_status };
+    }
+    const rows = await checkedRpc(
+      context.supabase,
+      "lock_attendance_session",
+      {
+        p_session_id: data.id,
+        p_expected_updated_at: data.expectedUpdatedAt,
+        p_request_id: requestId,
+      },
+      lockResultSchema,
+      "Attendance locking",
+    );
+    return { id: rows[0]!.session_id, status: rows[0]!.session_status };
   });
+
+export const listAttendanceHistory = createServerFn({ method: "GET" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((input: unknown) => attendanceHistoryInput.parse(input))
+  .handler(async ({ data, context }) =>
+    checkedRpc(
+      context.supabase,
+      "list_attendance_history",
+      {
+        p_school_id: data.schoolId,
+        p_from: data.from,
+        p_to: data.to,
+        ...(data.classroomId ? { p_classroom_id: data.classroomId } : {}),
+        ...(data.status ? { p_status: data.status } : {}),
+        ...(data.studentId ? { p_student_id: data.studentId } : {}),
+        p_offset: data.offset,
+        p_page_size: data.pageSize,
+      },
+      z.array(historyRowSchema),
+      "Attendance history",
+    ),
+  );
+
+export const listStaffStudentAttendanceHistory = createServerFn({ method: "GET" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((input: unknown) => staffStudentAttendanceHistoryInput.parse(input))
+  .handler(async ({ data, context }) =>
+    checkedRpc(
+      context.supabase,
+      "list_staff_student_attendance_history",
+      {
+        p_student_id: data.studentId,
+        p_from: data.from,
+        p_to: data.to,
+        p_offset: data.offset,
+        p_page_size: data.pageSize,
+      },
+      z.array(studentHistoryRowSchema),
+      "Student attendance history",
+    ),
+  );
+
+export const listAttendanceCorrections = createServerFn({ method: "GET" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((input: unknown) => attendanceCorrectionsInput.parse(input))
+  .handler(async ({ data, context }) =>
+    checkedRpc(
+      context.supabase,
+      "list_attendance_corrections",
+      {
+        p_record_id: data.recordId,
+        p_offset: data.offset,
+        p_page_size: data.pageSize,
+      },
+      z.array(correctionHistoryRowSchema),
+      "Attendance correction history",
+    ),
+  );
+
+export const getAttendanceSchoolTimezone = createServerFn({ method: "GET" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((input: unknown) => attendanceScopeInput.parse(input))
+  .handler(async ({ data, context }) =>
+    checkedRpc(
+      context.supabase,
+      "attendance_school_timezone",
+      {
+        p_school_id: data.schoolId,
+      },
+      timezoneSchema,
+      "School timezone",
+    ),
+  );

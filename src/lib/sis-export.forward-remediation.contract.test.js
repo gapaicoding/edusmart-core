@@ -29,7 +29,11 @@ describe("B10 export forward remediation contract", () => {
   });
 
   test("uses Student identity cardinality and preserves relation projections", () => {
-    const students = migration.match(/'Students',\(select[\s\S]*?\),\n\s*'Guardians'/)?.[0] ?? "";
+    const studentsStart = migration.indexOf("'Students',");
+    const guardiansStart = migration.indexOf("'Guardians',", studentsStart + 1);
+    expect(studentsStart).toBeGreaterThan(-1);
+    expect(guardiansStart).toBeGreaterThan(studentsStart);
+    const students = migration.slice(studentsStart, guardiansStart);
     expect(students).toContain("from public.students st");
     expect(students).toMatch(/exists\s*\(select\s+1\s+from\s+public\.student_enrollments/i);
     expect(students).not.toMatch(
