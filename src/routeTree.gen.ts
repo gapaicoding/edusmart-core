@@ -18,6 +18,7 @@ import { Route as HealthzRouteImport } from './routes/healthz'
 import { Route as ResetPasswordRouteImport } from './routes/reset-password'
 import { Route as AuthenticatedAccessPendingRouteImport } from './routes/_authenticated/access-pending'
 import { Route as AuthenticatedDashboardRouteImport } from './routes/_authenticated/dashboard'
+import { Route as AuthenticatedNotificationsRouteImport } from './routes/_authenticated/notifications'
 import { Route as AuthenticatedSelectOrganizationRouteImport } from './routes/_authenticated/select-organization'
 import { Route as AuthenticatedSelectSchoolRouteImport } from './routes/_authenticated/select-school'
 import { Route as AuthenticatedSisExportRouteImport } from './routes/_authenticated/sis-export'
@@ -33,8 +34,12 @@ import { Route as AuthenticatedAssessmentsIdRouteImport } from './routes/_authen
 import { Route as AuthenticatedAttendanceIndexRouteImport } from './routes/_authenticated/attendance/index'
 import { Route as AuthenticatedGuardiansIndexRouteImport } from './routes/_authenticated/guardians/index'
 import { Route as AuthenticatedGuardiansGuardianIdRouteImport } from './routes/_authenticated/guardians/$guardianId'
+import { Route as AuthenticatedPermissionRequestsIndexRouteImport } from './routes/_authenticated/permission-requests/index'
+import { Route as AuthenticatedPermissionRequestsRequestIdRouteImport } from './routes/_authenticated/permission-requests/$requestId'
+import { Route as AuthenticatedPermissionRequestsNewRouteImport } from './routes/_authenticated/permission-requests/new'
 import { Route as AuthenticatedPortalIndexRouteImport } from './routes/_authenticated/portal/index'
 import { Route as AuthenticatedPortalAttendanceRouteImport } from './routes/_authenticated/portal/attendance'
+import { Route as AuthenticatedPortalPermissionRequestsRouteImport } from './routes/_authenticated/portal/permission-requests'
 import { Route as AuthenticatedPortalReportCardsRouteImport } from './routes/_authenticated/portal/report-cards'
 import { Route as AuthenticatedPortalScheduleRouteImport } from './routes/_authenticated/portal/schedule'
 import { Route as AuthenticatedPortalScoresRouteImport } from './routes/_authenticated/portal/scores'
@@ -56,6 +61,8 @@ import { Route as AuthenticatedStudentsIndexRouteImport } from './routes/_authen
 import { Route as AuthenticatedStudentsStudentIdRouteImport } from './routes/_authenticated/students/$studentId'
 import { Route as AuthenticatedTeachingAssignmentsIndexRouteImport } from './routes/_authenticated/teaching-assignments/index'
 import { Route as AuthenticatedAttendanceSessionIdRouteImport } from './routes/_authenticated/attendance/session/$id'
+import { Route as AuthenticatedPermissionRequestsRequestIdEditRouteImport } from './routes/_authenticated/permission-requests/$requestId.edit'
+import { Route as AuthenticatedPortalPermissionRequestsRequestIdRouteImport } from './routes/_authenticated/portal/permission-requests/$requestId'
 
 const IndexRoute = IndexRouteImport.update({
   id: '/',
@@ -102,6 +109,12 @@ const AuthenticatedDashboardRoute = AuthenticatedDashboardRouteImport.update({
   path: '/dashboard',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
+const AuthenticatedNotificationsRoute =
+  AuthenticatedNotificationsRouteImport.update({
+    id: '/notifications',
+    path: '/notifications',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
 const AuthenticatedSelectOrganizationRoute =
   AuthenticatedSelectOrganizationRouteImport.update({
     id: '/select-organization',
@@ -191,6 +204,24 @@ const AuthenticatedGuardiansGuardianIdRoute =
     path: '/guardians/$guardianId',
     getParentRoute: () => AuthenticatedRouteRoute,
   } as any)
+const AuthenticatedPermissionRequestsIndexRoute =
+  AuthenticatedPermissionRequestsIndexRouteImport.update({
+    id: '/permission-requests/',
+    path: '/permission-requests/',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
+const AuthenticatedPermissionRequestsRequestIdRoute =
+  AuthenticatedPermissionRequestsRequestIdRouteImport.update({
+    id: '/permission-requests/$requestId',
+    path: '/permission-requests/$requestId',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
+const AuthenticatedPermissionRequestsNewRoute =
+  AuthenticatedPermissionRequestsNewRouteImport.update({
+    id: '/permission-requests/new',
+    path: '/permission-requests/new',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
 const AuthenticatedPortalIndexRoute =
   AuthenticatedPortalIndexRouteImport.update({
     id: '/portal/',
@@ -201,6 +232,12 @@ const AuthenticatedPortalAttendanceRoute =
   AuthenticatedPortalAttendanceRouteImport.update({
     id: '/portal/attendance',
     path: '/portal/attendance',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
+const AuthenticatedPortalPermissionRequestsRoute =
+  AuthenticatedPortalPermissionRequestsRouteImport.update({
+    id: '/portal/permission-requests',
+    path: '/portal/permission-requests',
     getParentRoute: () => AuthenticatedRouteRoute,
   } as any)
 const AuthenticatedPortalReportCardsRoute =
@@ -327,6 +364,18 @@ const AuthenticatedAttendanceSessionIdRoute =
     path: '/attendance/session/$id',
     getParentRoute: () => AuthenticatedRouteRoute,
   } as any)
+const AuthenticatedPermissionRequestsRequestIdEditRoute =
+  AuthenticatedPermissionRequestsRequestIdEditRouteImport.update({
+    id: '/edit',
+    path: '/edit',
+    getParentRoute: () => AuthenticatedPermissionRequestsRequestIdRoute,
+  } as any)
+const AuthenticatedPortalPermissionRequestsRequestIdRoute =
+  AuthenticatedPortalPermissionRequestsRequestIdRouteImport.update({
+    id: '/$requestId',
+    path: '/$requestId',
+    getParentRoute: () => AuthenticatedPortalPermissionRequestsRoute,
+  } as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
@@ -337,6 +386,7 @@ export interface FileRoutesByFullPath {
   '/reset-password': typeof ResetPasswordRoute
   '/access-pending': typeof AuthenticatedAccessPendingRoute
   '/dashboard': typeof AuthenticatedDashboardRoute
+  '/notifications': typeof AuthenticatedNotificationsRoute
   '/select-organization': typeof AuthenticatedSelectOrganizationRoute
   '/select-school': typeof AuthenticatedSelectSchoolRoute
   '/sis-export': typeof AuthenticatedSisExportRoute
@@ -349,7 +399,10 @@ export interface FileRoutesByFullPath {
   '/academic/years': typeof AuthenticatedAcademicYearsRoute
   '/assessments/$id': typeof AuthenticatedAssessmentsIdRoute
   '/guardians/$guardianId': typeof AuthenticatedGuardiansGuardianIdRoute
+  '/permission-requests/$requestId': typeof AuthenticatedPermissionRequestsRequestIdRouteWithChildren
+  '/permission-requests/new': typeof AuthenticatedPermissionRequestsNewRoute
   '/portal/attendance': typeof AuthenticatedPortalAttendanceRoute
+  '/portal/permission-requests': typeof AuthenticatedPortalPermissionRequestsRouteWithChildren
   '/portal/report-cards': typeof AuthenticatedPortalReportCardsRoute
   '/portal/schedule': typeof AuthenticatedPortalScheduleRoute
   '/portal/scores': typeof AuthenticatedPortalScoresRoute
@@ -366,6 +419,7 @@ export interface FileRoutesByFullPath {
   '/assessments/': typeof AuthenticatedAssessmentsIndexRoute
   '/attendance/': typeof AuthenticatedAttendanceIndexRoute
   '/guardians/': typeof AuthenticatedGuardiansIndexRoute
+  '/permission-requests/': typeof AuthenticatedPermissionRequestsIndexRoute
   '/portal/': typeof AuthenticatedPortalIndexRoute
   '/report-cards/': typeof AuthenticatedReportCardsIndexRoute
   '/schedule/': typeof AuthenticatedScheduleIndexRoute
@@ -375,6 +429,8 @@ export interface FileRoutesByFullPath {
   '/students/': typeof AuthenticatedStudentsIndexRoute
   '/teaching-assignments/': typeof AuthenticatedTeachingAssignmentsIndexRoute
   '/attendance/session/$id': typeof AuthenticatedAttendanceSessionIdRoute
+  '/permission-requests/$requestId/edit': typeof AuthenticatedPermissionRequestsRequestIdEditRoute
+  '/portal/permission-requests/$requestId': typeof AuthenticatedPortalPermissionRequestsRequestIdRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -385,6 +441,7 @@ export interface FileRoutesByTo {
   '/reset-password': typeof ResetPasswordRoute
   '/access-pending': typeof AuthenticatedAccessPendingRoute
   '/dashboard': typeof AuthenticatedDashboardRoute
+  '/notifications': typeof AuthenticatedNotificationsRoute
   '/select-organization': typeof AuthenticatedSelectOrganizationRoute
   '/select-school': typeof AuthenticatedSelectSchoolRoute
   '/sis-export': typeof AuthenticatedSisExportRoute
@@ -397,7 +454,10 @@ export interface FileRoutesByTo {
   '/academic/years': typeof AuthenticatedAcademicYearsRoute
   '/assessments/$id': typeof AuthenticatedAssessmentsIdRoute
   '/guardians/$guardianId': typeof AuthenticatedGuardiansGuardianIdRoute
+  '/permission-requests/$requestId': typeof AuthenticatedPermissionRequestsRequestIdRouteWithChildren
+  '/permission-requests/new': typeof AuthenticatedPermissionRequestsNewRoute
   '/portal/attendance': typeof AuthenticatedPortalAttendanceRoute
+  '/portal/permission-requests': typeof AuthenticatedPortalPermissionRequestsRouteWithChildren
   '/portal/report-cards': typeof AuthenticatedPortalReportCardsRoute
   '/portal/schedule': typeof AuthenticatedPortalScheduleRoute
   '/portal/scores': typeof AuthenticatedPortalScoresRoute
@@ -414,6 +474,7 @@ export interface FileRoutesByTo {
   '/assessments': typeof AuthenticatedAssessmentsIndexRoute
   '/attendance': typeof AuthenticatedAttendanceIndexRoute
   '/guardians': typeof AuthenticatedGuardiansIndexRoute
+  '/permission-requests': typeof AuthenticatedPermissionRequestsIndexRoute
   '/portal': typeof AuthenticatedPortalIndexRoute
   '/report-cards': typeof AuthenticatedReportCardsIndexRoute
   '/schedule': typeof AuthenticatedScheduleIndexRoute
@@ -423,6 +484,8 @@ export interface FileRoutesByTo {
   '/students': typeof AuthenticatedStudentsIndexRoute
   '/teaching-assignments': typeof AuthenticatedTeachingAssignmentsIndexRoute
   '/attendance/session/$id': typeof AuthenticatedAttendanceSessionIdRoute
+  '/permission-requests/$requestId/edit': typeof AuthenticatedPermissionRequestsRequestIdEditRoute
+  '/portal/permission-requests/$requestId': typeof AuthenticatedPortalPermissionRequestsRequestIdRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -435,6 +498,7 @@ export interface FileRoutesById {
   '/reset-password': typeof ResetPasswordRoute
   '/_authenticated/access-pending': typeof AuthenticatedAccessPendingRoute
   '/_authenticated/dashboard': typeof AuthenticatedDashboardRoute
+  '/_authenticated/notifications': typeof AuthenticatedNotificationsRoute
   '/_authenticated/select-organization': typeof AuthenticatedSelectOrganizationRoute
   '/_authenticated/select-school': typeof AuthenticatedSelectSchoolRoute
   '/_authenticated/sis-export': typeof AuthenticatedSisExportRoute
@@ -447,7 +511,10 @@ export interface FileRoutesById {
   '/_authenticated/academic/years': typeof AuthenticatedAcademicYearsRoute
   '/_authenticated/assessments/$id': typeof AuthenticatedAssessmentsIdRoute
   '/_authenticated/guardians/$guardianId': typeof AuthenticatedGuardiansGuardianIdRoute
+  '/_authenticated/permission-requests/$requestId': typeof AuthenticatedPermissionRequestsRequestIdRouteWithChildren
+  '/_authenticated/permission-requests/new': typeof AuthenticatedPermissionRequestsNewRoute
   '/_authenticated/portal/attendance': typeof AuthenticatedPortalAttendanceRoute
+  '/_authenticated/portal/permission-requests': typeof AuthenticatedPortalPermissionRequestsRouteWithChildren
   '/_authenticated/portal/report-cards': typeof AuthenticatedPortalReportCardsRoute
   '/_authenticated/portal/schedule': typeof AuthenticatedPortalScheduleRoute
   '/_authenticated/portal/scores': typeof AuthenticatedPortalScoresRoute
@@ -464,6 +531,7 @@ export interface FileRoutesById {
   '/_authenticated/assessments/': typeof AuthenticatedAssessmentsIndexRoute
   '/_authenticated/attendance/': typeof AuthenticatedAttendanceIndexRoute
   '/_authenticated/guardians/': typeof AuthenticatedGuardiansIndexRoute
+  '/_authenticated/permission-requests/': typeof AuthenticatedPermissionRequestsIndexRoute
   '/_authenticated/portal/': typeof AuthenticatedPortalIndexRoute
   '/_authenticated/report-cards/': typeof AuthenticatedReportCardsIndexRoute
   '/_authenticated/schedule/': typeof AuthenticatedScheduleIndexRoute
@@ -473,6 +541,8 @@ export interface FileRoutesById {
   '/_authenticated/students/': typeof AuthenticatedStudentsIndexRoute
   '/_authenticated/teaching-assignments/': typeof AuthenticatedTeachingAssignmentsIndexRoute
   '/_authenticated/attendance/session/$id': typeof AuthenticatedAttendanceSessionIdRoute
+  '/_authenticated/permission-requests/$requestId/edit': typeof AuthenticatedPermissionRequestsRequestIdEditRoute
+  '/_authenticated/portal/permission-requests/$requestId': typeof AuthenticatedPortalPermissionRequestsRequestIdRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -485,6 +555,7 @@ export interface FileRouteTypes {
     | '/reset-password'
     | '/access-pending'
     | '/dashboard'
+    | '/notifications'
     | '/select-organization'
     | '/select-school'
     | '/sis-export'
@@ -497,7 +568,10 @@ export interface FileRouteTypes {
     | '/academic/years'
     | '/assessments/$id'
     | '/guardians/$guardianId'
+    | '/permission-requests/$requestId'
+    | '/permission-requests/new'
     | '/portal/attendance'
+    | '/portal/permission-requests'
     | '/portal/report-cards'
     | '/portal/schedule'
     | '/portal/scores'
@@ -514,6 +588,7 @@ export interface FileRouteTypes {
     | '/assessments/'
     | '/attendance/'
     | '/guardians/'
+    | '/permission-requests/'
     | '/portal/'
     | '/report-cards/'
     | '/schedule/'
@@ -523,6 +598,8 @@ export interface FileRouteTypes {
     | '/students/'
     | '/teaching-assignments/'
     | '/attendance/session/$id'
+    | '/permission-requests/$requestId/edit'
+    | '/portal/permission-requests/$requestId'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -533,6 +610,7 @@ export interface FileRouteTypes {
     | '/reset-password'
     | '/access-pending'
     | '/dashboard'
+    | '/notifications'
     | '/select-organization'
     | '/select-school'
     | '/sis-export'
@@ -545,7 +623,10 @@ export interface FileRouteTypes {
     | '/academic/years'
     | '/assessments/$id'
     | '/guardians/$guardianId'
+    | '/permission-requests/$requestId'
+    | '/permission-requests/new'
     | '/portal/attendance'
+    | '/portal/permission-requests'
     | '/portal/report-cards'
     | '/portal/schedule'
     | '/portal/scores'
@@ -562,6 +643,7 @@ export interface FileRouteTypes {
     | '/assessments'
     | '/attendance'
     | '/guardians'
+    | '/permission-requests'
     | '/portal'
     | '/report-cards'
     | '/schedule'
@@ -571,6 +653,8 @@ export interface FileRouteTypes {
     | '/students'
     | '/teaching-assignments'
     | '/attendance/session/$id'
+    | '/permission-requests/$requestId/edit'
+    | '/portal/permission-requests/$requestId'
   id:
     | '__root__'
     | '/'
@@ -582,6 +666,7 @@ export interface FileRouteTypes {
     | '/reset-password'
     | '/_authenticated/access-pending'
     | '/_authenticated/dashboard'
+    | '/_authenticated/notifications'
     | '/_authenticated/select-organization'
     | '/_authenticated/select-school'
     | '/_authenticated/sis-export'
@@ -594,7 +679,10 @@ export interface FileRouteTypes {
     | '/_authenticated/academic/years'
     | '/_authenticated/assessments/$id'
     | '/_authenticated/guardians/$guardianId'
+    | '/_authenticated/permission-requests/$requestId'
+    | '/_authenticated/permission-requests/new'
     | '/_authenticated/portal/attendance'
+    | '/_authenticated/portal/permission-requests'
     | '/_authenticated/portal/report-cards'
     | '/_authenticated/portal/schedule'
     | '/_authenticated/portal/scores'
@@ -611,6 +699,7 @@ export interface FileRouteTypes {
     | '/_authenticated/assessments/'
     | '/_authenticated/attendance/'
     | '/_authenticated/guardians/'
+    | '/_authenticated/permission-requests/'
     | '/_authenticated/portal/'
     | '/_authenticated/report-cards/'
     | '/_authenticated/schedule/'
@@ -620,6 +709,8 @@ export interface FileRouteTypes {
     | '/_authenticated/students/'
     | '/_authenticated/teaching-assignments/'
     | '/_authenticated/attendance/session/$id'
+    | '/_authenticated/permission-requests/$requestId/edit'
+    | '/_authenticated/portal/permission-requests/$requestId'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -695,6 +786,13 @@ declare module '@tanstack/react-router' {
       path: '/dashboard'
       fullPath: '/dashboard'
       preLoaderRoute: typeof AuthenticatedDashboardRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/notifications': {
+      id: '/_authenticated/notifications'
+      path: '/notifications'
+      fullPath: '/notifications'
+      preLoaderRoute: typeof AuthenticatedNotificationsRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
     '/_authenticated/select-organization': {
@@ -802,6 +900,27 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedGuardiansGuardianIdRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+    '/_authenticated/permission-requests/': {
+      id: '/_authenticated/permission-requests/'
+      path: '/permission-requests'
+      fullPath: '/permission-requests/'
+      preLoaderRoute: typeof AuthenticatedPermissionRequestsIndexRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/permission-requests/$requestId': {
+      id: '/_authenticated/permission-requests/$requestId'
+      path: '/permission-requests/$requestId'
+      fullPath: '/permission-requests/$requestId'
+      preLoaderRoute: typeof AuthenticatedPermissionRequestsRequestIdRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/permission-requests/new': {
+      id: '/_authenticated/permission-requests/new'
+      path: '/permission-requests/new'
+      fullPath: '/permission-requests/new'
+      preLoaderRoute: typeof AuthenticatedPermissionRequestsNewRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
     '/_authenticated/portal/': {
       id: '/_authenticated/portal/'
       path: '/portal'
@@ -814,6 +933,13 @@ declare module '@tanstack/react-router' {
       path: '/portal/attendance'
       fullPath: '/portal/attendance'
       preLoaderRoute: typeof AuthenticatedPortalAttendanceRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/portal/permission-requests': {
+      id: '/_authenticated/portal/permission-requests'
+      path: '/portal/permission-requests'
+      fullPath: '/portal/permission-requests'
+      preLoaderRoute: typeof AuthenticatedPortalPermissionRequestsRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
     '/_authenticated/portal/report-cards': {
@@ -963,12 +1089,57 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedAttendanceSessionIdRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+    '/_authenticated/permission-requests/$requestId/edit': {
+      id: '/_authenticated/permission-requests/$requestId/edit'
+      path: '/edit'
+      fullPath: '/permission-requests/$requestId/edit'
+      preLoaderRoute: typeof AuthenticatedPermissionRequestsRequestIdEditRouteImport
+      parentRoute: typeof AuthenticatedPermissionRequestsRequestIdRoute
+    }
+    '/_authenticated/portal/permission-requests/$requestId': {
+      id: '/_authenticated/portal/permission-requests/$requestId'
+      path: '/$requestId'
+      fullPath: '/portal/permission-requests/$requestId'
+      preLoaderRoute: typeof AuthenticatedPortalPermissionRequestsRequestIdRouteImport
+      parentRoute: typeof AuthenticatedPortalPermissionRequestsRoute
+    }
   }
 }
+
+interface AuthenticatedPermissionRequestsRequestIdRouteChildren {
+  AuthenticatedPermissionRequestsRequestIdEditRoute: typeof AuthenticatedPermissionRequestsRequestIdEditRoute
+}
+
+const AuthenticatedPermissionRequestsRequestIdRouteChildren: AuthenticatedPermissionRequestsRequestIdRouteChildren =
+  {
+    AuthenticatedPermissionRequestsRequestIdEditRoute:
+      AuthenticatedPermissionRequestsRequestIdEditRoute,
+  }
+
+const AuthenticatedPermissionRequestsRequestIdRouteWithChildren =
+  AuthenticatedPermissionRequestsRequestIdRoute._addFileChildren(
+    AuthenticatedPermissionRequestsRequestIdRouteChildren,
+  )
+
+interface AuthenticatedPortalPermissionRequestsRouteChildren {
+  AuthenticatedPortalPermissionRequestsRequestIdRoute: typeof AuthenticatedPortalPermissionRequestsRequestIdRoute
+}
+
+const AuthenticatedPortalPermissionRequestsRouteChildren: AuthenticatedPortalPermissionRequestsRouteChildren =
+  {
+    AuthenticatedPortalPermissionRequestsRequestIdRoute:
+      AuthenticatedPortalPermissionRequestsRequestIdRoute,
+  }
+
+const AuthenticatedPortalPermissionRequestsRouteWithChildren =
+  AuthenticatedPortalPermissionRequestsRoute._addFileChildren(
+    AuthenticatedPortalPermissionRequestsRouteChildren,
+  )
 
 interface AuthenticatedRouteRouteChildren {
   AuthenticatedAccessPendingRoute: typeof AuthenticatedAccessPendingRoute
   AuthenticatedDashboardRoute: typeof AuthenticatedDashboardRoute
+  AuthenticatedNotificationsRoute: typeof AuthenticatedNotificationsRoute
   AuthenticatedSelectOrganizationRoute: typeof AuthenticatedSelectOrganizationRoute
   AuthenticatedSelectSchoolRoute: typeof AuthenticatedSelectSchoolRoute
   AuthenticatedSisExportRoute: typeof AuthenticatedSisExportRoute
@@ -981,7 +1152,10 @@ interface AuthenticatedRouteRouteChildren {
   AuthenticatedAcademicYearsRoute: typeof AuthenticatedAcademicYearsRoute
   AuthenticatedAssessmentsIdRoute: typeof AuthenticatedAssessmentsIdRoute
   AuthenticatedGuardiansGuardianIdRoute: typeof AuthenticatedGuardiansGuardianIdRoute
+  AuthenticatedPermissionRequestsRequestIdRoute: typeof AuthenticatedPermissionRequestsRequestIdRouteWithChildren
+  AuthenticatedPermissionRequestsNewRoute: typeof AuthenticatedPermissionRequestsNewRoute
   AuthenticatedPortalAttendanceRoute: typeof AuthenticatedPortalAttendanceRoute
+  AuthenticatedPortalPermissionRequestsRoute: typeof AuthenticatedPortalPermissionRequestsRouteWithChildren
   AuthenticatedPortalReportCardsRoute: typeof AuthenticatedPortalReportCardsRoute
   AuthenticatedPortalScheduleRoute: typeof AuthenticatedPortalScheduleRoute
   AuthenticatedPortalScoresRoute: typeof AuthenticatedPortalScoresRoute
@@ -998,6 +1172,7 @@ interface AuthenticatedRouteRouteChildren {
   AuthenticatedAssessmentsIndexRoute: typeof AuthenticatedAssessmentsIndexRoute
   AuthenticatedAttendanceIndexRoute: typeof AuthenticatedAttendanceIndexRoute
   AuthenticatedGuardiansIndexRoute: typeof AuthenticatedGuardiansIndexRoute
+  AuthenticatedPermissionRequestsIndexRoute: typeof AuthenticatedPermissionRequestsIndexRoute
   AuthenticatedPortalIndexRoute: typeof AuthenticatedPortalIndexRoute
   AuthenticatedReportCardsIndexRoute: typeof AuthenticatedReportCardsIndexRoute
   AuthenticatedScheduleIndexRoute: typeof AuthenticatedScheduleIndexRoute
@@ -1012,6 +1187,7 @@ interface AuthenticatedRouteRouteChildren {
 const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedAccessPendingRoute: AuthenticatedAccessPendingRoute,
   AuthenticatedDashboardRoute: AuthenticatedDashboardRoute,
+  AuthenticatedNotificationsRoute: AuthenticatedNotificationsRoute,
   AuthenticatedSelectOrganizationRoute: AuthenticatedSelectOrganizationRoute,
   AuthenticatedSelectSchoolRoute: AuthenticatedSelectSchoolRoute,
   AuthenticatedSisExportRoute: AuthenticatedSisExportRoute,
@@ -1024,7 +1200,13 @@ const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedAcademicYearsRoute: AuthenticatedAcademicYearsRoute,
   AuthenticatedAssessmentsIdRoute: AuthenticatedAssessmentsIdRoute,
   AuthenticatedGuardiansGuardianIdRoute: AuthenticatedGuardiansGuardianIdRoute,
+  AuthenticatedPermissionRequestsRequestIdRoute:
+    AuthenticatedPermissionRequestsRequestIdRouteWithChildren,
+  AuthenticatedPermissionRequestsNewRoute:
+    AuthenticatedPermissionRequestsNewRoute,
   AuthenticatedPortalAttendanceRoute: AuthenticatedPortalAttendanceRoute,
+  AuthenticatedPortalPermissionRequestsRoute:
+    AuthenticatedPortalPermissionRequestsRouteWithChildren,
   AuthenticatedPortalReportCardsRoute: AuthenticatedPortalReportCardsRoute,
   AuthenticatedPortalScheduleRoute: AuthenticatedPortalScheduleRoute,
   AuthenticatedPortalScoresRoute: AuthenticatedPortalScoresRoute,
@@ -1041,6 +1223,8 @@ const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedAssessmentsIndexRoute: AuthenticatedAssessmentsIndexRoute,
   AuthenticatedAttendanceIndexRoute: AuthenticatedAttendanceIndexRoute,
   AuthenticatedGuardiansIndexRoute: AuthenticatedGuardiansIndexRoute,
+  AuthenticatedPermissionRequestsIndexRoute:
+    AuthenticatedPermissionRequestsIndexRoute,
   AuthenticatedPortalIndexRoute: AuthenticatedPortalIndexRoute,
   AuthenticatedReportCardsIndexRoute: AuthenticatedReportCardsIndexRoute,
   AuthenticatedScheduleIndexRoute: AuthenticatedScheduleIndexRoute,

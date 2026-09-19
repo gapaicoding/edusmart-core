@@ -76,6 +76,12 @@ function useSelectedChild(children: PortalChild[] | undefined) {
 
 const PORTAL_TABS = [
   { to: "/portal", label: "Overview", icon: UserRound, exact: true },
+  {
+    to: "/portal/permission-requests",
+    label: "Permission Requests",
+    icon: ClipboardCheck,
+    exact: false,
+  },
   { to: "/portal/schedule", label: "Schedule", icon: CalendarClock, exact: false },
   { to: "/portal/attendance", label: "Attendance", icon: CalendarDays, exact: false },
   { to: "/portal/scores", label: "Scores", icon: ClipboardCheck, exact: false },
