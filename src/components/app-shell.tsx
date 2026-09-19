@@ -1,8 +1,9 @@
 import { useState, type ReactNode } from "react";
 import { Link, useNavigate, useRouterState } from "@tanstack/react-router";
-import { useQueryClient } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import {
   BookOpen,
+  Bell,
   Briefcase,
   Building2,
   CalendarDays,
@@ -29,6 +30,8 @@ import {
 
 import { supabase } from "@/integrations/supabase/client";
 import { useAppContext } from "@/lib/app-context";
+import { listMyNotifications } from "@/lib/notifications-parent-permissions.functions";
+import { useServerFn } from "@tanstack/react-start";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -63,7 +66,11 @@ type NavItem = {
  * database enforces every read/write regardless of what the sidebar shows.
  * `null` means the group is shown to every signed-in persona (Dashboard).
  */
-type NavGroup = { label: string | null; audience: "staff" | "parent" | "student" | null; items: NavItem[] };
+type NavGroup = {
+  label: string | null;
+  audience: "staff" | "parent" | "student" | null;
+  items: NavItem[];
+};
 
 /** Staff persona codes: seeing the operational navigation groups. */
 const STAFF_ROLE_CODES = [
@@ -89,7 +96,23 @@ const NAV_GROUPS: NavGroup[] = [
   {
     label: null,
     audience: null,
-    items: [{ to: "/dashboard", label: "Dashboard", icon: LayoutDashboard, permission: null }],
+    items: [
+      { to: "/dashboard", label: "Dashboard", icon: LayoutDashboard, permission: null },
+      { to: "/notifications", label: "Notifications", icon: Bell, permission: null },
+      {
+        to: "/permission-requests",
+        label: "Permission Requests",
+        icon: ClipboardList,
+        permission: null,
+        anyOf: [
+          "permission_request.read",
+          "permission_request.create",
+          "permission_request.update",
+          "permission_request.publish",
+          "permission_request.close",
+        ],
+      },
+    ],
   },
   {
     label: "Academic Setup",
@@ -136,8 +159,20 @@ const NAV_GROUPS: NavGroup[] = [
       { to: "/students", label: "Students", icon: Users, permission: "student.read" },
       { to: "/guardians", label: "Guardians", icon: HeartHandshake, permission: "guardian.read" },
       { to: "/staff", label: "Staff", icon: Briefcase, permission: "staff.read" },
-      { to: "/sis-imports", label: "SIS Imports", icon: FileUp, permission: null, anyOf: ["student.import", "guardian.import", "staff.import", "enrollment.import"] },
-      { to: "/sis-export", label: "SIS Export", icon: FileDown, permission: null, anyOf: ["student.export", "guardian.export", "staff.export"] },
+      {
+        to: "/sis-imports",
+        label: "SIS Imports",
+        icon: FileUp,
+        permission: null,
+        anyOf: ["student.import", "guardian.import", "staff.import", "enrollment.import"],
+      },
+      {
+        to: "/sis-export",
+        label: "SIS Export",
+        icon: FileDown,
+        permission: null,
+        anyOf: ["student.export", "guardian.export", "staff.export"],
+      },
     ],
   },
   {
@@ -177,6 +212,12 @@ const NAV_GROUPS: NavGroup[] = [
     audience: "parent",
     items: [
       { to: "/portal", label: "Overview", icon: HeartHandshake, permission: "student.read" },
+      {
+        to: "/portal/permission-requests",
+        label: "Permission Requests",
+        icon: ClipboardList,
+        permission: "student.read",
+      },
       {
         to: "/portal/schedule",
         label: "Schedule",
@@ -429,6 +470,17 @@ export function AppShell({ children }: { children: ReactNode }) {
   const { snapshot, activeOrganization, identityLoading, contextLoading, error } = useAppContext();
   const navigate = useNavigate();
   const queryClient = useQueryClient();
+  const fetchNotifications = useServerFn(listMyNotifications);
+  const notificationsQuery = useQuery({
+    queryKey: ["notifications", "inbox", "shell"],
+    queryFn: () => fetchNotifications({ data: { pageSize: 1, offset: 0 } }),
+    staleTime: 30_000,
+  });
+  const unreadCount = Array.isArray(notificationsQuery.data)
+    ? Number(
+        (notificationsQuery.data[0] as { unread_count?: number } | undefined)?.unread_count ?? 0,
+      )
+    : 0;
 
   async function handleSignOut() {
     await queryClient.cancelQueries();
@@ -486,6 +538,20 @@ export function AppShell({ children }: { children: ReactNode }) {
             </div>
 
             <div className="ml-auto flex items-center gap-2">
+              <Link
+                to="/notifications"
+                aria-label={
+                  unreadCount > 0 ? `${unreadCount} unread notifications` : "Notifications"
+                }
+                className="relative rounded-md p-2 text-muted-foreground hover:bg-accent hover:text-accent-foreground"
+              >
+                <Bell className="h-4 w-4" />
+                {unreadCount > 0 && (
+                  <span className="absolute -right-1 -top-1 flex min-h-4 min-w-4 items-center justify-center rounded-full bg-primary px-1 text-[10px] font-semibold text-primary-foreground">
+                    {unreadCount > 99 ? "99+" : unreadCount}
+                  </span>
+                )}
+              </Link>
               {identityResolving ? (
                 <Skeleton className="h-8 w-32 rounded-md" />
               ) : (
