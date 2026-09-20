@@ -50,6 +50,7 @@ import { Route as AuthenticatedScheduleMyRouteImport } from './routes/_authentic
 import { Route as AuthenticatedSisImportsIndexRouteImport } from './routes/_authenticated/sis-imports/index'
 import { Route as AuthenticatedSisImportsJobIdRouteImport } from './routes/_authenticated/sis-imports/$jobId'
 import { Route as AuthenticatedSisImportsNewRouteImport } from './routes/_authenticated/sis-imports/new'
+import { Route as AuthenticatedStaffAttendanceIndexRouteImport } from './routes/_authenticated/staff-attendance/index'
 import { Route as AuthenticatedStaffIndexRouteImport } from './routes/_authenticated/staff/index'
 import { Route as AuthenticatedStaffStaffIdRouteImport } from './routes/_authenticated/staff/$staffId'
 import { Route as AuthenticatedStudentIndexRouteImport } from './routes/_authenticated/student/index'
@@ -60,6 +61,8 @@ import { Route as AuthenticatedStudentScoresRouteImport } from './routes/_authen
 import { Route as AuthenticatedStudentsIndexRouteImport } from './routes/_authenticated/students/index'
 import { Route as AuthenticatedStudentsStudentIdRouteImport } from './routes/_authenticated/students/$studentId'
 import { Route as AuthenticatedTeachingAssignmentsIndexRouteImport } from './routes/_authenticated/teaching-assignments/index'
+import { Route as AuthenticatedTeachingJournalsIndexRouteImport } from './routes/_authenticated/teaching-journals/index'
+import { Route as AuthenticatedTeachingJournalsManageRouteImport } from './routes/_authenticated/teaching-journals/manage'
 import { Route as AuthenticatedAttendanceSessionIdRouteImport } from './routes/_authenticated/attendance/session/$id'
 import { Route as AuthenticatedPermissionRequestsRequestIdEditRouteImport } from './routes/_authenticated/permission-requests/$requestId.edit'
 import { Route as AuthenticatedPortalPermissionRequestsRequestIdRouteImport } from './routes/_authenticated/portal/permission-requests/$requestId'
@@ -299,6 +302,12 @@ const AuthenticatedSisImportsNewRoute =
     path: '/sis-imports/new',
     getParentRoute: () => AuthenticatedRouteRoute,
   } as any)
+const AuthenticatedStaffAttendanceIndexRoute =
+  AuthenticatedStaffAttendanceIndexRouteImport.update({
+    id: '/staff-attendance/',
+    path: '/staff-attendance/',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
 const AuthenticatedStaffIndexRoute = AuthenticatedStaffIndexRouteImport.update({
   id: '/staff/',
   path: '/staff/',
@@ -356,6 +365,18 @@ const AuthenticatedTeachingAssignmentsIndexRoute =
   AuthenticatedTeachingAssignmentsIndexRouteImport.update({
     id: '/teaching-assignments/',
     path: '/teaching-assignments/',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
+const AuthenticatedTeachingJournalsIndexRoute =
+  AuthenticatedTeachingJournalsIndexRouteImport.update({
+    id: '/teaching-journals/',
+    path: '/teaching-journals/',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
+const AuthenticatedTeachingJournalsManageRoute =
+  AuthenticatedTeachingJournalsManageRouteImport.update({
+    id: '/teaching-journals/manage',
+    path: '/teaching-journals/manage',
     getParentRoute: () => AuthenticatedRouteRoute,
   } as any)
 const AuthenticatedAttendanceSessionIdRoute =
@@ -416,6 +437,7 @@ export interface FileRoutesByFullPath {
   '/student/schedule': typeof AuthenticatedStudentScheduleRoute
   '/student/scores': typeof AuthenticatedStudentScoresRoute
   '/students/$studentId': typeof AuthenticatedStudentsStudentIdRoute
+  '/teaching-journals/manage': typeof AuthenticatedTeachingJournalsManageRoute
   '/assessments/': typeof AuthenticatedAssessmentsIndexRoute
   '/attendance/': typeof AuthenticatedAttendanceIndexRoute
   '/guardians/': typeof AuthenticatedGuardiansIndexRoute
@@ -424,10 +446,12 @@ export interface FileRoutesByFullPath {
   '/report-cards/': typeof AuthenticatedReportCardsIndexRoute
   '/schedule/': typeof AuthenticatedScheduleIndexRoute
   '/sis-imports/': typeof AuthenticatedSisImportsIndexRoute
+  '/staff-attendance/': typeof AuthenticatedStaffAttendanceIndexRoute
   '/staff/': typeof AuthenticatedStaffIndexRoute
   '/student/': typeof AuthenticatedStudentIndexRoute
   '/students/': typeof AuthenticatedStudentsIndexRoute
   '/teaching-assignments/': typeof AuthenticatedTeachingAssignmentsIndexRoute
+  '/teaching-journals/': typeof AuthenticatedTeachingJournalsIndexRoute
   '/attendance/session/$id': typeof AuthenticatedAttendanceSessionIdRoute
   '/permission-requests/$requestId/edit': typeof AuthenticatedPermissionRequestsRequestIdEditRoute
   '/portal/permission-requests/$requestId': typeof AuthenticatedPortalPermissionRequestsRequestIdRoute
@@ -471,6 +495,7 @@ export interface FileRoutesByTo {
   '/student/schedule': typeof AuthenticatedStudentScheduleRoute
   '/student/scores': typeof AuthenticatedStudentScoresRoute
   '/students/$studentId': typeof AuthenticatedStudentsStudentIdRoute
+  '/teaching-journals/manage': typeof AuthenticatedTeachingJournalsManageRoute
   '/assessments': typeof AuthenticatedAssessmentsIndexRoute
   '/attendance': typeof AuthenticatedAttendanceIndexRoute
   '/guardians': typeof AuthenticatedGuardiansIndexRoute
@@ -479,10 +504,12 @@ export interface FileRoutesByTo {
   '/report-cards': typeof AuthenticatedReportCardsIndexRoute
   '/schedule': typeof AuthenticatedScheduleIndexRoute
   '/sis-imports': typeof AuthenticatedSisImportsIndexRoute
+  '/staff-attendance': typeof AuthenticatedStaffAttendanceIndexRoute
   '/staff': typeof AuthenticatedStaffIndexRoute
   '/student': typeof AuthenticatedStudentIndexRoute
   '/students': typeof AuthenticatedStudentsIndexRoute
   '/teaching-assignments': typeof AuthenticatedTeachingAssignmentsIndexRoute
+  '/teaching-journals': typeof AuthenticatedTeachingJournalsIndexRoute
   '/attendance/session/$id': typeof AuthenticatedAttendanceSessionIdRoute
   '/permission-requests/$requestId/edit': typeof AuthenticatedPermissionRequestsRequestIdEditRoute
   '/portal/permission-requests/$requestId': typeof AuthenticatedPortalPermissionRequestsRequestIdRoute
@@ -528,6 +555,7 @@ export interface FileRoutesById {
   '/_authenticated/student/schedule': typeof AuthenticatedStudentScheduleRoute
   '/_authenticated/student/scores': typeof AuthenticatedStudentScoresRoute
   '/_authenticated/students/$studentId': typeof AuthenticatedStudentsStudentIdRoute
+  '/_authenticated/teaching-journals/manage': typeof AuthenticatedTeachingJournalsManageRoute
   '/_authenticated/assessments/': typeof AuthenticatedAssessmentsIndexRoute
   '/_authenticated/attendance/': typeof AuthenticatedAttendanceIndexRoute
   '/_authenticated/guardians/': typeof AuthenticatedGuardiansIndexRoute
@@ -536,10 +564,12 @@ export interface FileRoutesById {
   '/_authenticated/report-cards/': typeof AuthenticatedReportCardsIndexRoute
   '/_authenticated/schedule/': typeof AuthenticatedScheduleIndexRoute
   '/_authenticated/sis-imports/': typeof AuthenticatedSisImportsIndexRoute
+  '/_authenticated/staff-attendance/': typeof AuthenticatedStaffAttendanceIndexRoute
   '/_authenticated/staff/': typeof AuthenticatedStaffIndexRoute
   '/_authenticated/student/': typeof AuthenticatedStudentIndexRoute
   '/_authenticated/students/': typeof AuthenticatedStudentsIndexRoute
   '/_authenticated/teaching-assignments/': typeof AuthenticatedTeachingAssignmentsIndexRoute
+  '/_authenticated/teaching-journals/': typeof AuthenticatedTeachingJournalsIndexRoute
   '/_authenticated/attendance/session/$id': typeof AuthenticatedAttendanceSessionIdRoute
   '/_authenticated/permission-requests/$requestId/edit': typeof AuthenticatedPermissionRequestsRequestIdEditRoute
   '/_authenticated/portal/permission-requests/$requestId': typeof AuthenticatedPortalPermissionRequestsRequestIdRoute
@@ -585,6 +615,7 @@ export interface FileRouteTypes {
     | '/student/schedule'
     | '/student/scores'
     | '/students/$studentId'
+    | '/teaching-journals/manage'
     | '/assessments/'
     | '/attendance/'
     | '/guardians/'
@@ -593,10 +624,12 @@ export interface FileRouteTypes {
     | '/report-cards/'
     | '/schedule/'
     | '/sis-imports/'
+    | '/staff-attendance/'
     | '/staff/'
     | '/student/'
     | '/students/'
     | '/teaching-assignments/'
+    | '/teaching-journals/'
     | '/attendance/session/$id'
     | '/permission-requests/$requestId/edit'
     | '/portal/permission-requests/$requestId'
@@ -640,6 +673,7 @@ export interface FileRouteTypes {
     | '/student/schedule'
     | '/student/scores'
     | '/students/$studentId'
+    | '/teaching-journals/manage'
     | '/assessments'
     | '/attendance'
     | '/guardians'
@@ -648,10 +682,12 @@ export interface FileRouteTypes {
     | '/report-cards'
     | '/schedule'
     | '/sis-imports'
+    | '/staff-attendance'
     | '/staff'
     | '/student'
     | '/students'
     | '/teaching-assignments'
+    | '/teaching-journals'
     | '/attendance/session/$id'
     | '/permission-requests/$requestId/edit'
     | '/portal/permission-requests/$requestId'
@@ -696,6 +732,7 @@ export interface FileRouteTypes {
     | '/_authenticated/student/schedule'
     | '/_authenticated/student/scores'
     | '/_authenticated/students/$studentId'
+    | '/_authenticated/teaching-journals/manage'
     | '/_authenticated/assessments/'
     | '/_authenticated/attendance/'
     | '/_authenticated/guardians/'
@@ -704,10 +741,12 @@ export interface FileRouteTypes {
     | '/_authenticated/report-cards/'
     | '/_authenticated/schedule/'
     | '/_authenticated/sis-imports/'
+    | '/_authenticated/staff-attendance/'
     | '/_authenticated/staff/'
     | '/_authenticated/student/'
     | '/_authenticated/students/'
     | '/_authenticated/teaching-assignments/'
+    | '/_authenticated/teaching-journals/'
     | '/_authenticated/attendance/session/$id'
     | '/_authenticated/permission-requests/$requestId/edit'
     | '/_authenticated/portal/permission-requests/$requestId'
@@ -1012,6 +1051,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedSisImportsNewRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+    '/_authenticated/staff-attendance/': {
+      id: '/_authenticated/staff-attendance/'
+      path: '/staff-attendance'
+      fullPath: '/staff-attendance/'
+      preLoaderRoute: typeof AuthenticatedStaffAttendanceIndexRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
     '/_authenticated/staff/': {
       id: '/_authenticated/staff/'
       path: '/staff'
@@ -1080,6 +1126,20 @@ declare module '@tanstack/react-router' {
       path: '/teaching-assignments'
       fullPath: '/teaching-assignments/'
       preLoaderRoute: typeof AuthenticatedTeachingAssignmentsIndexRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/teaching-journals/': {
+      id: '/_authenticated/teaching-journals/'
+      path: '/teaching-journals'
+      fullPath: '/teaching-journals/'
+      preLoaderRoute: typeof AuthenticatedTeachingJournalsIndexRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/teaching-journals/manage': {
+      id: '/_authenticated/teaching-journals/manage'
+      path: '/teaching-journals/manage'
+      fullPath: '/teaching-journals/manage'
+      preLoaderRoute: typeof AuthenticatedTeachingJournalsManageRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
     '/_authenticated/attendance/session/$id': {
@@ -1169,6 +1229,7 @@ interface AuthenticatedRouteRouteChildren {
   AuthenticatedStudentScheduleRoute: typeof AuthenticatedStudentScheduleRoute
   AuthenticatedStudentScoresRoute: typeof AuthenticatedStudentScoresRoute
   AuthenticatedStudentsStudentIdRoute: typeof AuthenticatedStudentsStudentIdRoute
+  AuthenticatedTeachingJournalsManageRoute: typeof AuthenticatedTeachingJournalsManageRoute
   AuthenticatedAssessmentsIndexRoute: typeof AuthenticatedAssessmentsIndexRoute
   AuthenticatedAttendanceIndexRoute: typeof AuthenticatedAttendanceIndexRoute
   AuthenticatedGuardiansIndexRoute: typeof AuthenticatedGuardiansIndexRoute
@@ -1177,10 +1238,12 @@ interface AuthenticatedRouteRouteChildren {
   AuthenticatedReportCardsIndexRoute: typeof AuthenticatedReportCardsIndexRoute
   AuthenticatedScheduleIndexRoute: typeof AuthenticatedScheduleIndexRoute
   AuthenticatedSisImportsIndexRoute: typeof AuthenticatedSisImportsIndexRoute
+  AuthenticatedStaffAttendanceIndexRoute: typeof AuthenticatedStaffAttendanceIndexRoute
   AuthenticatedStaffIndexRoute: typeof AuthenticatedStaffIndexRoute
   AuthenticatedStudentIndexRoute: typeof AuthenticatedStudentIndexRoute
   AuthenticatedStudentsIndexRoute: typeof AuthenticatedStudentsIndexRoute
   AuthenticatedTeachingAssignmentsIndexRoute: typeof AuthenticatedTeachingAssignmentsIndexRoute
+  AuthenticatedTeachingJournalsIndexRoute: typeof AuthenticatedTeachingJournalsIndexRoute
   AuthenticatedAttendanceSessionIdRoute: typeof AuthenticatedAttendanceSessionIdRoute
 }
 
@@ -1220,6 +1283,8 @@ const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedStudentScheduleRoute: AuthenticatedStudentScheduleRoute,
   AuthenticatedStudentScoresRoute: AuthenticatedStudentScoresRoute,
   AuthenticatedStudentsStudentIdRoute: AuthenticatedStudentsStudentIdRoute,
+  AuthenticatedTeachingJournalsManageRoute:
+    AuthenticatedTeachingJournalsManageRoute,
   AuthenticatedAssessmentsIndexRoute: AuthenticatedAssessmentsIndexRoute,
   AuthenticatedAttendanceIndexRoute: AuthenticatedAttendanceIndexRoute,
   AuthenticatedGuardiansIndexRoute: AuthenticatedGuardiansIndexRoute,
@@ -1229,11 +1294,15 @@ const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedReportCardsIndexRoute: AuthenticatedReportCardsIndexRoute,
   AuthenticatedScheduleIndexRoute: AuthenticatedScheduleIndexRoute,
   AuthenticatedSisImportsIndexRoute: AuthenticatedSisImportsIndexRoute,
+  AuthenticatedStaffAttendanceIndexRoute:
+    AuthenticatedStaffAttendanceIndexRoute,
   AuthenticatedStaffIndexRoute: AuthenticatedStaffIndexRoute,
   AuthenticatedStudentIndexRoute: AuthenticatedStudentIndexRoute,
   AuthenticatedStudentsIndexRoute: AuthenticatedStudentsIndexRoute,
   AuthenticatedTeachingAssignmentsIndexRoute:
     AuthenticatedTeachingAssignmentsIndexRoute,
+  AuthenticatedTeachingJournalsIndexRoute:
+    AuthenticatedTeachingJournalsIndexRoute,
   AuthenticatedAttendanceSessionIdRoute: AuthenticatedAttendanceSessionIdRoute,
 }
 

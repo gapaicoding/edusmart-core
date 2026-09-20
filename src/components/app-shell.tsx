@@ -205,6 +205,31 @@ const NAV_GROUPS: NavGroup[] = [
         icon: FileText,
         permission: "report_card.read",
       },
+      {
+        to: "/teaching-journals",
+        label: "Teaching Journal",
+        icon: BookOpen,
+        permission: null,
+        anyOf: [
+          "teaching_journal.read",
+          "teaching_journal.create",
+          "teaching_journal.update",
+          "teaching_journal.submit",
+        ],
+      },
+      {
+        to: "/teaching-journals/manage",
+        label: "Journal Monitor",
+        icon: ClipboardCheck,
+        permission: "teaching_journal.read",
+      },
+      {
+        to: "/staff-attendance",
+        label: "Staff Attendance",
+        icon: CalendarCheck,
+        permission: null,
+        anyOf: ["staff_attendance.read", "staff_attendance.manage", "staff_attendance.self.read"],
+      },
     ],
   },
   {
