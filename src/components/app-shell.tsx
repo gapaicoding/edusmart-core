@@ -157,6 +157,12 @@ const NAV_GROUPS: NavGroup[] = [
     audience: "staff",
     items: [
       { to: "/students", label: "Students", icon: Users, permission: "student.read" },
+      {
+        to: "/student-progression",
+        label: "Student Progression",
+        icon: GraduationCap,
+        permission: "progression.read",
+      },
       { to: "/guardians", label: "Guardians", icon: HeartHandshake, permission: "guardian.read" },
       { to: "/staff", label: "Staff", icon: Briefcase, permission: "staff.read" },
       {
