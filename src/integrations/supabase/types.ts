@@ -1,4 +1,4 @@
-﻿export type Json = string | number | boolean | null | { [key: string]: Json | undefined } | Json[];
+export type Json = string | number | boolean | null | { [key: string]: Json | undefined } | Json[];
 
 export type Database = {
   // Allows to automatically instantiate createClient with right options
@@ -2047,6 +2047,307 @@ export type Database = {
           },
         ];
       };
+      progression_batches: {
+        Row: {
+          applied_at: string | null;
+          applied_by_profile_id: string | null;
+          approved_at: string | null;
+          approved_by_profile_id: string | null;
+          cancellation_reason: string | null;
+          cancelled_at: string | null;
+          cancelled_by_profile_id: string | null;
+          created_at: string;
+          created_by_profile_id: string;
+          id: string;
+          organization_id: string;
+          readiness_snapshot: Json;
+          rejected_at: string | null;
+          rejected_by_profile_id: string | null;
+          rejection_reason: string | null;
+          school_id: string;
+          source_academic_year_id: string;
+          status: string;
+          submitted_at: string | null;
+          submitted_by_profile_id: string | null;
+          target_academic_year_id: string;
+          updated_at: string;
+          version: number;
+        };
+        Insert: {
+          applied_at?: string | null;
+          applied_by_profile_id?: string | null;
+          approved_at?: string | null;
+          approved_by_profile_id?: string | null;
+          cancellation_reason?: string | null;
+          cancelled_at?: string | null;
+          cancelled_by_profile_id?: string | null;
+          created_at?: string;
+          created_by_profile_id: string;
+          id?: string;
+          organization_id: string;
+          readiness_snapshot?: Json;
+          rejected_at?: string | null;
+          rejected_by_profile_id?: string | null;
+          rejection_reason?: string | null;
+          school_id: string;
+          source_academic_year_id: string;
+          status?: string;
+          submitted_at?: string | null;
+          submitted_by_profile_id?: string | null;
+          target_academic_year_id: string;
+          updated_at?: string;
+          version?: number;
+        };
+        Update: {
+          applied_at?: string | null;
+          applied_by_profile_id?: string | null;
+          approved_at?: string | null;
+          approved_by_profile_id?: string | null;
+          cancellation_reason?: string | null;
+          cancelled_at?: string | null;
+          cancelled_by_profile_id?: string | null;
+          created_at?: string;
+          created_by_profile_id?: string;
+          id?: string;
+          organization_id?: string;
+          readiness_snapshot?: Json;
+          rejected_at?: string | null;
+          rejected_by_profile_id?: string | null;
+          rejection_reason?: string | null;
+          school_id?: string;
+          source_academic_year_id?: string;
+          status?: string;
+          submitted_at?: string | null;
+          submitted_by_profile_id?: string | null;
+          target_academic_year_id?: string;
+          updated_at?: string;
+          version?: number;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "progression_batches_applied_by_profile_id_fkey";
+            columns: ["applied_by_profile_id"];
+            isOneToOne: false;
+            referencedRelation: "profiles";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "progression_batches_approved_by_profile_id_fkey";
+            columns: ["approved_by_profile_id"];
+            isOneToOne: false;
+            referencedRelation: "profiles";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "progression_batches_cancelled_by_profile_id_fkey";
+            columns: ["cancelled_by_profile_id"];
+            isOneToOne: false;
+            referencedRelation: "profiles";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "progression_batches_created_by_profile_id_fkey";
+            columns: ["created_by_profile_id"];
+            isOneToOne: false;
+            referencedRelation: "profiles";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "progression_batches_rejected_by_profile_id_fkey";
+            columns: ["rejected_by_profile_id"];
+            isOneToOne: false;
+            referencedRelation: "profiles";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "progression_batches_school_fk";
+            columns: ["school_id", "organization_id"];
+            isOneToOne: false;
+            referencedRelation: "schools";
+            referencedColumns: ["id", "organization_id"];
+          },
+          {
+            foreignKeyName: "progression_batches_source_year_fk";
+            columns: ["source_academic_year_id", "organization_id", "school_id"];
+            isOneToOne: false;
+            referencedRelation: "academic_years";
+            referencedColumns: ["id", "organization_id", "school_id"];
+          },
+          {
+            foreignKeyName: "progression_batches_submitted_by_profile_id_fkey";
+            columns: ["submitted_by_profile_id"];
+            isOneToOne: false;
+            referencedRelation: "profiles";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "progression_batches_target_year_fk";
+            columns: ["target_academic_year_id", "organization_id", "school_id"];
+            isOneToOne: false;
+            referencedRelation: "academic_years";
+            referencedColumns: ["id", "organization_id", "school_id"];
+          },
+        ];
+      };
+      progression_command_requests: {
+        Row: {
+          actor_profile_id: string;
+          command_name: string;
+          completed_at: string | null;
+          created_at: string;
+          id: string;
+          organization_id: string;
+          payload_fingerprint: string;
+          request_id: string;
+          resource_id: string | null;
+          resource_type: string | null;
+          result_payload: Json | null;
+          school_id: string;
+          status: string;
+        };
+        Insert: {
+          actor_profile_id: string;
+          command_name: string;
+          completed_at?: string | null;
+          created_at?: string;
+          id?: string;
+          organization_id: string;
+          payload_fingerprint: string;
+          request_id: string;
+          resource_id?: string | null;
+          resource_type?: string | null;
+          result_payload?: Json | null;
+          school_id: string;
+          status?: string;
+        };
+        Update: {
+          actor_profile_id?: string;
+          command_name?: string;
+          completed_at?: string | null;
+          created_at?: string;
+          id?: string;
+          organization_id?: string;
+          payload_fingerprint?: string;
+          request_id?: string;
+          resource_id?: string | null;
+          resource_type?: string | null;
+          result_payload?: Json | null;
+          school_id?: string;
+          status?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "progression_command_requests_actor_profile_id_fkey";
+            columns: ["actor_profile_id"];
+            isOneToOne: false;
+            referencedRelation: "profiles";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
+      progression_decisions: {
+        Row: {
+          batch_id: string;
+          created_at: string;
+          decided_at: string | null;
+          decided_by_profile_id: string | null;
+          exception_reason: string | null;
+          id: string;
+          operator_note: string | null;
+          organization_id: string;
+          outcome: string | null;
+          readiness_snapshot: Json;
+          school_id: string;
+          source_student_enrollment_id: string;
+          student_id: string;
+          target_classroom_id: string | null;
+          target_grade_level_id: string | null;
+          updated_at: string;
+          version: number;
+        };
+        Insert: {
+          batch_id: string;
+          created_at?: string;
+          decided_at?: string | null;
+          decided_by_profile_id?: string | null;
+          exception_reason?: string | null;
+          id?: string;
+          operator_note?: string | null;
+          organization_id: string;
+          outcome?: string | null;
+          readiness_snapshot?: Json;
+          school_id: string;
+          source_student_enrollment_id: string;
+          student_id: string;
+          target_classroom_id?: string | null;
+          target_grade_level_id?: string | null;
+          updated_at?: string;
+          version?: number;
+        };
+        Update: {
+          batch_id?: string;
+          created_at?: string;
+          decided_at?: string | null;
+          decided_by_profile_id?: string | null;
+          exception_reason?: string | null;
+          id?: string;
+          operator_note?: string | null;
+          organization_id?: string;
+          outcome?: string | null;
+          readiness_snapshot?: Json;
+          school_id?: string;
+          source_student_enrollment_id?: string;
+          student_id?: string;
+          target_classroom_id?: string | null;
+          target_grade_level_id?: string | null;
+          updated_at?: string;
+          version?: number;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "progression_decisions_batch_fk";
+            columns: ["batch_id", "organization_id", "school_id"];
+            isOneToOne: false;
+            referencedRelation: "progression_batches";
+            referencedColumns: ["id", "organization_id", "school_id"];
+          },
+          {
+            foreignKeyName: "progression_decisions_decided_by_profile_id_fkey";
+            columns: ["decided_by_profile_id"];
+            isOneToOne: false;
+            referencedRelation: "profiles";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "progression_decisions_source_enrollment_fk";
+            columns: ["source_student_enrollment_id", "organization_id", "school_id"];
+            isOneToOne: false;
+            referencedRelation: "student_enrollments";
+            referencedColumns: ["id", "organization_id", "school_id"];
+          },
+          {
+            foreignKeyName: "progression_decisions_student_fk";
+            columns: ["student_id", "organization_id"];
+            isOneToOne: false;
+            referencedRelation: "students";
+            referencedColumns: ["id", "organization_id"];
+          },
+          {
+            foreignKeyName: "progression_decisions_target_classroom_fk";
+            columns: ["target_classroom_id", "organization_id", "school_id"];
+            isOneToOne: false;
+            referencedRelation: "classrooms";
+            referencedColumns: ["id", "organization_id", "school_id"];
+          },
+          {
+            foreignKeyName: "progression_decisions_target_grade_fk";
+            columns: ["target_grade_level_id", "organization_id", "school_id"];
+            isOneToOne: false;
+            referencedRelation: "grade_levels";
+            referencedColumns: ["id", "organization_id", "school_id"];
+          },
+        ];
+      };
       report_card_narratives: {
         Row: {
           content: string;
@@ -3722,6 +4023,24 @@ export type Database = {
       [_ in never]: never;
     };
     Functions: {
+      apply_progression_batch: {
+        Args: {
+          p_batch_id: string;
+          p_expected_version: number;
+          p_request_id: string;
+          p_school_id: string;
+        };
+        Returns: Json;
+      };
+      approve_progression_batch: {
+        Args: {
+          p_batch_id: string;
+          p_expected_version: number;
+          p_request_id: string;
+          p_school_id: string;
+        };
+        Returns: Json;
+      };
       assert_sis_import_permissions_for_entities: {
         Args: {
           p_entity_types: string[];
@@ -3812,6 +4131,60 @@ export type Database = {
           p_command_id: string;
           p_resource_id: string;
           p_result_payload: Json;
+        };
+        Returns: undefined;
+      };
+      b14_authorize: {
+        Args: { p_permission: string; p_school_id: string };
+        Returns: string;
+      };
+      b14_command_begin: {
+        Args: {
+          p_command_name: string;
+          p_fingerprint: string;
+          p_organization_id: string;
+          p_request_id: string;
+          p_school_id: string;
+        };
+        Returns: Json;
+      };
+      b14_command_complete: {
+        Args: {
+          p_command_name: string;
+          p_request_id: string;
+          p_resource_id: string;
+          p_resource_type: string;
+          p_result: Json;
+        };
+        Returns: undefined;
+      };
+      b14_command_fingerprint: { Args: { p_payload: Json }; Returns: string };
+      b14_readiness: {
+        Args: {
+          p_enrollment_id: string;
+          p_organization_id: string;
+          p_school_id: string;
+          p_source_year_id: string;
+        };
+        Returns: Json;
+      };
+      b14_transition_batch: {
+        Args: {
+          p_batch_id: string;
+          p_command: string;
+          p_expected_version: number;
+          p_permission: string;
+          p_reason?: string;
+          p_request_id: string;
+          p_school_id: string;
+        };
+        Returns: Json;
+      };
+      b14_validate_decision: {
+        Args: {
+          p_batch: Database["public"]["Tables"]["progression_batches"]["Row"];
+          p_decision: Database["public"]["Tables"]["progression_decisions"]["Row"];
+          p_require_complete?: boolean;
         };
         Returns: undefined;
       };
@@ -3931,6 +4304,16 @@ export type Database = {
           version: number;
         }[];
       };
+      cancel_progression_batch: {
+        Args: {
+          p_batch_id: string;
+          p_expected_version: number;
+          p_reason: string;
+          p_request_id: string;
+          p_school_id: string;
+        };
+        Returns: Json;
+      };
       close_permission_request: {
         Args: {
           p_command_request_id?: string;
@@ -3988,6 +4371,15 @@ export type Database = {
           status: string;
           version: number;
         }[];
+      };
+      create_progression_batch: {
+        Args: {
+          p_request_id: string;
+          p_school_id: string;
+          p_source_academic_year_id: string;
+          p_target_academic_year_id: string;
+        };
+        Returns: Json;
       };
       create_report_card_revision: {
         Args: {
@@ -4095,6 +4487,10 @@ export type Database = {
           students: Json;
           title: string;
         }[];
+      };
+      get_progression_batch: {
+        Args: { p_batch_id: string; p_school_id: string };
+        Returns: Json;
       };
       get_sis_export_projection: {
         Args: { p_school_id: string };
@@ -4415,6 +4811,19 @@ export type Database = {
           student_name: string;
         }[];
       };
+      list_progression_batches: {
+        Args: { p_limit?: number; p_offset?: number; p_school_id: string };
+        Returns: Json;
+      };
+      list_progression_candidates: {
+        Args: {
+          p_batch_id: string;
+          p_limit?: number;
+          p_offset?: number;
+          p_school_id: string;
+        };
+        Returns: Json;
+      };
       list_sis_import_jobs: {
         Args: { p_limit?: number; p_offset?: number; p_school_id: string };
         Returns: Json;
@@ -4722,6 +5131,16 @@ export type Database = {
         };
         Returns: string;
       };
+      reject_progression_batch: {
+        Args: {
+          p_batch_id: string;
+          p_expected_version: number;
+          p_reason: string;
+          p_request_id: string;
+          p_school_id: string;
+        };
+        Returns: Json;
+      };
       replace_report_card_document: {
         Args: {
           p_attestation: string;
@@ -4833,6 +5252,21 @@ export type Database = {
           session_id: string;
         }[];
       };
+      save_progression_decision: {
+        Args: {
+          p_batch_id: string;
+          p_exception_reason?: string;
+          p_expected_version?: number;
+          p_operator_note?: string;
+          p_outcome: string;
+          p_request_id: string;
+          p_school_id: string;
+          p_source_student_enrollment_id: string;
+          p_target_classroom_id?: string;
+          p_target_grade_level_id?: string;
+        };
+        Returns: Json;
+      };
       scrub_expired_sis_import_payloads: { Args: never; Returns: number };
       send_permission_request_reminder: {
         Args: {
@@ -4882,6 +5316,15 @@ export type Database = {
           request_recipient_id: string;
           version: number;
         }[];
+      };
+      submit_progression_batch: {
+        Args: {
+          p_batch_id: string;
+          p_expected_version: number;
+          p_request_id: string;
+          p_school_id: string;
+        };
+        Returns: Json;
       };
       submit_teaching_journal: {
         Args: {

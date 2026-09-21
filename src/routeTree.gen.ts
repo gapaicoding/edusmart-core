@@ -53,6 +53,8 @@ import { Route as AuthenticatedSisImportsNewRouteImport } from './routes/_authen
 import { Route as AuthenticatedStaffAttendanceIndexRouteImport } from './routes/_authenticated/staff-attendance/index'
 import { Route as AuthenticatedStaffIndexRouteImport } from './routes/_authenticated/staff/index'
 import { Route as AuthenticatedStaffStaffIdRouteImport } from './routes/_authenticated/staff/$staffId'
+import { Route as AuthenticatedStudentProgressionIndexRouteImport } from './routes/_authenticated/student-progression/index'
+import { Route as AuthenticatedStudentProgressionBatchIdRouteImport } from './routes/_authenticated/student-progression/$batchId'
 import { Route as AuthenticatedStudentIndexRouteImport } from './routes/_authenticated/student/index'
 import { Route as AuthenticatedStudentAttendanceRouteImport } from './routes/_authenticated/student/attendance'
 import { Route as AuthenticatedStudentReportCardsRouteImport } from './routes/_authenticated/student/report-cards'
@@ -319,6 +321,18 @@ const AuthenticatedStaffStaffIdRoute =
     path: '/staff/$staffId',
     getParentRoute: () => AuthenticatedRouteRoute,
   } as any)
+const AuthenticatedStudentProgressionIndexRoute =
+  AuthenticatedStudentProgressionIndexRouteImport.update({
+    id: '/student-progression/',
+    path: '/student-progression/',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
+const AuthenticatedStudentProgressionBatchIdRoute =
+  AuthenticatedStudentProgressionBatchIdRouteImport.update({
+    id: '/student-progression/$batchId',
+    path: '/student-progression/$batchId',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
 const AuthenticatedStudentIndexRoute =
   AuthenticatedStudentIndexRouteImport.update({
     id: '/student/',
@@ -432,6 +446,7 @@ export interface FileRoutesByFullPath {
   '/sis-imports/$jobId': typeof AuthenticatedSisImportsJobIdRoute
   '/sis-imports/new': typeof AuthenticatedSisImportsNewRoute
   '/staff/$staffId': typeof AuthenticatedStaffStaffIdRoute
+  '/student-progression/$batchId': typeof AuthenticatedStudentProgressionBatchIdRoute
   '/student/attendance': typeof AuthenticatedStudentAttendanceRoute
   '/student/report-cards': typeof AuthenticatedStudentReportCardsRoute
   '/student/schedule': typeof AuthenticatedStudentScheduleRoute
@@ -448,6 +463,7 @@ export interface FileRoutesByFullPath {
   '/sis-imports/': typeof AuthenticatedSisImportsIndexRoute
   '/staff-attendance/': typeof AuthenticatedStaffAttendanceIndexRoute
   '/staff/': typeof AuthenticatedStaffIndexRoute
+  '/student-progression/': typeof AuthenticatedStudentProgressionIndexRoute
   '/student/': typeof AuthenticatedStudentIndexRoute
   '/students/': typeof AuthenticatedStudentsIndexRoute
   '/teaching-assignments/': typeof AuthenticatedTeachingAssignmentsIndexRoute
@@ -490,6 +506,7 @@ export interface FileRoutesByTo {
   '/sis-imports/$jobId': typeof AuthenticatedSisImportsJobIdRoute
   '/sis-imports/new': typeof AuthenticatedSisImportsNewRoute
   '/staff/$staffId': typeof AuthenticatedStaffStaffIdRoute
+  '/student-progression/$batchId': typeof AuthenticatedStudentProgressionBatchIdRoute
   '/student/attendance': typeof AuthenticatedStudentAttendanceRoute
   '/student/report-cards': typeof AuthenticatedStudentReportCardsRoute
   '/student/schedule': typeof AuthenticatedStudentScheduleRoute
@@ -506,6 +523,7 @@ export interface FileRoutesByTo {
   '/sis-imports': typeof AuthenticatedSisImportsIndexRoute
   '/staff-attendance': typeof AuthenticatedStaffAttendanceIndexRoute
   '/staff': typeof AuthenticatedStaffIndexRoute
+  '/student-progression': typeof AuthenticatedStudentProgressionIndexRoute
   '/student': typeof AuthenticatedStudentIndexRoute
   '/students': typeof AuthenticatedStudentsIndexRoute
   '/teaching-assignments': typeof AuthenticatedTeachingAssignmentsIndexRoute
@@ -550,6 +568,7 @@ export interface FileRoutesById {
   '/_authenticated/sis-imports/$jobId': typeof AuthenticatedSisImportsJobIdRoute
   '/_authenticated/sis-imports/new': typeof AuthenticatedSisImportsNewRoute
   '/_authenticated/staff/$staffId': typeof AuthenticatedStaffStaffIdRoute
+  '/_authenticated/student-progression/$batchId': typeof AuthenticatedStudentProgressionBatchIdRoute
   '/_authenticated/student/attendance': typeof AuthenticatedStudentAttendanceRoute
   '/_authenticated/student/report-cards': typeof AuthenticatedStudentReportCardsRoute
   '/_authenticated/student/schedule': typeof AuthenticatedStudentScheduleRoute
@@ -566,6 +585,7 @@ export interface FileRoutesById {
   '/_authenticated/sis-imports/': typeof AuthenticatedSisImportsIndexRoute
   '/_authenticated/staff-attendance/': typeof AuthenticatedStaffAttendanceIndexRoute
   '/_authenticated/staff/': typeof AuthenticatedStaffIndexRoute
+  '/_authenticated/student-progression/': typeof AuthenticatedStudentProgressionIndexRoute
   '/_authenticated/student/': typeof AuthenticatedStudentIndexRoute
   '/_authenticated/students/': typeof AuthenticatedStudentsIndexRoute
   '/_authenticated/teaching-assignments/': typeof AuthenticatedTeachingAssignmentsIndexRoute
@@ -610,6 +630,7 @@ export interface FileRouteTypes {
     | '/sis-imports/$jobId'
     | '/sis-imports/new'
     | '/staff/$staffId'
+    | '/student-progression/$batchId'
     | '/student/attendance'
     | '/student/report-cards'
     | '/student/schedule'
@@ -626,6 +647,7 @@ export interface FileRouteTypes {
     | '/sis-imports/'
     | '/staff-attendance/'
     | '/staff/'
+    | '/student-progression/'
     | '/student/'
     | '/students/'
     | '/teaching-assignments/'
@@ -668,6 +690,7 @@ export interface FileRouteTypes {
     | '/sis-imports/$jobId'
     | '/sis-imports/new'
     | '/staff/$staffId'
+    | '/student-progression/$batchId'
     | '/student/attendance'
     | '/student/report-cards'
     | '/student/schedule'
@@ -684,6 +707,7 @@ export interface FileRouteTypes {
     | '/sis-imports'
     | '/staff-attendance'
     | '/staff'
+    | '/student-progression'
     | '/student'
     | '/students'
     | '/teaching-assignments'
@@ -727,6 +751,7 @@ export interface FileRouteTypes {
     | '/_authenticated/sis-imports/$jobId'
     | '/_authenticated/sis-imports/new'
     | '/_authenticated/staff/$staffId'
+    | '/_authenticated/student-progression/$batchId'
     | '/_authenticated/student/attendance'
     | '/_authenticated/student/report-cards'
     | '/_authenticated/student/schedule'
@@ -743,6 +768,7 @@ export interface FileRouteTypes {
     | '/_authenticated/sis-imports/'
     | '/_authenticated/staff-attendance/'
     | '/_authenticated/staff/'
+    | '/_authenticated/student-progression/'
     | '/_authenticated/student/'
     | '/_authenticated/students/'
     | '/_authenticated/teaching-assignments/'
@@ -1072,6 +1098,20 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedStaffStaffIdRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+    '/_authenticated/student-progression/': {
+      id: '/_authenticated/student-progression/'
+      path: '/student-progression'
+      fullPath: '/student-progression/'
+      preLoaderRoute: typeof AuthenticatedStudentProgressionIndexRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/student-progression/$batchId': {
+      id: '/_authenticated/student-progression/$batchId'
+      path: '/student-progression/$batchId'
+      fullPath: '/student-progression/$batchId'
+      preLoaderRoute: typeof AuthenticatedStudentProgressionBatchIdRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
     '/_authenticated/student/': {
       id: '/_authenticated/student/'
       path: '/student'
@@ -1224,6 +1264,7 @@ interface AuthenticatedRouteRouteChildren {
   AuthenticatedSisImportsJobIdRoute: typeof AuthenticatedSisImportsJobIdRoute
   AuthenticatedSisImportsNewRoute: typeof AuthenticatedSisImportsNewRoute
   AuthenticatedStaffStaffIdRoute: typeof AuthenticatedStaffStaffIdRoute
+  AuthenticatedStudentProgressionBatchIdRoute: typeof AuthenticatedStudentProgressionBatchIdRoute
   AuthenticatedStudentAttendanceRoute: typeof AuthenticatedStudentAttendanceRoute
   AuthenticatedStudentReportCardsRoute: typeof AuthenticatedStudentReportCardsRoute
   AuthenticatedStudentScheduleRoute: typeof AuthenticatedStudentScheduleRoute
@@ -1240,6 +1281,7 @@ interface AuthenticatedRouteRouteChildren {
   AuthenticatedSisImportsIndexRoute: typeof AuthenticatedSisImportsIndexRoute
   AuthenticatedStaffAttendanceIndexRoute: typeof AuthenticatedStaffAttendanceIndexRoute
   AuthenticatedStaffIndexRoute: typeof AuthenticatedStaffIndexRoute
+  AuthenticatedStudentProgressionIndexRoute: typeof AuthenticatedStudentProgressionIndexRoute
   AuthenticatedStudentIndexRoute: typeof AuthenticatedStudentIndexRoute
   AuthenticatedStudentsIndexRoute: typeof AuthenticatedStudentsIndexRoute
   AuthenticatedTeachingAssignmentsIndexRoute: typeof AuthenticatedTeachingAssignmentsIndexRoute
@@ -1278,6 +1320,8 @@ const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedSisImportsJobIdRoute: AuthenticatedSisImportsJobIdRoute,
   AuthenticatedSisImportsNewRoute: AuthenticatedSisImportsNewRoute,
   AuthenticatedStaffStaffIdRoute: AuthenticatedStaffStaffIdRoute,
+  AuthenticatedStudentProgressionBatchIdRoute:
+    AuthenticatedStudentProgressionBatchIdRoute,
   AuthenticatedStudentAttendanceRoute: AuthenticatedStudentAttendanceRoute,
   AuthenticatedStudentReportCardsRoute: AuthenticatedStudentReportCardsRoute,
   AuthenticatedStudentScheduleRoute: AuthenticatedStudentScheduleRoute,
@@ -1297,6 +1341,8 @@ const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedStaffAttendanceIndexRoute:
     AuthenticatedStaffAttendanceIndexRoute,
   AuthenticatedStaffIndexRoute: AuthenticatedStaffIndexRoute,
+  AuthenticatedStudentProgressionIndexRoute:
+    AuthenticatedStudentProgressionIndexRoute,
   AuthenticatedStudentIndexRoute: AuthenticatedStudentIndexRoute,
   AuthenticatedStudentsIndexRoute: AuthenticatedStudentsIndexRoute,
   AuthenticatedTeachingAssignmentsIndexRoute:
