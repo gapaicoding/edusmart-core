@@ -2,17 +2,25 @@ import { useEffect, useState } from "react";
 import { Link } from "@tanstack/react-router";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
-import { ArrowLeft, ClipboardCheck, Plus } from "lucide-react";
+import { ArrowLeft, ClipboardCheck, Pencil, Plus } from "lucide-react";
 import { toast } from "sonner";
 import { useAppContext, PermissionGate } from "@/lib/app-context";
 import {
   changeAssessmentLifecycle,
   getAssessment,
   getAssessmentOptions,
-  listAssessments,
-  saveAssessment,
   saveScores,
 } from "@/lib/assessment.functions";
+import {
+  correctFinalScoreCommand,
+  createAssessmentCommand,
+  getAssessmentProjection,
+  getGradebookProjection,
+  listAssessmentProjection,
+  saveAssessmentScoresCommand,
+  transitionAssessmentCommand,
+  updateAssessmentDraftCommand,
+} from "@/lib/assessment-gradebook.functions";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -70,7 +78,7 @@ function AssessmentForm({
   onSaved: () => void;
 }) {
   const optionsFn = useServerFn(getAssessmentOptions);
-  const saveFn = useServerFn(saveAssessment);
+  const saveFn = useServerFn(createAssessmentCommand);
   const [open, setOpen] = useState(false);
   const opts = useQuery({
     queryKey: ["assessment-options", scope],
@@ -86,7 +94,7 @@ function AssessmentForm({
   const [weight, setWeight] = useState("");
   const [description, setDescription] = useState("");
   const mutation = useMutation({
-    mutationFn: () =>
+    mutationFn: (requestId: string) =>
       saveFn({
         data: {
           ...scope,
@@ -98,6 +106,7 @@ function AssessmentForm({
           minScore: Number(min),
           maxScore: Number(max),
           weight: weight === "" ? null : Number(weight),
+          requestId,
         },
       }),
     onSuccess: () => {
@@ -209,7 +218,7 @@ function AssessmentForm({
           </Button>
           <Button
             disabled={mutation.isPending || !assignment || !type || !title || !date}
-            onClick={() => mutation.mutate()}
+            onClick={() => mutation.mutate(crypto.randomUUID())}
           >
             {mutation.isPending ? "Saving…" : "Create draft"}
           </Button>
@@ -222,11 +231,18 @@ function AssessmentForm({
 export function AssessmentsPage() {
   const { context, scope } = useScope();
   const qc = useQueryClient();
-  const fn = useServerFn(listAssessments);
+  const fn = useServerFn(listAssessmentProjection);
+  const optionsFn = useServerFn(getAssessmentOptions);
+  const canRead = context.hasPermission("assessment.read");
   const q = useQuery({
     queryKey: ["assessments", scope],
     queryFn: () => fn({ data: scope! }),
-    enabled: !!scope,
+    enabled: !!scope && canRead,
+  });
+  const options = useQuery({
+    queryKey: ["assessment-options", scope],
+    queryFn: () => optionsFn({ data: scope! }),
+    enabled: !!scope && canRead,
   });
   if (context.contextLoading || context.academicLoading || (!scope && !context.error))
     return (
@@ -240,6 +256,19 @@ export function AssessmentsPage() {
     return (
       <StateMessage>Select a school, academic year, and term to view assessments.</StateMessage>
     );
+  if (!canRead) return <StateMessage>Access unavailable.</StateMessage>;
+  const assignmentLabels = new Map((options.data?.assignments ?? []).map((x) => [x.id, x.label]));
+  const typeNames = new Map((options.data?.types ?? []).map((x) => [x.id, x.name]));
+  const displayRows = q.data!.map((a) => ({
+    ...a,
+    subjectName: assignmentLabels.get(a.teaching_assignment_id) ?? "Assigned class",
+    classroomName: "",
+    typeName: typeNames.get(a.assessment_type_id) ?? "Assessment",
+    assessmentDate: a.assessment_date,
+    minScore: "",
+    maxScore: "",
+    weight: null,
+  }));
   return (
     <div className="space-y-6">
       <div className="flex flex-wrap items-center justify-between gap-3">
@@ -260,11 +289,11 @@ export function AssessmentsPage() {
         <Skeleton className="h-48" />
       ) : q.error ? (
         <StateMessage>{(q.error as Error).message}</StateMessage>
-      ) : q.data!.rows.length === 0 ? (
+      ) : q.data!.length === 0 ? (
         <StateMessage>No assessments in this term.</StateMessage>
       ) : (
         <div className="grid gap-3">
-          {q.data!.rows.map((a) => (
+          {displayRows.map((a) => (
             <Link key={a.id} to="/assessments/$id" params={{ id: a.id }}>
               <Card className="transition-colors hover:bg-accent/30">
                 <CardHeader className="pb-3">
@@ -386,15 +415,18 @@ export function AssessmentDetailPage({ id }: { id: string }) {
           </div>
         </CardHeader>
         <CardContent className="flex flex-wrap gap-2">
-          {next && (
-            <Button disabled={lifecycle.isPending} onClick={() => lifecycle.mutate(next)}>
-              {next === "publish"
-                ? "Publish scores"
-                : next === "close"
-                  ? "Close scoring"
-                  : "Open scoring"}
-            </Button>
-          )}
+          {next &&
+            (next === "publish" ? (
+              <PermissionGate permission="assessment.publish">
+                <Button disabled={lifecycle.isPending} onClick={() => lifecycle.mutate(next)}>
+                  Publish scores
+                </Button>
+              </PermissionGate>
+            ) : (
+              <Button disabled={lifecycle.isPending} onClick={() => lifecycle.mutate(next)}>
+                {next === "close" ? "Close scoring" : "Open scoring"}
+              </Button>
+            ))}
           <PermissionGate permission="assessment.archive_own">
             <Button
               variant="outline"

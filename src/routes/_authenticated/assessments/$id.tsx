@@ -1,5 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { AssessmentDetailPage } from "@/components/assessment/assessment-ui";
+import { AssessmentDetailPage } from "@/components/assessment/assessment-gradebook-ui";
 
 export const Route = createFileRoute("/_authenticated/assessments/$id")({
   component: AssessmentRoute,

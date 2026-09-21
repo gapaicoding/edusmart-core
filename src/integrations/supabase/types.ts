@@ -244,6 +244,7 @@ export type Database = {
           term_id: string;
           title: string;
           updated_at: string;
+          version: number;
           weight: number | null;
         };
         Insert: {
@@ -263,6 +264,7 @@ export type Database = {
           term_id: string;
           title: string;
           updated_at?: string;
+          version?: number;
           weight?: number | null;
         };
         Update: {
@@ -282,6 +284,7 @@ export type Database = {
           term_id?: string;
           title?: string;
           updated_at?: string;
+          version?: number;
           weight?: number | null;
         };
         Relationships: [
@@ -319,6 +322,69 @@ export type Database = {
             isOneToOne: false;
             referencedRelation: "academic_years";
             referencedColumns: ["id", "organization_id", "school_id"];
+          },
+        ];
+      };
+      assessment_command_requests: {
+        Row: {
+          actor_profile_id: string;
+          command_name: string;
+          completed_at: string | null;
+          created_at: string;
+          id: string;
+          organization_id: string;
+          payload_fingerprint: string;
+          request_id: string;
+          resource_id: string | null;
+          resource_type: string | null;
+          result_payload: Json | null;
+          school_id: string;
+          status: string;
+        };
+        Insert: {
+          actor_profile_id: string;
+          command_name: string;
+          completed_at?: string | null;
+          created_at?: string;
+          id?: string;
+          organization_id: string;
+          payload_fingerprint: string;
+          request_id: string;
+          resource_id?: string | null;
+          resource_type?: string | null;
+          result_payload?: Json | null;
+          school_id: string;
+          status?: string;
+        };
+        Update: {
+          actor_profile_id?: string;
+          command_name?: string;
+          completed_at?: string | null;
+          created_at?: string;
+          id?: string;
+          organization_id?: string;
+          payload_fingerprint?: string;
+          request_id?: string;
+          resource_id?: string | null;
+          resource_type?: string | null;
+          result_payload?: Json | null;
+          school_id?: string;
+          status?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "assessment_command_requests_actor_profile_id_fkey";
+            columns: ["actor_profile_id"];
+            isOneToOne: false;
+            referencedRelation: "profiles";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "assessment_command_requests_school_fk";
+            columns: ["school_id", "organization_id"];
+            isOneToOne: false;
+            referencedRelation: "schools";
+            referencedColumns: ["id", "organization_id"];
           },
         ];
       };
@@ -3160,6 +3226,7 @@ export type Database = {
           student_enrollment_id: string;
           updated_at: string;
           updated_by_profile_id: string | null;
+          version: number;
         };
         Insert: {
           attendance_session_id: string;
@@ -3175,6 +3242,7 @@ export type Database = {
           student_enrollment_id: string;
           updated_at?: string;
           updated_by_profile_id?: string | null;
+          version?: number;
         };
         Update: {
           attendance_session_id?: string;
@@ -3190,6 +3258,7 @@ export type Database = {
           student_enrollment_id?: string;
           updated_at?: string;
           updated_by_profile_id?: string | null;
+          version?: number;
         };
         Relationships: [
           {
@@ -4187,6 +4256,144 @@ export type Database = {
           p_require_complete?: boolean;
         };
         Returns: undefined;
+      };
+      b15_assessment_create: {
+        Args: {
+          p_academic_year_id: string;
+          p_assessment_date: string;
+          p_assessment_type_id: string;
+          p_description: string | null;
+          p_max_score: number;
+          p_min_score: number;
+          p_organization_id: string;
+          p_request_id: string;
+          p_school_id: string;
+          p_teaching_assignment_id: string;
+          p_term_id: string;
+          p_title: string;
+          p_weight: number | null;
+        };
+        Returns: {
+          assessment_id: string;
+          status: string;
+          version: number;
+        }[];
+      };
+      b15_assessment_request_fingerprint: { Args: { p_payload: Json }; Returns: string };
+      b15_assessment_save_scores: {
+        Args: {
+          p_assessment_id: string;
+          p_entries: Json;
+          p_expected_assessment_version: number | null;
+          p_organization_id: string;
+          p_request_id: string;
+          p_school_id: string;
+        };
+        Returns: { assessment_id: string; saved_count: number; version: number }[];
+      };
+      b15_assessment_transition: {
+        Args: {
+          p_action: string;
+          p_assessment_id: string;
+          p_expected_version: number;
+          p_organization_id: string;
+          p_request_id: string;
+          p_school_id: string;
+        };
+        Returns: { assessment_id: string; status: string; version: number }[];
+      };
+      b15_assessment_update_draft: {
+        Args: {
+          p_assessment_date: string;
+          p_assessment_id: string;
+          p_assessment_type_id: string;
+          p_description: string | null;
+          p_expected_version: number;
+          p_max_score: number;
+          p_min_score: number;
+          p_organization_id: string;
+          p_request_id: string;
+          p_school_id: string;
+          p_title: string;
+          p_weight: number | null;
+        };
+        Returns: { assessment_id: string; status: string; version: number }[];
+      };
+      b15_correct_final_score: {
+        Args: {
+          p_assessment_id: string;
+          p_expected_score_version: number;
+          p_new_score: number;
+          p_new_status: string;
+          p_organization_id: string;
+          p_reason: string;
+          p_request_id: string;
+          p_school_id: string;
+          p_score_id: string;
+        };
+        Returns: { score_id: string; status: string; version: number }[];
+      };
+      b15_get_assessment: {
+        Args: { p_assessment_id: string; p_organization_id: string; p_school_id: string };
+        Returns: {
+          academic_year_id: string;
+          assessment_date: string;
+          assessment_type_id: string;
+          created_at: string;
+          created_by_profile_id: string;
+          description: string;
+          id: string;
+          max_score: number;
+          min_score: number;
+          organization_id: string;
+          school_id: string;
+          status: string;
+          teaching_assignment_id: string;
+          term_id: string;
+          title: string;
+          updated_at: string;
+          version: number;
+          weight: number;
+        }[];
+      };
+      b15_get_gradebook: {
+        Args: { p_assessment_id: string; p_organization_id: string; p_school_id: string };
+        Returns: {
+          current_eligible: boolean;
+          enrollment_status: string;
+          feedback: string;
+          score: number;
+          score_id: string;
+          score_status: string;
+          score_version: number;
+          student_enrollment_id: string;
+          student_id: string;
+          student_name: string;
+        }[];
+      };
+      b15_list_assessments: {
+        Args: {
+          p_academic_year_id?: string | null;
+          p_limit?: number;
+          p_offset?: number;
+          p_organization_id: string;
+          p_school_id: string;
+          p_status?: string | null;
+          p_term_id?: string | null;
+        };
+        Returns: {
+          academic_year_id: string;
+          assessment_date: string;
+          assessment_type_id: string;
+          id: string;
+          school_id: string;
+          status: string;
+          teaching_assignment_id: string;
+          term_id: string;
+          title: string;
+          updated_at: string;
+          version: number;
+        }[];
       };
       can_access_assessment: {
         Args: { p_assessment_id: string; p_permission_code: string };
