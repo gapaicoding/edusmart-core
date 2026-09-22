@@ -51,20 +51,22 @@ import {
 import { Skeleton } from "@/components/ui/skeleton";
 import { Textarea } from "@/components/ui/textarea";
 import { useAppContext } from "@/lib/app-context";
+import { getAcademicContext } from "@/lib/context.functions";
+import { useReportCardRequestAction } from "@/lib/report-card-request-identity";
+import type {
+  ReportCardContentInput,
+  ReportCardGenerationInput,
+} from "@/lib/report-card-runtime.schemas";
 import {
-  createReportCardRevision,
-  deleteReportNarrative,
-  findExistingReportCard,
-  generateReportCardDraft,
-  getReportCard,
-  listReportCardGenerationCandidates,
-  listReportCards,
-  publishReportCardVersion,
-  saveReportNarrative,
-  transitionReportCard,
-  updateReportCardComment,
-  updateReportSubjectNarrative,
-} from "@/lib/reporting.functions";
+  createReportCardRevisionCommand,
+  generateReportCardDraftCommand,
+  getReportCardProjection,
+  listReportCardCandidatesProjection,
+  listReportCardsProjection,
+  publishReportCardCommand,
+  saveReportCardContentCommand,
+  transitionReportCardCommand,
+} from "@/lib/report-card-runtime.functions";
 import {
   generateReportCardDocument,
   getReportCardDocumentStatus,
@@ -109,9 +111,12 @@ export function GenerateReportCardDialog({
   const [termId, setTermId] = useState<string | null>(defaultTermId ?? null);
   const navigate = useNavigate();
   const queryClient = useQueryClient();
-  const candidatesFn = useServerFn(listReportCardGenerationCandidates);
-  const generateFn = useServerFn(generateReportCardDraft);
-  const findFn = useServerFn(findExistingReportCard);
+  const candidatesFn = useServerFn(listReportCardCandidatesProjection);
+  const generateFn = useServerFn(generateReportCardDraftCommand);
+  const requestAction = useReportCardRequestAction<{
+    studentEnrollmentId: string;
+    termId: string;
+  }>();
   const candidates = useQuery({
     queryKey: ["report-card-candidates", schoolId, defaultAcademicYearId, search],
     queryFn: () =>
@@ -119,15 +124,27 @@ export function GenerateReportCardDialog({
         data: {
           schoolId,
           academicYearId: defaultAcademicYearId ?? undefined,
-          search: search || undefined,
         },
       }),
     enabled: open,
   });
-  const selected =
-    candidates.data?.rows.find((r) => r.studentEnrollmentId === enrollmentId) ?? null;
+  const candidateRows = useMemo(
+    () =>
+      (candidates.data ?? []).filter(
+        (r) => !search || r.student_name.toLowerCase().includes(search.toLowerCase()),
+      ),
+    [candidates.data, search],
+  );
+  const selected = candidateRows.find((r) => r.student_enrollment_id === enrollmentId) ?? null;
+  const displayCandidates = candidateRows.map((r) => ({
+    studentEnrollmentId: r.student_enrollment_id,
+    studentName: r.student_name,
+    academicYearName: r.academic_year_id,
+    gradeLevelName: null,
+    classroomName: r.classroom_name,
+  }));
   const eligibleTerms = selected
-    ? terms.filter((t) => t.academicYearId === selected.academicYearId)
+    ? terms.filter((t) => t.academicYearId === selected.academic_year_id)
     : [];
   useEffect(() => {
     if (!selected) return;
@@ -138,51 +155,53 @@ export function GenerateReportCardDialog({
         : (eligibleTerms[0]?.id ?? null),
     );
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [selected?.studentEnrollmentId]);
+  }, [selected?.student_enrollment_id]);
   const reset = () => {
     setSearch("");
     setEnrollmentId(null);
     setTermId(defaultTermId ?? null);
   };
   const generate = useMutation({
-    mutationFn: async () => {
-      if (!enrollmentId || !termId) throw new Error("Select a student and a term.");
-      if (!eligibleTerms.some((t) => t.id === termId))
-        throw new Error("Selected term is not part of this enrollment's academic year.");
-      return generateFn({ data: { studentEnrollmentId: enrollmentId, termId } });
+    mutationFn: async (action: {
+      requestId: string;
+      payload: { studentEnrollmentId: string; termId: string };
+    }) => {
+      return generateFn({
+        data: { ...action.payload, requestId: action.requestId },
+      });
     },
-    onSuccess: async (result) => {
+    onSuccess: async (result, action) => {
       await queryClient.invalidateQueries({ queryKey: ["report-cards"] });
+      requestAction.succeed(action);
       toast.success("Report card draft created.");
       setOpen(false);
       reset();
-      navigate({ to: "/report-cards/$id", params: { id: result.id } });
+      if (result?.report_card_id)
+        navigate({ to: "/report-cards/$id", params: { id: result.report_card_id } });
     },
-    onError: async (error) => {
-      const message = formatReportingMutationError(error);
-      if (/already exists/i.test(message) && enrollmentId && termId) {
-        try {
-          const existing = await findFn({
-            data: { studentEnrollmentId: enrollmentId, termId },
-          });
-          if (existing.card) {
-            toast.info("A report card already exists for this student and term. Opening it.");
-            setOpen(false);
-            reset();
-            navigate({ to: "/report-cards/$id", params: { id: existing.card.id } });
-            return;
-          }
-        } catch {
-          /* fall through to toast */
-        }
-      }
-      toast.error(message);
+    onError: async (error, action) => {
+      requestAction.fail(error, action);
+      toast.error(formatReportingMutationError(error));
     },
   });
+  const startGenerate = () => {
+    if (!enrollmentId || !termId || generate.isPending) return;
+    if (!eligibleTerms.some((t) => t.id === termId)) {
+      toast.error("Selected term is not part of this enrollment's academic year.");
+      return;
+    }
+    const action = requestAction.begin({ studentEnrollmentId: enrollmentId, termId });
+    if (action) generate.mutate(action);
+  };
+  const retryGenerate = () => {
+    const action = requestAction.retry();
+    if (action && !generate.isPending) generate.mutate(action);
+  };
   return (
     <Dialog
       open={open}
       onOpenChange={(next) => {
+        if (!next && (generate.isPending || requestAction.retryAction)) return;
         setOpen(next);
         if (!next) reset();
       }}
@@ -206,6 +225,7 @@ export function GenerateReportCardDialog({
             <Input
               value={search}
               onChange={(e) => setSearch(e.target.value)}
+              disabled={generate.isPending || Boolean(requestAction.retryAction)}
               placeholder="Search by student name"
               aria-label="Search candidate students"
             />
@@ -219,7 +239,7 @@ export function GenerateReportCardDialog({
                 <AlertTitle>Candidates could not be loaded</AlertTitle>
                 <AlertDescription>{(candidates.error as Error).message}</AlertDescription>
               </Alert>
-            ) : !candidates.data?.rows.length ? (
+            ) : !candidateRows.length ? (
               <Alert>
                 <AlertTitle>No eligible student enrollments</AlertTitle>
                 <AlertDescription>
@@ -227,12 +247,16 @@ export function GenerateReportCardDialog({
                 </AlertDescription>
               </Alert>
             ) : (
-              <Select value={enrollmentId ?? ""} onValueChange={(v) => setEnrollmentId(v || null)}>
+              <Select
+                value={enrollmentId ?? ""}
+                onValueChange={(v) => setEnrollmentId(v || null)}
+                disabled={generate.isPending || Boolean(requestAction.retryAction)}
+              >
                 <SelectTrigger>
                   <SelectValue placeholder="Select a student enrollment" />
                 </SelectTrigger>
                 <SelectContent>
-                  {candidates.data.rows.map((r) => (
+                  {displayCandidates.map((r) => (
                     <SelectItem key={r.studentEnrollmentId} value={r.studentEnrollmentId}>
                       {r.studentName} · {r.academicYearName}
                       {r.gradeLevelName ? ` · ${r.gradeLevelName}` : ""}
@@ -248,7 +272,7 @@ export function GenerateReportCardDialog({
             <Select
               value={termId ?? ""}
               onValueChange={(v) => setTermId(v || null)}
-              disabled={!selected}
+              disabled={!selected || generate.isPending || Boolean(requestAction.retryAction)}
             >
               <SelectTrigger>
                 <SelectValue placeholder={selected ? "Select a term" : "Select a student first"} />
@@ -269,20 +293,31 @@ export function GenerateReportCardDialog({
           </div>
         </div>
         <DialogFooter>
+          {requestAction.retryAction && (
+            <Alert>
+              <AlertTitle>Generation result is uncertain</AlertTitle>
+              <AlertDescription>
+                Retry the same request to safely confirm its result.
+              </AlertDescription>
+              <Button variant="outline" onClick={retryGenerate} disabled={generate.isPending}>
+                Retry generation
+              </Button>
+            </Alert>
+          )}
           <Button
             variant="outline"
             onClick={() => {
               setOpen(false);
               reset();
             }}
-            disabled={generate.isPending}
+            disabled={generate.isPending || Boolean(requestAction.retryAction)}
           >
             Cancel
           </Button>
           <Button
             data-testid="generate-report-card-submit"
             disabled={!enrollmentId || !termId || generate.isPending}
-            onClick={() => generate.mutate()}
+            onClick={startGenerate}
           >
             {generate.isPending ? "Generating…" : "Generate"}
           </Button>
@@ -294,7 +329,8 @@ export function GenerateReportCardDialog({
 
 export function ReportCardsPage() {
   const { activeSchool, activeAcademicYear, activeTerm, terms, permissions } = useAppContext();
-  const fn = useServerFn(listReportCards);
+  const fn = useServerFn(listReportCardsProjection);
+  const canRead = permissions.includes("report_card.read");
   const canGenerate = permissions.includes("report_card.generate");
   const [search, setSearch] = useState("");
   const [status, setStatus] = useState("all");
@@ -311,11 +347,24 @@ export function ReportCardsPage() {
           academicYearId: activeAcademicYear?.id,
           termId: termId === "all" ? undefined : termId,
           status: status === "all" ? undefined : (status as "draft"),
-          search: search || undefined,
         },
       }),
-    enabled: Boolean(activeSchool?.id),
+    enabled: Boolean(activeSchool?.id && canRead),
   });
+  const displayRows = (query.data ?? [])
+    .filter((row) => !search || row.student_name.toLowerCase().includes(search.toLowerCase()))
+    .map((row) => ({
+      id: row.report_card_id,
+      studentName: row.student_name,
+      academicYearName: row.academic_year_id,
+      termName: row.term_id,
+      gradeLevelName: null,
+      classroomName: row.classroom_name,
+      version: row.business_version,
+      status: row.status,
+      updated_at: row.updated_at,
+      published_at: row.published_at,
+    }));
   return (
     <AppShell>
       <div className="mx-auto max-w-7xl space-y-5">
@@ -374,7 +423,14 @@ export function ReportCardsPage() {
             </Select>
           </CardContent>
         </Card>
-        {!activeSchool ? (
+        {!canRead ? (
+          <Alert>
+            <AlertTitle>Report card access unavailable</AlertTitle>
+            <AlertDescription>
+              Your current permissions do not include report-card access.
+            </AlertDescription>
+          </Alert>
+        ) : !activeSchool ? (
           <Alert>
             <AlertTitle>Select a school</AlertTitle>
             <AlertDescription>Choose a school to load its report cards.</AlertDescription>
@@ -394,7 +450,7 @@ export function ReportCardsPage() {
               </button>
             </AlertDescription>
           </Alert>
-        ) : !query.data?.rows.length ? (
+        ) : !displayRows.length ? (
           <Alert>
             <AlertTitle>No report cards found</AlertTitle>
             <AlertDescription className="space-y-2">
@@ -411,7 +467,7 @@ export function ReportCardsPage() {
           </Alert>
         ) : (
           <div className="grid gap-3">
-            {query.data.rows.map((row) => (
+            {displayRows.map((row) => (
               <Link key={row.id} to="/report-cards/$id" params={{ id: row.id }}>
                 <Card className="transition-colors hover:border-primary/50">
                   <CardContent className="grid gap-3 p-4 sm:grid-cols-[minmax(0,2fr)_repeat(4,minmax(0,1fr))] sm:items-center">
@@ -450,9 +506,57 @@ export function ReportCardsPage() {
   );
 }
 
-type Detail = NonNullable<
-  Awaited<ReturnType<ReturnType<typeof useServerFn<typeof getReportCard>>>>
->;
+type Detail = {
+  card: {
+    id: string;
+    school_id: string;
+    status: string;
+    version: number;
+    row_version: number;
+    homeroom_comment: string | null;
+    attendance_summary: unknown;
+    student_enrollment_id: string;
+    term_id: string;
+    updated_at: string;
+    published_at: string | null;
+    academic_year_id: string;
+  };
+  student_name: string | null;
+  classroom_id: string | null;
+  context?: {
+    studentName: string;
+    schoolName: string;
+    academicYearName: string;
+    termName: string;
+    gradeLevelName: string | null;
+    classroomName: string | null;
+  };
+  entries: Array<{
+    id: string;
+    subject_id: string;
+    final_score: number | null;
+    predicate: string | null;
+    narrative: string | null;
+    row_version: number;
+    subjectName?: string;
+  }>;
+  narratives: Array<{
+    id: string;
+    section_code: string;
+    title: string;
+    content: string;
+    sequence: number;
+    row_version: number;
+  }>;
+  history: Array<{
+    id: string;
+    version: number;
+    row_version: number;
+    status: string;
+    updated_at: string;
+    published_at: string | null;
+  }>;
+};
 
 function AttendanceSummary({ value }: { value: unknown }) {
   const summary = safeAttendance(value);
@@ -571,9 +675,9 @@ export function NarrativeEditor({
     title: string;
     content: string;
     sequence: number;
-    expectedUpdatedAt: string;
+    expectedRowVersion?: number;
   }) => void;
-  onDelete: (id: string) => void;
+  onDelete?: (id: string) => void;
 }) {
   const [newTitle, setNewTitle] = useState("");
   const [newContent, setNewContent] = useState("");
@@ -593,7 +697,7 @@ export function NarrativeEditor({
                 <p className="font-medium">{n.title}</p>
                 <p className="text-xs text-muted-foreground">{n.section_code}</p>
               </div>
-              {draft && (
+              {draft && onDelete && (
                 <Button variant="ghost" size="sm" disabled={busy} onClick={() => onDelete(n.id)}>
                   Remove
                 </Button>
@@ -616,7 +720,7 @@ export function NarrativeEditor({
                       title: n.title,
                       content: element?.value ?? "",
                       sequence: n.sequence,
-                      expectedUpdatedAt: n.updated_at,
+                      expectedRowVersion: n.row_version,
                     });
                   }}
                 >
@@ -656,7 +760,6 @@ export function NarrativeEditor({
                   title: newTitle.trim(),
                   content: newContent,
                   sequence: narratives.length + 1,
-                  expectedUpdatedAt: cardUpdatedAt,
                 });
                 setNewTitle("");
                 setNewContent("");
@@ -715,46 +818,98 @@ export function ReportCardVersionHistory({
 
 export function ReviewPublishBar({
   status,
-  updatedAt,
+  rowVersion,
   reportCardId,
 }: {
   status: string;
-  updatedAt: string;
+  rowVersion: number;
   reportCardId: string;
 }) {
   const { permissions } = useAppContext();
   const actions = reportActions(status, permissions);
   const queryClient = useQueryClient();
   const navigate = useNavigate();
-  const transition = useServerFn(transitionReportCard);
-  const publish = useServerFn(publishReportCardVersion);
-  const revision = useServerFn(createReportCardRevision);
+  const transition = useServerFn(transitionReportCardCommand);
+  const publish = useServerFn(publishReportCardCommand);
+  const revision = useServerFn(createReportCardRevisionCommand);
+  const [revisionReason, setRevisionReason] = useState("");
+  const requestAction = useReportCardRequestAction<{
+    command: "transition" | "publish" | "revision";
+    action: string;
+    reportCardId: string;
+    expectedRowVersion: number;
+    reason?: string;
+  }>();
   const mutation = useMutation({
-    mutationFn: async (action: string) => {
-      if (action === "publish")
-        return publish({ data: { reportCardId, expectedUpdatedAt: updatedAt } });
-      if (action === "revision")
-        return revision({ data: { reportCardId, expectedUpdatedAt: updatedAt } });
+    mutationFn: async (request: {
+      requestId: string;
+      payload: {
+        command: "transition" | "publish" | "revision";
+        action: string;
+        reportCardId: string;
+        expectedRowVersion: number;
+        reason?: string;
+      };
+    }) => {
+      const { payload, requestId } = request;
+      if (payload.command === "publish")
+        return publish({
+          data: {
+            reportCardId: payload.reportCardId,
+            expectedRowVersion: payload.expectedRowVersion,
+            requestId,
+          },
+        });
+      if (payload.command === "revision")
+        return revision({
+          data: {
+            sourceReportCardId: payload.reportCardId,
+            expectedSourceRowVersion: payload.expectedRowVersion,
+            reason: payload.reason ?? "",
+            requestId,
+          },
+        });
       return transition({
         data: {
-          reportCardId,
-          expectedUpdatedAt: updatedAt,
-          action: action as "submit" | "review" | "return" | "archive",
+          reportCardId: payload.reportCardId,
+          expectedRowVersion: payload.expectedRowVersion,
+          action: payload.action as "submit" | "review" | "return" | "archive",
+          requestId,
         },
       });
     },
-    onSuccess: async (result, action) => {
+    onSuccess: async (result, request) => {
       await queryClient.invalidateQueries({ queryKey: ["report-cards"] });
       await queryClient.invalidateQueries({ queryKey: ["report-card", reportCardId] });
-      if (action === "revision" && "id" in result)
-        navigate({ to: "/report-cards/$id", params: { id: result.id } });
+      requestAction.succeed(request);
+      if (request.payload.command === "revision" && result?.report_card_id)
+        navigate({ to: "/report-cards/$id", params: { id: result.report_card_id } });
       else toast.success("Report card workflow updated.");
     },
-    onError: async (error) => {
+    onError: async (error, request) => {
+      requestAction.fail(error, request);
       toast.error(formatReportingMutationError(error));
       await queryClient.invalidateQueries({ queryKey: ["report-card", reportCardId] });
     },
   });
+  const runAction = (action: string) => {
+    if (mutation.isPending || requestAction.retryAction) return;
+    const command =
+      action === "publish" ? "publish" : action === "revision" ? "revision" : "transition";
+    const payload = {
+      command,
+      action,
+      reportCardId,
+      expectedRowVersion: rowVersion,
+      ...(command === "revision" ? { reason: revisionReason.trim() } : {}),
+    } as const;
+    const request = requestAction.begin(payload);
+    if (request) mutation.mutate(request);
+  };
+  const retryAction = () => {
+    const request = requestAction.retry();
+    if (request && !mutation.isPending) mutation.mutate(request);
+  };
   const button = (
     action: string,
     label: string,
@@ -763,8 +918,8 @@ export function ReviewPublishBar({
     <Button
       key={action}
       variant={variant}
-      disabled={mutation.isPending}
-      onClick={() => mutation.mutate(action)}
+      disabled={mutation.isPending || Boolean(requestAction.retryAction)}
+      onClick={() => runAction(action)}
     >
       {label}
     </Button>
@@ -781,6 +936,15 @@ export function ReviewPublishBar({
         </CardDescription>
       </CardHeader>
       <CardContent className="flex flex-wrap gap-2">
+        {requestAction.retryAction && (
+          <Alert className="w-full">
+            <AlertTitle>Workflow result is uncertain</AlertTitle>
+            <AlertDescription>Retry the same action to safely confirm its result.</AlertDescription>
+            <Button variant="outline" onClick={retryAction} disabled={mutation.isPending}>
+              Retry action
+            </Button>
+          </Alert>
+        )}
         {actions.includes("submit") && button("submit", "Submit", "default")}
         {actions.includes("archive") && button("archive", "Archive", "outline")}
         {actions.includes("review") && button("review", "Mark reviewed")}
@@ -800,7 +964,7 @@ export function ReviewPublishBar({
               </AlertDialogHeader>
               <AlertDialogFooter>
                 <AlertDialogCancel>Cancel</AlertDialogCancel>
-                <AlertDialogAction onClick={() => mutation.mutate("publish")}>
+                <AlertDialogAction onClick={() => runAction("publish")}>
                   Publish official report
                 </AlertDialogAction>
               </AlertDialogFooter>
@@ -822,9 +986,20 @@ export function ReviewPublishBar({
                   will be created for changes.
                 </AlertDialogDescription>
               </AlertDialogHeader>
+              <Textarea
+                value={revisionReason}
+                onChange={(event) => setRevisionReason(event.target.value)}
+                disabled={mutation.isPending || Boolean(requestAction.retryAction)}
+                placeholder="Reason for this revision"
+                maxLength={1000}
+                aria-label="Revision reason"
+              />
               <AlertDialogFooter>
                 <AlertDialogCancel>Cancel</AlertDialogCancel>
-                <AlertDialogAction onClick={() => mutation.mutate("revision")}>
+                <AlertDialogAction
+                  disabled={!revisionReason.trim() || mutation.isPending}
+                  onClick={() => runAction("revision")}
+                >
                   Create draft revision
                 </AlertDialogAction>
               </AlertDialogFooter>
@@ -989,39 +1164,70 @@ function ReportCardDocumentSection({
 }
 
 export function ReportCardBuilder({ id }: { id: string }) {
-  const fn = useServerFn(getReportCard);
+  const fn = useServerFn(getReportCardProjection);
   const queryClient = useQueryClient();
-  const { permissions } = useAppContext();
-  const commentFn = useServerFn(updateReportCardComment);
-  const subjectFn = useServerFn(updateReportSubjectNarrative);
-  const narrativeFn = useServerFn(saveReportNarrative);
-  const deleteFn = useServerFn(deleteReportNarrative);
-  const generateFn = useServerFn(generateReportCardDraft);
+  const { permissions, activeOrganization } = useAppContext();
+  const canRead = permissions.includes("report_card.read");
+  const contentFn = useServerFn(saveReportCardContentCommand);
+  const generateFn = useServerFn(generateReportCardDraftCommand);
+  const fetchAcademicContext = useServerFn(getAcademicContext);
   const query = useQuery({
     queryKey: ["report-card", id],
     queryFn: () => fn({ data: { reportCardId: id } }),
     retry: false,
+    enabled: canRead,
+  });
+  const academicContextQuery = useQuery({
+    queryKey: ["academic-context", (query.data as unknown as Detail | undefined)?.card.school_id],
+    queryFn: () =>
+      fetchAcademicContext({
+        data: { schoolId: (query.data as unknown as Detail).card.school_id },
+      }),
+    enabled: canRead && Boolean((query.data as unknown as Detail | undefined)?.card.school_id),
+    staleTime: 60_000,
   });
   const [comment, setComment] = useState("");
+  const [conflict, setConflict] = useState(false);
+  type DraftAction =
+    | { operation: "save"; input: Omit<ReportCardContentInput, "requestId"> }
+    | { operation: "regenerate"; input: Omit<ReportCardGenerationInput, "requestId"> };
+  const requestAction = useReportCardRequestAction<DraftAction>();
   useEffect(
-    () => setComment(query.data?.card.homeroom_comment ?? ""),
-    [query.data?.card.homeroom_comment],
+    () => setComment((query.data as unknown as Detail | undefined)?.card.homeroom_comment ?? ""),
+    [query.data],
   );
   const refresh = async () => {
     await queryClient.invalidateQueries({ queryKey: ["report-card", id] });
     await queryClient.invalidateQueries({ queryKey: ["report-cards"] });
   };
   const mutation = useMutation({
-    mutationFn: async (job: () => Promise<unknown>) => job(),
-    onSuccess: async () => {
+    mutationFn: async (request: { requestId: string; payload: DraftAction }) => {
+      if (request.payload.operation === "save")
+        return contentFn({ data: { ...request.payload.input, requestId: request.requestId } });
+      return generateFn({ data: { ...request.payload.input, requestId: request.requestId } });
+    },
+    onSuccess: async (_result, request) => {
+      setConflict(false);
       toast.success("Report card saved.");
       await refresh();
+      requestAction.succeed(request);
     },
-    onError: async (error) => {
-      toast.error(formatReportingMutationError(error));
-      await refresh();
+    onError: async (error, request) => {
+      requestAction.fail(error, request);
+      const message = formatReportingMutationError(error);
+      if (/changed|stale|refresh/i.test(message)) setConflict(true);
+      else toast.error(message);
     },
   });
+  const runDraftAction = (payload: DraftAction) => {
+    if (mutation.isPending || requestAction.retryAction) return;
+    const request = requestAction.begin(payload);
+    if (request) mutation.mutate(request);
+  };
+  const retryDraftAction = () => {
+    const request = requestAction.retry();
+    if (request && !mutation.isPending) mutation.mutate(request);
+  };
   if (query.isLoading)
     return (
       <AppShell>
@@ -1029,6 +1235,17 @@ export function ReportCardBuilder({ id }: { id: string }) {
           <Skeleton className="h-24" />
           <Skeleton className="h-64" />
         </div>
+      </AppShell>
+    );
+  if (!canRead)
+    return (
+      <AppShell>
+        <Alert>
+          <AlertTitle>Report card access unavailable</AlertTitle>
+          <AlertDescription>
+            Your current permissions do not include report-card access.
+          </AlertDescription>
+        </Alert>
       </AppShell>
     );
   if (query.error)
@@ -1052,7 +1269,30 @@ export function ReportCardBuilder({ id }: { id: string }) {
         </Alert>
       </AppShell>
     );
-  const data = query.data;
+  const rawData = query.data as unknown as Detail;
+  const academicYears = academicContextQuery.data?.academicYears ?? [];
+  const academicTerms = academicContextQuery.data?.terms ?? [];
+  const canonicalYear = academicYears.find((year) => year.id === rawData.card.academic_year_id);
+  const canonicalTerm = academicTerms.find(
+    (term) =>
+      term.id === rawData.card.term_id && term.academicYearId === rawData.card.academic_year_id,
+  );
+  const canonicalSchool = activeOrganization?.schools.find(
+    (school) => school.id === rawData.card.school_id,
+  );
+  const context = {
+    studentName: rawData.student_name ?? "Student",
+    schoolName: canonicalSchool?.name ?? "School",
+    academicYearName:
+      canonicalYear?.name ??
+      (academicContextQuery.isLoading ? "Loading academic year…" : "Academic year unavailable"),
+    termName:
+      canonicalTerm?.name ??
+      (academicContextQuery.isLoading ? "Loading term…" : "Term unavailable"),
+    gradeLevelName: null,
+    classroomName: null,
+  };
+  const data = { ...rawData, context };
   const draft = data.card.status === "draft";
   const actions = reportActions(data.card.status, permissions);
   const canSave = actions.includes("save");
@@ -1071,7 +1311,7 @@ export function ReportCardBuilder({ id }: { id: string }) {
             <p className="mt-3 text-xs font-semibold uppercase tracking-[0.2em] text-primary">
               Frozen academic snapshot
             </p>
-            <h1 className="text-3xl font-semibold">{data.context.studentName}</h1>
+            <h1 className="text-3xl font-semibold">{context.studentName}</h1>
             <p className="text-sm text-muted-foreground">
               {data.context.schoolName} · {data.context.academicYearName} · {data.context.termName}
             </p>
@@ -1086,6 +1326,33 @@ export function ReportCardBuilder({ id }: { id: string }) {
             <ReportCardStatusBadge status={data.card.status} />
           </div>
         </header>
+        {conflict && (
+          <Alert variant="destructive">
+            <AlertTitle>This report card changed elsewhere</AlertTitle>
+            <AlertDescription className="flex flex-wrap items-center gap-3">
+              <span>Reload the latest snapshot before saving again.</span>
+              <Button variant="outline" size="sm" onClick={() => void query.refetch()}>
+                Reload latest
+              </Button>
+            </AlertDescription>
+          </Alert>
+        )}
+        {requestAction.retryAction && (
+          <Alert variant="destructive">
+            <AlertTitle>Save result is uncertain</AlertTitle>
+            <AlertDescription className="flex flex-wrap items-center gap-3">
+              <span>Your edits are being held. Retry the same save to confirm its result.</span>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={retryDraftAction}
+                disabled={mutation.isPending}
+              >
+                Retry same save
+              </Button>
+            </AlertDescription>
+          </Alert>
+        )}
         <Alert>
           <BookOpenCheck className="h-4 w-4" />
           <AlertTitle>This is a snapshot</AlertTitle>
@@ -1105,18 +1372,24 @@ export function ReportCardBuilder({ id }: { id: string }) {
             <SubjectEntryTable
               entries={data.entries}
               draft={draft && canSave}
-              busy={mutation.isPending}
+              busy={mutation.isPending || Boolean(requestAction.retryAction)}
               onSave={(entry, narrative) =>
-                mutation.mutate(() =>
-                  subjectFn({
-                    data: {
-                      reportCardId: id,
-                      entryId: entry.id,
-                      narrative: narrative || null,
-                      expectedUpdatedAt: entry.updated_at,
+                runDraftAction({
+                  operation: "save",
+                  input: {
+                    reportCardId: id,
+                    expectedRowVersion: data.card.row_version,
+                    content: {
+                      subject_entries: [
+                        {
+                          id: entry.id,
+                          narrative: narrative || null,
+                          expected_row_version: entry.row_version,
+                        },
+                      ],
                     },
-                  }),
-                )
+                  },
+                })
               }
             />
           </CardContent>
@@ -1130,22 +1403,23 @@ export function ReportCardBuilder({ id }: { id: string }) {
             <Textarea
               value={comment}
               onChange={(e) => setComment(e.target.value)}
-              disabled={!draft || !canSave || mutation.isPending}
+              disabled={
+                !draft || !canSave || mutation.isPending || Boolean(requestAction.retryAction)
+              }
               rows={5}
             />
             {draft && canSave && (
               <Button
-                disabled={mutation.isPending}
+                disabled={mutation.isPending || Boolean(requestAction.retryAction)}
                 onClick={() =>
-                  mutation.mutate(() =>
-                    commentFn({
-                      data: {
-                        reportCardId: id,
-                        homeroomComment: comment || null,
-                        expectedUpdatedAt: data.card.updated_at,
-                      },
-                    }),
-                  )
+                  runDraftAction({
+                    operation: "save",
+                    input: {
+                      reportCardId: id,
+                      expectedRowVersion: data.card.row_version,
+                      content: { homeroom_comment: comment || null },
+                    },
+                  })
                 }
               >
                 Save comment
@@ -1156,17 +1430,30 @@ export function ReportCardBuilder({ id }: { id: string }) {
         <NarrativeEditor
           narratives={data.narratives}
           draft={draft && canSave}
-          busy={mutation.isPending}
+          busy={mutation.isPending || Boolean(requestAction.retryAction)}
           cardUpdatedAt={data.card.updated_at}
           onSave={(input) =>
-            mutation.mutate(() => narrativeFn({ data: { reportCardId: id, ...input } }))
-          }
-          onDelete={(narrativeId) =>
-            mutation.mutate(() =>
-              deleteFn({
-                data: { reportCardId: id, narrativeId, expectedUpdatedAt: data.card.updated_at },
-              }),
-            )
+            runDraftAction({
+              operation: "save",
+              input: {
+                reportCardId: id,
+                expectedRowVersion: data.card.row_version,
+                content: {
+                  narratives: [
+                    {
+                      id: input.narrativeId ?? null,
+                      section_code: input.sectionCode,
+                      title: input.title,
+                      content: input.content,
+                      sequence: input.sequence,
+                      ...(input.expectedRowVersion
+                        ? { expected_row_version: input.expectedRowVersion }
+                        : {}),
+                    },
+                  ],
+                },
+              },
+            })
           }
         />
         {draft && canRegenerate && (
@@ -1181,17 +1468,16 @@ export function ReportCardBuilder({ id }: { id: string }) {
             <CardContent>
               <Button
                 variant="outline"
-                disabled={mutation.isPending}
+                disabled={mutation.isPending || Boolean(requestAction.retryAction)}
                 onClick={() =>
-                  mutation.mutate(() =>
-                    generateFn({
-                      data: {
-                        studentEnrollmentId: data.card.student_enrollment_id,
-                        termId: data.card.term_id,
-                        expectedUpdatedAt: data.card.updated_at,
-                      },
-                    }),
-                  )
+                  runDraftAction({
+                    operation: "regenerate",
+                    input: {
+                      studentEnrollmentId: data.card.student_enrollment_id,
+                      termId: data.card.term_id,
+                      expectedRowVersion: data.card.row_version,
+                    },
+                  })
                 }
               >
                 <RefreshCw className="mr-2 h-4 w-4" />
@@ -1202,7 +1488,7 @@ export function ReportCardBuilder({ id }: { id: string }) {
         )}
         <ReviewPublishBar
           status={data.card.status}
-          updatedAt={data.card.updated_at}
+          rowVersion={data.card.row_version}
           reportCardId={id}
         />
         <ReportCardVersionHistory rows={data.history} currentId={id} />
