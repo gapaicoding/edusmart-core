@@ -2414,6 +2414,79 @@ export type Database = {
           },
         ];
       };
+      report_card_command_requests: {
+        Row: {
+          actor_profile_id: string;
+          command_name: string;
+          completed_at: string | null;
+          created_at: string;
+          id: string;
+          organization_id: string;
+          payload_fingerprint: string;
+          report_card_id: string | null;
+          request_id: string;
+          resource_id: string | null;
+          resource_type: string | null;
+          result_payload: Json;
+          school_id: string;
+          status: string;
+        };
+        Insert: {
+          actor_profile_id: string;
+          command_name: string;
+          completed_at?: string | null;
+          created_at?: string;
+          id?: string;
+          organization_id: string;
+          payload_fingerprint: string;
+          report_card_id?: string | null;
+          request_id: string;
+          resource_id?: string | null;
+          resource_type?: string | null;
+          result_payload?: Json;
+          school_id: string;
+          status?: string;
+        };
+        Update: {
+          actor_profile_id?: string;
+          command_name?: string;
+          completed_at?: string | null;
+          created_at?: string;
+          id?: string;
+          organization_id?: string;
+          payload_fingerprint?: string;
+          report_card_id?: string | null;
+          request_id?: string;
+          resource_id?: string | null;
+          resource_type?: string | null;
+          result_payload?: Json;
+          school_id?: string;
+          status?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "report_card_command_request_report_fk";
+            columns: ["report_card_id", "organization_id", "school_id"];
+            isOneToOne: false;
+            referencedRelation: "report_cards";
+            referencedColumns: ["id", "organization_id", "school_id"];
+          },
+          {
+            foreignKeyName: "report_card_command_request_scope_fk";
+            columns: ["school_id", "organization_id"];
+            isOneToOne: false;
+            referencedRelation: "schools";
+            referencedColumns: ["id", "organization_id"];
+          },
+          {
+            foreignKeyName: "report_card_command_requests_actor_profile_id_fkey";
+            columns: ["actor_profile_id"];
+            isOneToOne: false;
+            referencedRelation: "profiles";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
       report_card_narratives: {
         Row: {
           content: string;
@@ -2421,6 +2494,7 @@ export type Database = {
           id: string;
           organization_id: string;
           report_card_id: string;
+          row_version: number;
           school_id: string;
           section_code: string;
           sequence: number;
@@ -2433,6 +2507,7 @@ export type Database = {
           id?: string;
           organization_id: string;
           report_card_id: string;
+          row_version?: number;
           school_id: string;
           section_code: string;
           sequence?: number;
@@ -2445,6 +2520,7 @@ export type Database = {
           id?: string;
           organization_id?: string;
           report_card_id?: string;
+          row_version?: number;
           school_id?: string;
           section_code?: string;
           sequence?: number;
@@ -2470,6 +2546,7 @@ export type Database = {
           organization_id: string;
           predicate: string | null;
           report_card_id: string;
+          row_version: number;
           school_id: string;
           source_calculation: Json | null;
           subject_id: string;
@@ -2483,6 +2560,7 @@ export type Database = {
           organization_id: string;
           predicate?: string | null;
           report_card_id: string;
+          row_version?: number;
           school_id: string;
           source_calculation?: Json | null;
           subject_id: string;
@@ -2496,6 +2574,7 @@ export type Database = {
           organization_id?: string;
           predicate?: string | null;
           report_card_id?: string;
+          row_version?: number;
           school_id?: string;
           source_calculation?: Json | null;
           subject_id?: string;
@@ -2529,6 +2608,7 @@ export type Database = {
           published_at: string | null;
           published_by_profile_id: string | null;
           reviewed_at: string | null;
+          row_version: number;
           school_id: string;
           status: string;
           student_enrollment_id: string;
@@ -2547,6 +2627,7 @@ export type Database = {
           published_at?: string | null;
           published_by_profile_id?: string | null;
           reviewed_at?: string | null;
+          row_version?: number;
           school_id: string;
           status?: string;
           student_enrollment_id: string;
@@ -2565,6 +2646,7 @@ export type Database = {
           published_at?: string | null;
           published_by_profile_id?: string | null;
           reviewed_at?: string | null;
+          row_version?: number;
           school_id?: string;
           status?: string;
           student_enrollment_id?: string;
@@ -4393,6 +4475,108 @@ export type Database = {
           title: string;
           updated_at: string;
           version: number;
+        }[];
+      };
+      b16_get_report_card: {
+        Args: { p_report_card_id: string };
+        Returns: Json;
+      };
+      b16_list_report_card_candidates: {
+        Args: { p_academic_year_id?: string | null; p_school_id: string };
+        Returns: {
+          academic_year_id: string;
+          classroom_id: string | null;
+          classroom_name: string | null;
+          has_working_report_card: boolean;
+          student_enrollment_id: string;
+          student_name: string;
+        }[];
+      };
+      b16_list_report_cards: {
+        Args: {
+          p_academic_year_id?: string | null;
+          p_limit?: number;
+          p_offset?: number;
+          p_school_id: string;
+          p_status?: string | null;
+          p_term_id?: string | null;
+        };
+        Returns: {
+          academic_year_id: string;
+          business_version: number;
+          classroom_id: string | null;
+          classroom_name: string | null;
+          organization_id: string;
+          published_at: string | null;
+          report_card_id: string;
+          row_version: number;
+          school_id: string;
+          status: string;
+          student_enrollment_id: string;
+          student_name: string;
+          term_id: string;
+          updated_at: string;
+        }[];
+      };
+      b16_report_card_create_revision: {
+        Args: {
+          p_expected_source_row_version: number;
+          p_reason: string;
+          p_request_id: string;
+          p_source_report_card_id: string;
+        };
+        Returns: {
+          business_version: number;
+          report_card_id: string;
+          row_version: number;
+          source_report_card_id: string;
+          status: string;
+        }[];
+      };
+      b16_report_card_generate_draft: {
+        Args: {
+          p_expected_row_version?: number | null;
+          p_request_id: string;
+          p_student_enrollment_id: string;
+          p_term_id: string;
+        };
+        Returns: {
+          business_version: number;
+          report_card_id: string;
+          row_version: number;
+          status: string;
+        }[];
+      };
+      b16_report_card_publish: {
+        Args: { p_expected_row_version: number; p_report_card_id: string; p_request_id: string };
+        Returns: {
+          business_version: number;
+          report_card_id: string;
+          row_version: number;
+          status: string;
+        }[];
+      };
+      b16_report_card_save_content: {
+        Args: {
+          p_content: Json;
+          p_expected_row_version: number;
+          p_report_card_id: string;
+          p_request_id: string;
+        };
+        Returns: Json;
+      };
+      b16_report_card_transition: {
+        Args: {
+          p_action: string;
+          p_expected_row_version: number;
+          p_report_card_id: string;
+          p_request_id: string;
+        };
+        Returns: {
+          business_version: number;
+          report_card_id: string;
+          row_version: number;
+          status: string;
         }[];
       };
       can_access_assessment: {
