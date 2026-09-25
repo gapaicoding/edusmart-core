@@ -10,6 +10,7 @@ import { z } from "zod";
 
 export const ACADEMIC_YEAR_STATUSES = ["draft", "active", "closed", "archived"] as const;
 export const TERM_STATUSES = ["draft", "active", "closed", "archived"] as const;
+export const EDITABLE_ACADEMIC_PERIOD_STATUSES = ["draft", "active"] as const;
 export const LIFECYCLE_STATUSES = ["draft", "active", "inactive", "archived"] as const;
 export const EDUCATION_STAGES = ["paud", "tk", "sd", "smp", "sma", "smk", "other"] as const;
 export const CALENDAR_EVENT_TYPES = [
@@ -34,7 +35,7 @@ export const academicYearInput = z
     name,
     startsOn: isoDate,
     endsOn: isoDate,
-    status: z.enum(ACADEMIC_YEAR_STATUSES),
+    status: z.enum(EDITABLE_ACADEMIC_PERIOD_STATUSES),
     isCurrent: z.boolean(),
   })
   .refine((v) => v.startsOn < v.endsOn, {
@@ -52,7 +53,7 @@ export const termInput = z
     sequence: z.coerce.number().int().min(1, "Sequence must be 1 or higher"),
     startsOn: isoDate,
     endsOn: isoDate,
-    status: z.enum(TERM_STATUSES),
+    status: z.enum(EDITABLE_ACADEMIC_PERIOD_STATUSES),
   })
   .refine((v) => v.startsOn <= v.endsOn, {
     message: "The end date must be on or after the start date",

@@ -103,11 +103,15 @@ export type Database = {
         Row: {
           code: string;
           created_at: string;
+          closed_at: string | null;
+          closed_by_profile_id: string | null;
           ends_on: string;
           id: string;
           is_current: boolean;
           name: string;
           organization_id: string;
+          reopened_at: string | null;
+          reopened_by_profile_id: string | null;
           school_id: string;
           starts_on: string;
           status: string;
@@ -116,11 +120,15 @@ export type Database = {
         Insert: {
           code: string;
           created_at?: string;
+          closed_at?: string | null;
+          closed_by_profile_id?: string | null;
           ends_on: string;
           id?: string;
           is_current?: boolean;
           name: string;
           organization_id: string;
+          reopened_at?: string | null;
+          reopened_by_profile_id?: string | null;
           school_id: string;
           starts_on: string;
           status?: string;
@@ -129,11 +137,15 @@ export type Database = {
         Update: {
           code?: string;
           created_at?: string;
+          closed_at?: string | null;
+          closed_by_profile_id?: string | null;
           ends_on?: string;
           id?: string;
           is_current?: boolean;
           name?: string;
           organization_id?: string;
+          reopened_at?: string | null;
+          reopened_by_profile_id?: string | null;
           school_id?: string;
           starts_on?: string;
           status?: string;
@@ -146,6 +158,69 @@ export type Database = {
             isOneToOne: false;
             referencedRelation: "schools";
             referencedColumns: ["id", "organization_id"];
+          },
+        ];
+      };
+      academic_period_command_requests: {
+        Row: {
+          actor_profile_id: string;
+          command_name: string;
+          completed_at: string | null;
+          created_at: string;
+          id: string;
+          organization_id: string;
+          payload_fingerprint: string;
+          request_id: string;
+          resource_id: string;
+          resource_type: string;
+          result_payload: Json | null;
+          school_id: string;
+          status: string;
+        };
+        Insert: {
+          actor_profile_id: string;
+          command_name: string;
+          completed_at?: string | null;
+          created_at?: string;
+          id?: string;
+          organization_id: string;
+          payload_fingerprint: string;
+          request_id: string;
+          resource_id: string;
+          resource_type: string;
+          result_payload?: Json | null;
+          school_id: string;
+          status?: string;
+        };
+        Update: {
+          actor_profile_id?: string;
+          command_name?: string;
+          completed_at?: string | null;
+          created_at?: string;
+          id?: string;
+          organization_id?: string;
+          payload_fingerprint?: string;
+          request_id?: string;
+          resource_id?: string;
+          resource_type?: string;
+          result_payload?: Json | null;
+          school_id?: string;
+          status?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "academic_period_command_requests_scope_fk";
+            columns: ["school_id", "organization_id"];
+            isOneToOne: false;
+            referencedRelation: "schools";
+            referencedColumns: ["id", "organization_id"];
+          },
+          {
+            foreignKeyName: "academic_period_command_requests_actor_profile_id_fkey";
+            columns: ["actor_profile_id"];
+            isOneToOne: false;
+            referencedRelation: "profiles";
+            referencedColumns: ["id"];
           },
         ];
       };
@@ -3965,10 +4040,14 @@ export type Database = {
           academic_year_id: string;
           code: string;
           created_at: string;
+          closed_at: string | null;
+          closed_by_profile_id: string | null;
           ends_on: string;
           id: string;
           name: string;
           organization_id: string;
+          reopened_at: string | null;
+          reopened_by_profile_id: string | null;
           school_id: string;
           sequence: number;
           starts_on: string;
@@ -3979,10 +4058,14 @@ export type Database = {
           academic_year_id: string;
           code: string;
           created_at?: string;
+          closed_at?: string | null;
+          closed_by_profile_id?: string | null;
           ends_on: string;
           id?: string;
           name: string;
           organization_id: string;
+          reopened_at?: string | null;
+          reopened_by_profile_id?: string | null;
           school_id: string;
           sequence: number;
           starts_on: string;
@@ -3993,10 +4076,14 @@ export type Database = {
           academic_year_id?: string;
           code?: string;
           created_at?: string;
+          closed_at?: string | null;
+          closed_by_profile_id?: string | null;
           ends_on?: string;
           id?: string;
           name?: string;
           organization_id?: string;
+          reopened_at?: string | null;
+          reopened_by_profile_id?: string | null;
           school_id?: string;
           sequence?: number;
           starts_on?: string;
@@ -4174,6 +4261,54 @@ export type Database = {
       [_ in never]: never;
     };
     Functions: {
+      b17_close_academic_year: {
+        Args: {
+          p_academic_year_id: string;
+          p_expected_updated_at: string;
+          p_reason?: string | null;
+          p_request_id: string;
+          p_school_id: string;
+        };
+        Returns: Json;
+      };
+      b17_close_term: {
+        Args: {
+          p_expected_updated_at: string;
+          p_reason?: string | null;
+          p_request_id: string;
+          p_school_id: string;
+          p_term_id: string;
+        };
+        Returns: Json;
+      };
+      b17_get_academic_year_close_readiness: {
+        Args: { p_academic_year_id: string; p_school_id: string };
+        Returns: Json;
+      };
+      b17_get_term_close_readiness: {
+        Args: { p_school_id: string; p_term_id: string };
+        Returns: Json;
+      };
+      b17_reopen_academic_year: {
+        Args: {
+          p_academic_year_id: string;
+          p_expected_updated_at: string;
+          p_reason: string;
+          p_request_id: string;
+          p_school_id: string;
+        };
+        Returns: Json;
+      };
+      b17_reopen_term: {
+        Args: {
+          p_expected_updated_at: string;
+          p_reason: string;
+          p_request_id: string;
+          p_school_id: string;
+          p_term_id: string;
+        };
+        Returns: Json;
+      };
       apply_progression_batch: {
         Args: {
           p_batch_id: string;
