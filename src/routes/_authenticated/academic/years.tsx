@@ -1,13 +1,28 @@
-import { useState, type FormEvent } from "react";
+import { Fragment, useState, type FormEvent } from "react";
 import { createFileRoute } from "@tanstack/react-router";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import { Plus } from "lucide-react";
 import { z } from "zod";
-import { AcademicPage, Field, FormDialog, QueryState, StatusBadge } from "@/components/academic/academic-ui";
+import {
+  AcademicPage,
+  Field,
+  FormDialog,
+  QueryState,
+  StatusBadge,
+} from "@/components/academic/academic-ui";
 import { PermissionGate, useAppContext } from "@/lib/app-context";
-import { listAcademicYears, saveAcademicYear, type AcademicYearRow } from "@/lib/academic.functions";
-import { ACADEMIC_YEAR_STATUSES, academicYearInput, firstZodMessage } from "@/lib/academic.schemas";
+import {
+  listAcademicYears,
+  saveAcademicYear,
+  type AcademicYearRow,
+} from "@/lib/academic.functions";
+import {
+  EDITABLE_ACADEMIC_PERIOD_STATUSES,
+  academicYearInput,
+  firstZodMessage,
+} from "@/lib/academic.schemas";
+import { PeriodClosurePanel } from "@/components/academic/period-closure-panel";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Switch } from "@/components/ui/switch";
@@ -18,7 +33,14 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
 
 export const Route = createFileRoute("/_authenticated/academic/years")({
   head: () => ({
@@ -55,7 +77,7 @@ const EMPTY: FormState = {
 };
 
 function AcademicYearsPage() {
-  const { activeSchool } = useAppContext();
+  const { activeSchool, hasPermission } = useAppContext();
   const schoolId = activeSchool?.id ?? null;
   const queryClient = useQueryClient();
   const fetchYears = useServerFn(listAcademicYears);
@@ -68,7 +90,7 @@ function AcademicYearsPage() {
   const query = useQuery({
     queryKey: ["academic", "years", schoolId],
     queryFn: () => fetchYears({ data: { schoolId: schoolId! } }),
-    enabled: Boolean(schoolId),
+    enabled: Boolean(schoolId) && hasPermission("academic_year.read"),
   });
 
   const mutation = useMutation({
@@ -152,25 +174,46 @@ function AcademicYearsPage() {
             </TableHeader>
             <TableBody>
               {rows.map((row) => (
-                <TableRow key={row.id}>
-                  <TableCell className="font-mono text-xs">{row.code}</TableCell>
-                  <TableCell className="font-medium">
-                    {row.name}
-                    {row.isCurrent && <span className="ml-2 text-xs text-muted-foreground">· current</span>}
-                  </TableCell>
-                  <TableCell>{row.startsOn}</TableCell>
-                  <TableCell>{row.endsOn}</TableCell>
-                  <TableCell>
-                    <StatusBadge status={row.status} />
-                  </TableCell>
-                  <TableCell className="text-right">
-                    <PermissionGate permission="academic_year.manage">
-                      <Button variant="ghost" size="sm" onClick={() => openEdit(row)}>
-                        Edit
-                      </Button>
-                    </PermissionGate>
-                  </TableCell>
-                </TableRow>
+                <Fragment key={row.id}>
+                  <TableRow key={row.id}>
+                    <TableCell className="font-mono text-xs">{row.code}</TableCell>
+                    <TableCell className="font-medium">
+                      {row.name}
+                      {row.isCurrent && (
+                        <span className="ml-2 text-xs text-muted-foreground">· current</span>
+                      )}
+                    </TableCell>
+                    <TableCell>{row.startsOn}</TableCell>
+                    <TableCell>{row.endsOn}</TableCell>
+                    <TableCell>
+                      <StatusBadge status={row.status} />
+                    </TableCell>
+                    <TableCell className="text-right">
+                      <PermissionGate permission="academic_year.manage">
+                        {row.status !== "closed" && row.status !== "archived" && (
+                          <Button variant="ghost" size="sm" onClick={() => openEdit(row)}>
+                            Edit
+                          </Button>
+                        )}
+                      </PermissionGate>
+                    </TableCell>
+                  </TableRow>
+                  <TableRow key={`${row.id}-closure`}>
+                    <TableCell colSpan={6}>
+                      <PeriodClosurePanel
+                        kind="academic_year"
+                        schoolId={schoolId!}
+                        periodId={row.id}
+                        name={row.name}
+                        status={row.status}
+                        updatedAt={row.updatedAt}
+                        closedAt={row.closedAt}
+                        closedByProfileId={row.closedByProfileId}
+                        onChanged={() => void query.refetch()}
+                      />
+                    </TableCell>
+                  </TableRow>
+                </Fragment>
               ))}
             </TableBody>
           </Table>
@@ -218,12 +261,15 @@ function AcademicYearsPage() {
             />
           </Field>
           <Field label="Status">
-            <Select value={form.status} onValueChange={(value) => setForm({ ...form, status: value })}>
+            <Select
+              value={form.status}
+              onValueChange={(value) => setForm({ ...form, status: value })}
+            >
               <SelectTrigger>
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
-                {ACADEMIC_YEAR_STATUSES.map((status) => (
+                {EDITABLE_ACADEMIC_PERIOD_STATUSES.map((status) => (
                   <SelectItem key={status} value={status} className="capitalize">
                     {status}
                   </SelectItem>

@@ -33,6 +33,9 @@ export type AcademicYearRow = {
   endsOn: string;
   status: string;
   isCurrent: boolean;
+  updatedAt: string;
+  closedAt: string | null;
+  closedByProfileId: string | null;
 };
 
 export type TermRow = {
@@ -44,6 +47,9 @@ export type TermRow = {
   startsOn: string;
   endsOn: string;
   status: string;
+  updatedAt: string;
+  closedAt: string | null;
+  closedByProfileId: string | null;
 };
 
 export type GradeLevelRow = {
@@ -98,7 +104,9 @@ export const listAcademicYears = createServerFn({ method: "GET" })
   .handler(async ({ data, context }): Promise<AcademicYearRow[]> => {
     const { data: rows, error } = await context.supabase
       .from("academic_years")
-      .select("id, code, name, starts_on, ends_on, status, is_current")
+      .select(
+        "id, code, name, starts_on, ends_on, status, is_current, updated_at, closed_at, closed_by_profile_id",
+      )
       .eq("school_id", data.schoolId)
       .order("starts_on", { ascending: false });
     if (error) throw new Error(translateDbError(error, "Academic years"));
@@ -110,6 +118,9 @@ export const listAcademicYears = createServerFn({ method: "GET" })
       endsOn: r.ends_on,
       status: r.status,
       isCurrent: r.is_current,
+      updatedAt: r.updated_at,
+      closedAt: r.closed_at,
+      closedByProfileId: r.closed_by_profile_id,
     }));
   });
 
@@ -142,7 +153,10 @@ export const saveAcademicYear = createServerFn({ method: "POST" })
       return { id: assertWriteApplied(rows, "Updating this academic year").id };
     }
 
-    const { data: rows, error } = await supabase.from("academic_years").insert(payload).select("id");
+    const { data: rows, error } = await supabase
+      .from("academic_years")
+      .insert(payload)
+      .select("id");
     if (error) throw new Error(translateDbError(error, "Academic year"));
     return { id: assertWriteApplied(rows, "Creating this academic year").id };
   });
@@ -153,7 +167,9 @@ export const listTerms = createServerFn({ method: "GET" })
   .handler(async ({ data, context }): Promise<TermRow[]> => {
     let query = context.supabase
       .from("terms")
-      .select("id, academic_year_id, code, name, sequence, starts_on, ends_on, status")
+      .select(
+        "id, academic_year_id, code, name, sequence, starts_on, ends_on, status, updated_at, closed_at, closed_by_profile_id",
+      )
       .eq("school_id", data.schoolId);
     if (data.academicYearId) query = query.eq("academic_year_id", data.academicYearId);
 
@@ -168,6 +184,9 @@ export const listTerms = createServerFn({ method: "GET" })
       startsOn: r.starts_on,
       endsOn: r.ends_on,
       status: r.status,
+      updatedAt: r.updated_at,
+      closedAt: r.closed_at,
+      closedByProfileId: r.closed_by_profile_id,
     }));
   });
 
@@ -424,7 +443,9 @@ export const listCalendarEvents = createServerFn({ method: "GET" })
   .handler(async ({ data, context }): Promise<CalendarEventRow[]> => {
     let query = context.supabase
       .from("academic_calendar_events")
-      .select("id, academic_year_id, term_id, title, event_type, starts_on, ends_on, affects_instruction")
+      .select(
+        "id, academic_year_id, term_id, title, event_type, starts_on, ends_on, affects_instruction",
+      )
       .eq("school_id", data.schoolId);
     if (data.academicYearId) query = query.eq("academic_year_id", data.academicYearId);
 

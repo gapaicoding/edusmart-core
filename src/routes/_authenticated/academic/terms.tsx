@@ -1,13 +1,24 @@
-import { useState, type FormEvent } from "react";
+import { Fragment, useState, type FormEvent } from "react";
 import { createFileRoute } from "@tanstack/react-router";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import { Plus } from "lucide-react";
 import type { z } from "zod";
-import { AcademicPage, Field, FormDialog, QueryState, StatusBadge } from "@/components/academic/academic-ui";
+import {
+  AcademicPage,
+  Field,
+  FormDialog,
+  QueryState,
+  StatusBadge,
+} from "@/components/academic/academic-ui";
 import { PermissionGate, useAppContext } from "@/lib/app-context";
 import { listTerms, saveTerm, type TermRow } from "@/lib/academic.functions";
-import { TERM_STATUSES, firstZodMessage, termInput } from "@/lib/academic.schemas";
+import {
+  EDITABLE_ACADEMIC_PERIOD_STATUSES,
+  firstZodMessage,
+  termInput,
+} from "@/lib/academic.schemas";
+import { PeriodClosurePanel } from "@/components/academic/period-closure-panel";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -18,13 +29,23 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
 
 export const Route = createFileRoute("/_authenticated/academic/terms")({
   head: () => ({
     meta: [
       { title: "Terms — EduSmart SchoolOS" },
-      { name: "description", content: "Manage semesters and terms inside the active academic year." },
+      {
+        name: "description",
+        content: "Manage semesters and terms inside the active academic year.",
+      },
       { property: "og:title", content: "Terms — EduSmart SchoolOS" },
       { property: "og:description", content: "Term setup inside the active academic year." },
       { property: "og:type", content: "website" },
@@ -45,10 +66,17 @@ type FormState = {
   status: string;
 };
 
-const EMPTY: FormState = { code: "", name: "", sequence: "1", startsOn: "", endsOn: "", status: "draft" };
+const EMPTY: FormState = {
+  code: "",
+  name: "",
+  sequence: "1",
+  startsOn: "",
+  endsOn: "",
+  status: "draft",
+};
 
 function TermsPage() {
-  const { activeSchool, activeAcademicYear } = useAppContext();
+  const { activeSchool, activeAcademicYear, hasPermission } = useAppContext();
   const schoolId = activeSchool?.id ?? null;
   const yearId = activeAcademicYear?.id ?? null;
   const queryClient = useQueryClient();
@@ -62,7 +90,7 @@ function TermsPage() {
   const query = useQuery({
     queryKey: ["academic", "terms", schoolId, yearId],
     queryFn: () => fetchTerms({ data: { schoolId: schoolId!, academicYearId: yearId } }),
-    enabled: Boolean(schoolId && yearId),
+    enabled: Boolean(schoolId && yearId) && hasPermission("term.read"),
   });
 
   const mutation = useMutation({
@@ -163,23 +191,42 @@ function TermsPage() {
             </TableHeader>
             <TableBody>
               {rows.map((row) => (
-                <TableRow key={row.id}>
-                  <TableCell>{row.sequence}</TableCell>
-                  <TableCell className="font-mono text-xs">{row.code}</TableCell>
-                  <TableCell className="font-medium">{row.name}</TableCell>
-                  <TableCell>{row.startsOn}</TableCell>
-                  <TableCell>{row.endsOn}</TableCell>
-                  <TableCell>
-                    <StatusBadge status={row.status} />
-                  </TableCell>
-                  <TableCell className="text-right">
-                    <PermissionGate permission="term.manage">
-                      <Button variant="ghost" size="sm" onClick={() => openEdit(row)}>
-                        Edit
-                      </Button>
-                    </PermissionGate>
-                  </TableCell>
-                </TableRow>
+                <Fragment key={row.id}>
+                  <TableRow key={row.id}>
+                    <TableCell>{row.sequence}</TableCell>
+                    <TableCell className="font-mono text-xs">{row.code}</TableCell>
+                    <TableCell className="font-medium">{row.name}</TableCell>
+                    <TableCell>{row.startsOn}</TableCell>
+                    <TableCell>{row.endsOn}</TableCell>
+                    <TableCell>
+                      <StatusBadge status={row.status} />
+                    </TableCell>
+                    <TableCell className="text-right">
+                      <PermissionGate permission="term.manage">
+                        {row.status !== "closed" && row.status !== "archived" && (
+                          <Button variant="ghost" size="sm" onClick={() => openEdit(row)}>
+                            Edit
+                          </Button>
+                        )}
+                      </PermissionGate>
+                    </TableCell>
+                  </TableRow>
+                  <TableRow key={`${row.id}-closure`}>
+                    <TableCell colSpan={7}>
+                      <PeriodClosurePanel
+                        kind="term"
+                        schoolId={schoolId!}
+                        periodId={row.id}
+                        name={row.name}
+                        status={row.status}
+                        updatedAt={row.updatedAt}
+                        closedAt={row.closedAt}
+                        closedByProfileId={row.closedByProfileId}
+                        onChanged={() => void query.refetch()}
+                      />
+                    </TableCell>
+                  </TableRow>
+                </Fragment>
               ))}
             </TableBody>
           </Table>
@@ -197,10 +244,18 @@ function TermsPage() {
       >
         <div className="grid gap-4 sm:grid-cols-2">
           <Field label="Code" htmlFor="t-code" hint="Unique inside this academic year">
-            <Input id="t-code" value={form.code} onChange={(e) => setForm({ ...form, code: e.target.value })} />
+            <Input
+              id="t-code"
+              value={form.code}
+              onChange={(e) => setForm({ ...form, code: e.target.value })}
+            />
           </Field>
           <Field label="Name" htmlFor="t-name">
-            <Input id="t-name" value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} />
+            <Input
+              id="t-name"
+              value={form.name}
+              onChange={(e) => setForm({ ...form, name: e.target.value })}
+            />
           </Field>
           <Field label="Sequence" htmlFor="t-seq">
             <Input
@@ -212,12 +267,15 @@ function TermsPage() {
             />
           </Field>
           <Field label="Status">
-            <Select value={form.status} onValueChange={(value) => setForm({ ...form, status: value })}>
+            <Select
+              value={form.status}
+              onValueChange={(value) => setForm({ ...form, status: value })}
+            >
               <SelectTrigger>
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
-                {TERM_STATUSES.map((status) => (
+                {EDITABLE_ACADEMIC_PERIOD_STATUSES.map((status) => (
                   <SelectItem key={status} value={status} className="capitalize">
                     {status}
                   </SelectItem>
