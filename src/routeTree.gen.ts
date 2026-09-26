@@ -35,6 +35,9 @@ import { Route as AuthenticatedAdmissionsApplicationIdRouteImport } from './rout
 import { Route as AuthenticatedAssessmentsIndexRouteImport } from './routes/_authenticated/assessments/index'
 import { Route as AuthenticatedAssessmentsIdRouteImport } from './routes/_authenticated/assessments/$id'
 import { Route as AuthenticatedAttendanceIndexRouteImport } from './routes/_authenticated/attendance/index'
+import { Route as AuthenticatedCommunicationsIndexRouteImport } from './routes/_authenticated/communications/index'
+import { Route as AuthenticatedCommunicationsAnnouncementIdRouteImport } from './routes/_authenticated/communications/$announcementId'
+import { Route as AuthenticatedCommunicationsNewRouteImport } from './routes/_authenticated/communications/new'
 import { Route as AuthenticatedFinanceIndexRouteImport } from './routes/_authenticated/finance/index'
 import { Route as AuthenticatedFinanceBillingRouteImport } from './routes/_authenticated/finance/billing'
 import { Route as AuthenticatedFinanceFeesRouteImport } from './routes/_authenticated/finance/fees'
@@ -221,6 +224,24 @@ const AuthenticatedAttendanceIndexRoute =
   AuthenticatedAttendanceIndexRouteImport.update({
     id: '/attendance/',
     path: '/attendance/',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
+const AuthenticatedCommunicationsIndexRoute =
+  AuthenticatedCommunicationsIndexRouteImport.update({
+    id: '/communications/',
+    path: '/communications/',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
+const AuthenticatedCommunicationsAnnouncementIdRoute =
+  AuthenticatedCommunicationsAnnouncementIdRouteImport.update({
+    id: '/communications/$announcementId',
+    path: '/communications/$announcementId',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
+const AuthenticatedCommunicationsNewRoute =
+  AuthenticatedCommunicationsNewRouteImport.update({
+    id: '/communications/new',
+    path: '/communications/new',
     getParentRoute: () => AuthenticatedRouteRoute,
   } as any)
 const AuthenticatedFinanceIndexRoute =
@@ -497,6 +518,8 @@ export interface FileRoutesByFullPath {
   '/academic/years': typeof AuthenticatedAcademicYearsRoute
   '/admissions/$applicationId': typeof AuthenticatedAdmissionsApplicationIdRoute
   '/assessments/$id': typeof AuthenticatedAssessmentsIdRoute
+  '/communications/$announcementId': typeof AuthenticatedCommunicationsAnnouncementIdRoute
+  '/communications/new': typeof AuthenticatedCommunicationsNewRoute
   '/finance/billing': typeof AuthenticatedFinanceBillingRoute
   '/finance/fees': typeof AuthenticatedFinanceFeesRoute
   '/finance/payments': typeof AuthenticatedFinancePaymentsRoute
@@ -524,6 +547,7 @@ export interface FileRoutesByFullPath {
   '/admissions/': typeof AuthenticatedAdmissionsIndexRoute
   '/assessments/': typeof AuthenticatedAssessmentsIndexRoute
   '/attendance/': typeof AuthenticatedAttendanceIndexRoute
+  '/communications/': typeof AuthenticatedCommunicationsIndexRoute
   '/finance/': typeof AuthenticatedFinanceIndexRoute
   '/guardians/': typeof AuthenticatedGuardiansIndexRoute
   '/permission-requests/': typeof AuthenticatedPermissionRequestsIndexRoute
@@ -566,6 +590,8 @@ export interface FileRoutesByTo {
   '/academic/years': typeof AuthenticatedAcademicYearsRoute
   '/admissions/$applicationId': typeof AuthenticatedAdmissionsApplicationIdRoute
   '/assessments/$id': typeof AuthenticatedAssessmentsIdRoute
+  '/communications/$announcementId': typeof AuthenticatedCommunicationsAnnouncementIdRoute
+  '/communications/new': typeof AuthenticatedCommunicationsNewRoute
   '/finance/billing': typeof AuthenticatedFinanceBillingRoute
   '/finance/fees': typeof AuthenticatedFinanceFeesRoute
   '/finance/payments': typeof AuthenticatedFinancePaymentsRoute
@@ -593,6 +619,7 @@ export interface FileRoutesByTo {
   '/admissions': typeof AuthenticatedAdmissionsIndexRoute
   '/assessments': typeof AuthenticatedAssessmentsIndexRoute
   '/attendance': typeof AuthenticatedAttendanceIndexRoute
+  '/communications': typeof AuthenticatedCommunicationsIndexRoute
   '/finance': typeof AuthenticatedFinanceIndexRoute
   '/guardians': typeof AuthenticatedGuardiansIndexRoute
   '/permission-requests': typeof AuthenticatedPermissionRequestsIndexRoute
@@ -637,6 +664,8 @@ export interface FileRoutesById {
   '/_authenticated/academic/years': typeof AuthenticatedAcademicYearsRoute
   '/_authenticated/admissions/$applicationId': typeof AuthenticatedAdmissionsApplicationIdRoute
   '/_authenticated/assessments/$id': typeof AuthenticatedAssessmentsIdRoute
+  '/_authenticated/communications/$announcementId': typeof AuthenticatedCommunicationsAnnouncementIdRoute
+  '/_authenticated/communications/new': typeof AuthenticatedCommunicationsNewRoute
   '/_authenticated/finance/billing': typeof AuthenticatedFinanceBillingRoute
   '/_authenticated/finance/fees': typeof AuthenticatedFinanceFeesRoute
   '/_authenticated/finance/payments': typeof AuthenticatedFinancePaymentsRoute
@@ -664,6 +693,7 @@ export interface FileRoutesById {
   '/_authenticated/admissions/': typeof AuthenticatedAdmissionsIndexRoute
   '/_authenticated/assessments/': typeof AuthenticatedAssessmentsIndexRoute
   '/_authenticated/attendance/': typeof AuthenticatedAttendanceIndexRoute
+  '/_authenticated/communications/': typeof AuthenticatedCommunicationsIndexRoute
   '/_authenticated/finance/': typeof AuthenticatedFinanceIndexRoute
   '/_authenticated/guardians/': typeof AuthenticatedGuardiansIndexRoute
   '/_authenticated/permission-requests/': typeof AuthenticatedPermissionRequestsIndexRoute
@@ -708,6 +738,8 @@ export interface FileRouteTypes {
     | '/academic/years'
     | '/admissions/$applicationId'
     | '/assessments/$id'
+    | '/communications/$announcementId'
+    | '/communications/new'
     | '/finance/billing'
     | '/finance/fees'
     | '/finance/payments'
@@ -735,6 +767,7 @@ export interface FileRouteTypes {
     | '/admissions/'
     | '/assessments/'
     | '/attendance/'
+    | '/communications/'
     | '/finance/'
     | '/guardians/'
     | '/permission-requests/'
@@ -777,6 +810,8 @@ export interface FileRouteTypes {
     | '/academic/years'
     | '/admissions/$applicationId'
     | '/assessments/$id'
+    | '/communications/$announcementId'
+    | '/communications/new'
     | '/finance/billing'
     | '/finance/fees'
     | '/finance/payments'
@@ -804,6 +839,7 @@ export interface FileRouteTypes {
     | '/admissions'
     | '/assessments'
     | '/attendance'
+    | '/communications'
     | '/finance'
     | '/guardians'
     | '/permission-requests'
@@ -847,6 +883,8 @@ export interface FileRouteTypes {
     | '/_authenticated/academic/years'
     | '/_authenticated/admissions/$applicationId'
     | '/_authenticated/assessments/$id'
+    | '/_authenticated/communications/$announcementId'
+    | '/_authenticated/communications/new'
     | '/_authenticated/finance/billing'
     | '/_authenticated/finance/fees'
     | '/_authenticated/finance/payments'
@@ -874,6 +912,7 @@ export interface FileRouteTypes {
     | '/_authenticated/admissions/'
     | '/_authenticated/assessments/'
     | '/_authenticated/attendance/'
+    | '/_authenticated/communications/'
     | '/_authenticated/finance/'
     | '/_authenticated/guardians/'
     | '/_authenticated/permission-requests/'
@@ -1087,6 +1126,27 @@ declare module '@tanstack/react-router' {
       path: '/attendance'
       fullPath: '/attendance/'
       preLoaderRoute: typeof AuthenticatedAttendanceIndexRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/communications/': {
+      id: '/_authenticated/communications/'
+      path: '/communications'
+      fullPath: '/communications/'
+      preLoaderRoute: typeof AuthenticatedCommunicationsIndexRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/communications/$announcementId': {
+      id: '/_authenticated/communications/$announcementId'
+      path: '/communications/$announcementId'
+      fullPath: '/communications/$announcementId'
+      preLoaderRoute: typeof AuthenticatedCommunicationsAnnouncementIdRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/communications/new': {
+      id: '/_authenticated/communications/new'
+      path: '/communications/new'
+      fullPath: '/communications/new'
+      preLoaderRoute: typeof AuthenticatedCommunicationsNewRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
     '/_authenticated/finance/': {
@@ -1432,6 +1492,8 @@ interface AuthenticatedRouteRouteChildren {
   AuthenticatedAcademicYearsRoute: typeof AuthenticatedAcademicYearsRoute
   AuthenticatedAdmissionsApplicationIdRoute: typeof AuthenticatedAdmissionsApplicationIdRoute
   AuthenticatedAssessmentsIdRoute: typeof AuthenticatedAssessmentsIdRoute
+  AuthenticatedCommunicationsAnnouncementIdRoute: typeof AuthenticatedCommunicationsAnnouncementIdRoute
+  AuthenticatedCommunicationsNewRoute: typeof AuthenticatedCommunicationsNewRoute
   AuthenticatedFinanceBillingRoute: typeof AuthenticatedFinanceBillingRoute
   AuthenticatedFinanceFeesRoute: typeof AuthenticatedFinanceFeesRoute
   AuthenticatedFinancePaymentsRoute: typeof AuthenticatedFinancePaymentsRoute
@@ -1459,6 +1521,7 @@ interface AuthenticatedRouteRouteChildren {
   AuthenticatedAdmissionsIndexRoute: typeof AuthenticatedAdmissionsIndexRoute
   AuthenticatedAssessmentsIndexRoute: typeof AuthenticatedAssessmentsIndexRoute
   AuthenticatedAttendanceIndexRoute: typeof AuthenticatedAttendanceIndexRoute
+  AuthenticatedCommunicationsIndexRoute: typeof AuthenticatedCommunicationsIndexRoute
   AuthenticatedFinanceIndexRoute: typeof AuthenticatedFinanceIndexRoute
   AuthenticatedGuardiansIndexRoute: typeof AuthenticatedGuardiansIndexRoute
   AuthenticatedPermissionRequestsIndexRoute: typeof AuthenticatedPermissionRequestsIndexRoute
@@ -1494,6 +1557,9 @@ const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedAdmissionsApplicationIdRoute:
     AuthenticatedAdmissionsApplicationIdRoute,
   AuthenticatedAssessmentsIdRoute: AuthenticatedAssessmentsIdRoute,
+  AuthenticatedCommunicationsAnnouncementIdRoute:
+    AuthenticatedCommunicationsAnnouncementIdRoute,
+  AuthenticatedCommunicationsNewRoute: AuthenticatedCommunicationsNewRoute,
   AuthenticatedFinanceBillingRoute: AuthenticatedFinanceBillingRoute,
   AuthenticatedFinanceFeesRoute: AuthenticatedFinanceFeesRoute,
   AuthenticatedFinancePaymentsRoute: AuthenticatedFinancePaymentsRoute,
@@ -1526,6 +1592,7 @@ const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedAdmissionsIndexRoute: AuthenticatedAdmissionsIndexRoute,
   AuthenticatedAssessmentsIndexRoute: AuthenticatedAssessmentsIndexRoute,
   AuthenticatedAttendanceIndexRoute: AuthenticatedAttendanceIndexRoute,
+  AuthenticatedCommunicationsIndexRoute: AuthenticatedCommunicationsIndexRoute,
   AuthenticatedFinanceIndexRoute: AuthenticatedFinanceIndexRoute,
   AuthenticatedGuardiansIndexRoute: AuthenticatedGuardiansIndexRoute,
   AuthenticatedPermissionRequestsIndexRoute:

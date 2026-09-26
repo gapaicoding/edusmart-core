@@ -36,6 +36,7 @@ const KNOWN_NOTIFICATION_TYPES = new Set([
   "permission_request_reminder",
   "permission_request_closed",
   "permission_request_cancelled",
+  "announcement_published",
 ]);
 
 function rows(value: unknown): NotificationRow[] {

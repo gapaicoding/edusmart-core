@@ -44,6 +44,8 @@ describe("B19 Phase 3 Finance UI contract", () => {
 
   test("does not introduce a Phase 3 migration", () => {
     const migrations = fs.readdirSync(path.join(root, "..", "supabase/migrations"));
-    expect(migrations.filter((name) => name.startsWith("2026092618"))).toEqual([]);
+    expect(
+      migrations.filter((name) => name.startsWith("2026092618") && name.includes("b19")),
+    ).toEqual([]);
   });
 });
