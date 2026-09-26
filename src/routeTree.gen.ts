@@ -35,6 +35,10 @@ import { Route as AuthenticatedAdmissionsApplicationIdRouteImport } from './rout
 import { Route as AuthenticatedAssessmentsIndexRouteImport } from './routes/_authenticated/assessments/index'
 import { Route as AuthenticatedAssessmentsIdRouteImport } from './routes/_authenticated/assessments/$id'
 import { Route as AuthenticatedAttendanceIndexRouteImport } from './routes/_authenticated/attendance/index'
+import { Route as AuthenticatedFinanceIndexRouteImport } from './routes/_authenticated/finance/index'
+import { Route as AuthenticatedFinanceBillingRouteImport } from './routes/_authenticated/finance/billing'
+import { Route as AuthenticatedFinanceFeesRouteImport } from './routes/_authenticated/finance/fees'
+import { Route as AuthenticatedFinancePaymentsRouteImport } from './routes/_authenticated/finance/payments'
 import { Route as AuthenticatedGuardiansIndexRouteImport } from './routes/_authenticated/guardians/index'
 import { Route as AuthenticatedGuardiansGuardianIdRouteImport } from './routes/_authenticated/guardians/$guardianId'
 import { Route as AuthenticatedPermissionRequestsIndexRouteImport } from './routes/_authenticated/permission-requests/index'
@@ -42,6 +46,7 @@ import { Route as AuthenticatedPermissionRequestsRequestIdRouteImport } from './
 import { Route as AuthenticatedPermissionRequestsNewRouteImport } from './routes/_authenticated/permission-requests/new'
 import { Route as AuthenticatedPortalIndexRouteImport } from './routes/_authenticated/portal/index'
 import { Route as AuthenticatedPortalAttendanceRouteImport } from './routes/_authenticated/portal/attendance'
+import { Route as AuthenticatedPortalBillingRouteImport } from './routes/_authenticated/portal/billing'
 import { Route as AuthenticatedPortalPermissionRequestsRouteImport } from './routes/_authenticated/portal/permission-requests'
 import { Route as AuthenticatedPortalReportCardsRouteImport } from './routes/_authenticated/portal/report-cards'
 import { Route as AuthenticatedPortalScheduleRouteImport } from './routes/_authenticated/portal/schedule'
@@ -69,6 +74,7 @@ import { Route as AuthenticatedTeachingAssignmentsIndexRouteImport } from './rou
 import { Route as AuthenticatedTeachingJournalsIndexRouteImport } from './routes/_authenticated/teaching-journals/index'
 import { Route as AuthenticatedTeachingJournalsManageRouteImport } from './routes/_authenticated/teaching-journals/manage'
 import { Route as AuthenticatedAttendanceSessionIdRouteImport } from './routes/_authenticated/attendance/session/$id'
+import { Route as AuthenticatedFinanceInvoicesInvoiceIdRouteImport } from './routes/_authenticated/finance/invoices/$invoiceId'
 import { Route as AuthenticatedPermissionRequestsRequestIdEditRouteImport } from './routes/_authenticated/permission-requests/$requestId.edit'
 import { Route as AuthenticatedPortalPermissionRequestsRequestIdRouteImport } from './routes/_authenticated/portal/permission-requests/$requestId'
 
@@ -217,6 +223,30 @@ const AuthenticatedAttendanceIndexRoute =
     path: '/attendance/',
     getParentRoute: () => AuthenticatedRouteRoute,
   } as any)
+const AuthenticatedFinanceIndexRoute =
+  AuthenticatedFinanceIndexRouteImport.update({
+    id: '/finance/',
+    path: '/finance/',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
+const AuthenticatedFinanceBillingRoute =
+  AuthenticatedFinanceBillingRouteImport.update({
+    id: '/finance/billing',
+    path: '/finance/billing',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
+const AuthenticatedFinanceFeesRoute =
+  AuthenticatedFinanceFeesRouteImport.update({
+    id: '/finance/fees',
+    path: '/finance/fees',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
+const AuthenticatedFinancePaymentsRoute =
+  AuthenticatedFinancePaymentsRouteImport.update({
+    id: '/finance/payments',
+    path: '/finance/payments',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
 const AuthenticatedGuardiansIndexRoute =
   AuthenticatedGuardiansIndexRouteImport.update({
     id: '/guardians/',
@@ -257,6 +287,12 @@ const AuthenticatedPortalAttendanceRoute =
   AuthenticatedPortalAttendanceRouteImport.update({
     id: '/portal/attendance',
     path: '/portal/attendance',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
+const AuthenticatedPortalBillingRoute =
+  AuthenticatedPortalBillingRouteImport.update({
+    id: '/portal/billing',
+    path: '/portal/billing',
     getParentRoute: () => AuthenticatedRouteRoute,
   } as any)
 const AuthenticatedPortalPermissionRequestsRoute =
@@ -419,6 +455,12 @@ const AuthenticatedAttendanceSessionIdRoute =
     path: '/attendance/session/$id',
     getParentRoute: () => AuthenticatedRouteRoute,
   } as any)
+const AuthenticatedFinanceInvoicesInvoiceIdRoute =
+  AuthenticatedFinanceInvoicesInvoiceIdRouteImport.update({
+    id: '/finance/invoices/$invoiceId',
+    path: '/finance/invoices/$invoiceId',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
 const AuthenticatedPermissionRequestsRequestIdEditRoute =
   AuthenticatedPermissionRequestsRequestIdEditRouteImport.update({
     id: '/edit',
@@ -455,10 +497,14 @@ export interface FileRoutesByFullPath {
   '/academic/years': typeof AuthenticatedAcademicYearsRoute
   '/admissions/$applicationId': typeof AuthenticatedAdmissionsApplicationIdRoute
   '/assessments/$id': typeof AuthenticatedAssessmentsIdRoute
+  '/finance/billing': typeof AuthenticatedFinanceBillingRoute
+  '/finance/fees': typeof AuthenticatedFinanceFeesRoute
+  '/finance/payments': typeof AuthenticatedFinancePaymentsRoute
   '/guardians/$guardianId': typeof AuthenticatedGuardiansGuardianIdRoute
   '/permission-requests/$requestId': typeof AuthenticatedPermissionRequestsRequestIdRouteWithChildren
   '/permission-requests/new': typeof AuthenticatedPermissionRequestsNewRoute
   '/portal/attendance': typeof AuthenticatedPortalAttendanceRoute
+  '/portal/billing': typeof AuthenticatedPortalBillingRoute
   '/portal/permission-requests': typeof AuthenticatedPortalPermissionRequestsRouteWithChildren
   '/portal/report-cards': typeof AuthenticatedPortalReportCardsRoute
   '/portal/schedule': typeof AuthenticatedPortalScheduleRoute
@@ -478,6 +524,7 @@ export interface FileRoutesByFullPath {
   '/admissions/': typeof AuthenticatedAdmissionsIndexRoute
   '/assessments/': typeof AuthenticatedAssessmentsIndexRoute
   '/attendance/': typeof AuthenticatedAttendanceIndexRoute
+  '/finance/': typeof AuthenticatedFinanceIndexRoute
   '/guardians/': typeof AuthenticatedGuardiansIndexRoute
   '/permission-requests/': typeof AuthenticatedPermissionRequestsIndexRoute
   '/portal/': typeof AuthenticatedPortalIndexRoute
@@ -492,6 +539,7 @@ export interface FileRoutesByFullPath {
   '/teaching-assignments/': typeof AuthenticatedTeachingAssignmentsIndexRoute
   '/teaching-journals/': typeof AuthenticatedTeachingJournalsIndexRoute
   '/attendance/session/$id': typeof AuthenticatedAttendanceSessionIdRoute
+  '/finance/invoices/$invoiceId': typeof AuthenticatedFinanceInvoicesInvoiceIdRoute
   '/permission-requests/$requestId/edit': typeof AuthenticatedPermissionRequestsRequestIdEditRoute
   '/portal/permission-requests/$requestId': typeof AuthenticatedPortalPermissionRequestsRequestIdRoute
 }
@@ -518,10 +566,14 @@ export interface FileRoutesByTo {
   '/academic/years': typeof AuthenticatedAcademicYearsRoute
   '/admissions/$applicationId': typeof AuthenticatedAdmissionsApplicationIdRoute
   '/assessments/$id': typeof AuthenticatedAssessmentsIdRoute
+  '/finance/billing': typeof AuthenticatedFinanceBillingRoute
+  '/finance/fees': typeof AuthenticatedFinanceFeesRoute
+  '/finance/payments': typeof AuthenticatedFinancePaymentsRoute
   '/guardians/$guardianId': typeof AuthenticatedGuardiansGuardianIdRoute
   '/permission-requests/$requestId': typeof AuthenticatedPermissionRequestsRequestIdRouteWithChildren
   '/permission-requests/new': typeof AuthenticatedPermissionRequestsNewRoute
   '/portal/attendance': typeof AuthenticatedPortalAttendanceRoute
+  '/portal/billing': typeof AuthenticatedPortalBillingRoute
   '/portal/permission-requests': typeof AuthenticatedPortalPermissionRequestsRouteWithChildren
   '/portal/report-cards': typeof AuthenticatedPortalReportCardsRoute
   '/portal/schedule': typeof AuthenticatedPortalScheduleRoute
@@ -541,6 +593,7 @@ export interface FileRoutesByTo {
   '/admissions': typeof AuthenticatedAdmissionsIndexRoute
   '/assessments': typeof AuthenticatedAssessmentsIndexRoute
   '/attendance': typeof AuthenticatedAttendanceIndexRoute
+  '/finance': typeof AuthenticatedFinanceIndexRoute
   '/guardians': typeof AuthenticatedGuardiansIndexRoute
   '/permission-requests': typeof AuthenticatedPermissionRequestsIndexRoute
   '/portal': typeof AuthenticatedPortalIndexRoute
@@ -555,6 +608,7 @@ export interface FileRoutesByTo {
   '/teaching-assignments': typeof AuthenticatedTeachingAssignmentsIndexRoute
   '/teaching-journals': typeof AuthenticatedTeachingJournalsIndexRoute
   '/attendance/session/$id': typeof AuthenticatedAttendanceSessionIdRoute
+  '/finance/invoices/$invoiceId': typeof AuthenticatedFinanceInvoicesInvoiceIdRoute
   '/permission-requests/$requestId/edit': typeof AuthenticatedPermissionRequestsRequestIdEditRoute
   '/portal/permission-requests/$requestId': typeof AuthenticatedPortalPermissionRequestsRequestIdRoute
 }
@@ -583,10 +637,14 @@ export interface FileRoutesById {
   '/_authenticated/academic/years': typeof AuthenticatedAcademicYearsRoute
   '/_authenticated/admissions/$applicationId': typeof AuthenticatedAdmissionsApplicationIdRoute
   '/_authenticated/assessments/$id': typeof AuthenticatedAssessmentsIdRoute
+  '/_authenticated/finance/billing': typeof AuthenticatedFinanceBillingRoute
+  '/_authenticated/finance/fees': typeof AuthenticatedFinanceFeesRoute
+  '/_authenticated/finance/payments': typeof AuthenticatedFinancePaymentsRoute
   '/_authenticated/guardians/$guardianId': typeof AuthenticatedGuardiansGuardianIdRoute
   '/_authenticated/permission-requests/$requestId': typeof AuthenticatedPermissionRequestsRequestIdRouteWithChildren
   '/_authenticated/permission-requests/new': typeof AuthenticatedPermissionRequestsNewRoute
   '/_authenticated/portal/attendance': typeof AuthenticatedPortalAttendanceRoute
+  '/_authenticated/portal/billing': typeof AuthenticatedPortalBillingRoute
   '/_authenticated/portal/permission-requests': typeof AuthenticatedPortalPermissionRequestsRouteWithChildren
   '/_authenticated/portal/report-cards': typeof AuthenticatedPortalReportCardsRoute
   '/_authenticated/portal/schedule': typeof AuthenticatedPortalScheduleRoute
@@ -606,6 +664,7 @@ export interface FileRoutesById {
   '/_authenticated/admissions/': typeof AuthenticatedAdmissionsIndexRoute
   '/_authenticated/assessments/': typeof AuthenticatedAssessmentsIndexRoute
   '/_authenticated/attendance/': typeof AuthenticatedAttendanceIndexRoute
+  '/_authenticated/finance/': typeof AuthenticatedFinanceIndexRoute
   '/_authenticated/guardians/': typeof AuthenticatedGuardiansIndexRoute
   '/_authenticated/permission-requests/': typeof AuthenticatedPermissionRequestsIndexRoute
   '/_authenticated/portal/': typeof AuthenticatedPortalIndexRoute
@@ -620,6 +679,7 @@ export interface FileRoutesById {
   '/_authenticated/teaching-assignments/': typeof AuthenticatedTeachingAssignmentsIndexRoute
   '/_authenticated/teaching-journals/': typeof AuthenticatedTeachingJournalsIndexRoute
   '/_authenticated/attendance/session/$id': typeof AuthenticatedAttendanceSessionIdRoute
+  '/_authenticated/finance/invoices/$invoiceId': typeof AuthenticatedFinanceInvoicesInvoiceIdRoute
   '/_authenticated/permission-requests/$requestId/edit': typeof AuthenticatedPermissionRequestsRequestIdEditRoute
   '/_authenticated/portal/permission-requests/$requestId': typeof AuthenticatedPortalPermissionRequestsRequestIdRoute
 }
@@ -648,10 +708,14 @@ export interface FileRouteTypes {
     | '/academic/years'
     | '/admissions/$applicationId'
     | '/assessments/$id'
+    | '/finance/billing'
+    | '/finance/fees'
+    | '/finance/payments'
     | '/guardians/$guardianId'
     | '/permission-requests/$requestId'
     | '/permission-requests/new'
     | '/portal/attendance'
+    | '/portal/billing'
     | '/portal/permission-requests'
     | '/portal/report-cards'
     | '/portal/schedule'
@@ -671,6 +735,7 @@ export interface FileRouteTypes {
     | '/admissions/'
     | '/assessments/'
     | '/attendance/'
+    | '/finance/'
     | '/guardians/'
     | '/permission-requests/'
     | '/portal/'
@@ -685,6 +750,7 @@ export interface FileRouteTypes {
     | '/teaching-assignments/'
     | '/teaching-journals/'
     | '/attendance/session/$id'
+    | '/finance/invoices/$invoiceId'
     | '/permission-requests/$requestId/edit'
     | '/portal/permission-requests/$requestId'
   fileRoutesByTo: FileRoutesByTo
@@ -711,10 +777,14 @@ export interface FileRouteTypes {
     | '/academic/years'
     | '/admissions/$applicationId'
     | '/assessments/$id'
+    | '/finance/billing'
+    | '/finance/fees'
+    | '/finance/payments'
     | '/guardians/$guardianId'
     | '/permission-requests/$requestId'
     | '/permission-requests/new'
     | '/portal/attendance'
+    | '/portal/billing'
     | '/portal/permission-requests'
     | '/portal/report-cards'
     | '/portal/schedule'
@@ -734,6 +804,7 @@ export interface FileRouteTypes {
     | '/admissions'
     | '/assessments'
     | '/attendance'
+    | '/finance'
     | '/guardians'
     | '/permission-requests'
     | '/portal'
@@ -748,6 +819,7 @@ export interface FileRouteTypes {
     | '/teaching-assignments'
     | '/teaching-journals'
     | '/attendance/session/$id'
+    | '/finance/invoices/$invoiceId'
     | '/permission-requests/$requestId/edit'
     | '/portal/permission-requests/$requestId'
   id:
@@ -775,10 +847,14 @@ export interface FileRouteTypes {
     | '/_authenticated/academic/years'
     | '/_authenticated/admissions/$applicationId'
     | '/_authenticated/assessments/$id'
+    | '/_authenticated/finance/billing'
+    | '/_authenticated/finance/fees'
+    | '/_authenticated/finance/payments'
     | '/_authenticated/guardians/$guardianId'
     | '/_authenticated/permission-requests/$requestId'
     | '/_authenticated/permission-requests/new'
     | '/_authenticated/portal/attendance'
+    | '/_authenticated/portal/billing'
     | '/_authenticated/portal/permission-requests'
     | '/_authenticated/portal/report-cards'
     | '/_authenticated/portal/schedule'
@@ -798,6 +874,7 @@ export interface FileRouteTypes {
     | '/_authenticated/admissions/'
     | '/_authenticated/assessments/'
     | '/_authenticated/attendance/'
+    | '/_authenticated/finance/'
     | '/_authenticated/guardians/'
     | '/_authenticated/permission-requests/'
     | '/_authenticated/portal/'
@@ -812,6 +889,7 @@ export interface FileRouteTypes {
     | '/_authenticated/teaching-assignments/'
     | '/_authenticated/teaching-journals/'
     | '/_authenticated/attendance/session/$id'
+    | '/_authenticated/finance/invoices/$invoiceId'
     | '/_authenticated/permission-requests/$requestId/edit'
     | '/_authenticated/portal/permission-requests/$requestId'
   fileRoutesById: FileRoutesById
@@ -1011,6 +1089,34 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedAttendanceIndexRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+    '/_authenticated/finance/': {
+      id: '/_authenticated/finance/'
+      path: '/finance'
+      fullPath: '/finance/'
+      preLoaderRoute: typeof AuthenticatedFinanceIndexRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/finance/billing': {
+      id: '/_authenticated/finance/billing'
+      path: '/finance/billing'
+      fullPath: '/finance/billing'
+      preLoaderRoute: typeof AuthenticatedFinanceBillingRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/finance/fees': {
+      id: '/_authenticated/finance/fees'
+      path: '/finance/fees'
+      fullPath: '/finance/fees'
+      preLoaderRoute: typeof AuthenticatedFinanceFeesRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/finance/payments': {
+      id: '/_authenticated/finance/payments'
+      path: '/finance/payments'
+      fullPath: '/finance/payments'
+      preLoaderRoute: typeof AuthenticatedFinancePaymentsRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
     '/_authenticated/guardians/': {
       id: '/_authenticated/guardians/'
       path: '/guardians'
@@ -1058,6 +1164,13 @@ declare module '@tanstack/react-router' {
       path: '/portal/attendance'
       fullPath: '/portal/attendance'
       preLoaderRoute: typeof AuthenticatedPortalAttendanceRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/portal/billing': {
+      id: '/_authenticated/portal/billing'
+      path: '/portal/billing'
+      fullPath: '/portal/billing'
+      preLoaderRoute: typeof AuthenticatedPortalBillingRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
     '/_authenticated/portal/permission-requests': {
@@ -1249,6 +1362,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedAttendanceSessionIdRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+    '/_authenticated/finance/invoices/$invoiceId': {
+      id: '/_authenticated/finance/invoices/$invoiceId'
+      path: '/finance/invoices/$invoiceId'
+      fullPath: '/finance/invoices/$invoiceId'
+      preLoaderRoute: typeof AuthenticatedFinanceInvoicesInvoiceIdRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
     '/_authenticated/permission-requests/$requestId/edit': {
       id: '/_authenticated/permission-requests/$requestId/edit'
       path: '/edit'
@@ -1312,10 +1432,14 @@ interface AuthenticatedRouteRouteChildren {
   AuthenticatedAcademicYearsRoute: typeof AuthenticatedAcademicYearsRoute
   AuthenticatedAdmissionsApplicationIdRoute: typeof AuthenticatedAdmissionsApplicationIdRoute
   AuthenticatedAssessmentsIdRoute: typeof AuthenticatedAssessmentsIdRoute
+  AuthenticatedFinanceBillingRoute: typeof AuthenticatedFinanceBillingRoute
+  AuthenticatedFinanceFeesRoute: typeof AuthenticatedFinanceFeesRoute
+  AuthenticatedFinancePaymentsRoute: typeof AuthenticatedFinancePaymentsRoute
   AuthenticatedGuardiansGuardianIdRoute: typeof AuthenticatedGuardiansGuardianIdRoute
   AuthenticatedPermissionRequestsRequestIdRoute: typeof AuthenticatedPermissionRequestsRequestIdRouteWithChildren
   AuthenticatedPermissionRequestsNewRoute: typeof AuthenticatedPermissionRequestsNewRoute
   AuthenticatedPortalAttendanceRoute: typeof AuthenticatedPortalAttendanceRoute
+  AuthenticatedPortalBillingRoute: typeof AuthenticatedPortalBillingRoute
   AuthenticatedPortalPermissionRequestsRoute: typeof AuthenticatedPortalPermissionRequestsRouteWithChildren
   AuthenticatedPortalReportCardsRoute: typeof AuthenticatedPortalReportCardsRoute
   AuthenticatedPortalScheduleRoute: typeof AuthenticatedPortalScheduleRoute
@@ -1335,6 +1459,7 @@ interface AuthenticatedRouteRouteChildren {
   AuthenticatedAdmissionsIndexRoute: typeof AuthenticatedAdmissionsIndexRoute
   AuthenticatedAssessmentsIndexRoute: typeof AuthenticatedAssessmentsIndexRoute
   AuthenticatedAttendanceIndexRoute: typeof AuthenticatedAttendanceIndexRoute
+  AuthenticatedFinanceIndexRoute: typeof AuthenticatedFinanceIndexRoute
   AuthenticatedGuardiansIndexRoute: typeof AuthenticatedGuardiansIndexRoute
   AuthenticatedPermissionRequestsIndexRoute: typeof AuthenticatedPermissionRequestsIndexRoute
   AuthenticatedPortalIndexRoute: typeof AuthenticatedPortalIndexRoute
@@ -1349,6 +1474,7 @@ interface AuthenticatedRouteRouteChildren {
   AuthenticatedTeachingAssignmentsIndexRoute: typeof AuthenticatedTeachingAssignmentsIndexRoute
   AuthenticatedTeachingJournalsIndexRoute: typeof AuthenticatedTeachingJournalsIndexRoute
   AuthenticatedAttendanceSessionIdRoute: typeof AuthenticatedAttendanceSessionIdRoute
+  AuthenticatedFinanceInvoicesInvoiceIdRoute: typeof AuthenticatedFinanceInvoicesInvoiceIdRoute
 }
 
 const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
@@ -1368,12 +1494,16 @@ const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedAdmissionsApplicationIdRoute:
     AuthenticatedAdmissionsApplicationIdRoute,
   AuthenticatedAssessmentsIdRoute: AuthenticatedAssessmentsIdRoute,
+  AuthenticatedFinanceBillingRoute: AuthenticatedFinanceBillingRoute,
+  AuthenticatedFinanceFeesRoute: AuthenticatedFinanceFeesRoute,
+  AuthenticatedFinancePaymentsRoute: AuthenticatedFinancePaymentsRoute,
   AuthenticatedGuardiansGuardianIdRoute: AuthenticatedGuardiansGuardianIdRoute,
   AuthenticatedPermissionRequestsRequestIdRoute:
     AuthenticatedPermissionRequestsRequestIdRouteWithChildren,
   AuthenticatedPermissionRequestsNewRoute:
     AuthenticatedPermissionRequestsNewRoute,
   AuthenticatedPortalAttendanceRoute: AuthenticatedPortalAttendanceRoute,
+  AuthenticatedPortalBillingRoute: AuthenticatedPortalBillingRoute,
   AuthenticatedPortalPermissionRequestsRoute:
     AuthenticatedPortalPermissionRequestsRouteWithChildren,
   AuthenticatedPortalReportCardsRoute: AuthenticatedPortalReportCardsRoute,
@@ -1396,6 +1526,7 @@ const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedAdmissionsIndexRoute: AuthenticatedAdmissionsIndexRoute,
   AuthenticatedAssessmentsIndexRoute: AuthenticatedAssessmentsIndexRoute,
   AuthenticatedAttendanceIndexRoute: AuthenticatedAttendanceIndexRoute,
+  AuthenticatedFinanceIndexRoute: AuthenticatedFinanceIndexRoute,
   AuthenticatedGuardiansIndexRoute: AuthenticatedGuardiansIndexRoute,
   AuthenticatedPermissionRequestsIndexRoute:
     AuthenticatedPermissionRequestsIndexRoute,
@@ -1415,6 +1546,8 @@ const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedTeachingJournalsIndexRoute:
     AuthenticatedTeachingJournalsIndexRoute,
   AuthenticatedAttendanceSessionIdRoute: AuthenticatedAttendanceSessionIdRoute,
+  AuthenticatedFinanceInvoicesInvoiceIdRoute:
+    AuthenticatedFinanceInvoicesInvoiceIdRoute,
 }
 
 const AuthenticatedRouteRouteWithChildren =

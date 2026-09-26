@@ -24,7 +24,9 @@ export const generateReportCardDraftCommand = createServerFn({ method: "POST" })
       p_student_enrollment_id: data.studentEnrollmentId,
       p_term_id: data.termId,
       p_request_id: data.requestId,
-      p_expected_row_version: data.expectedRowVersion ?? null,
+      ...(typeof data.expectedRowVersion !== "number"
+        ? {}
+        : { p_expected_row_version: data.expectedRowVersion }),
     });
     if (error) fail(error, "report-card draft generation");
     return result?.[0] ?? null;
@@ -91,9 +93,11 @@ export const listReportCardsProjection = createServerFn({ method: "GET" })
   .handler(async ({ data, context }) => {
     const { data: result, error } = await context.supabase.rpc("b16_list_report_cards", {
       p_school_id: data.schoolId,
-      p_academic_year_id: data.academicYearId ?? null,
-      p_term_id: data.termId ?? null,
-      p_status: data.status ?? null,
+      ...(typeof data.academicYearId === "string"
+        ? { p_academic_year_id: data.academicYearId }
+        : {}),
+      ...(typeof data.termId === "string" ? { p_term_id: data.termId } : {}),
+      ...(typeof data.status === "string" ? { p_status: data.status } : {}),
       p_limit: data.limit,
       p_offset: data.offset,
     });
@@ -118,7 +122,9 @@ export const listReportCardCandidatesProjection = createServerFn({ method: "GET"
   .handler(async ({ data, context }) => {
     const { data: result, error } = await context.supabase.rpc("b16_list_report_card_candidates", {
       p_school_id: data.schoolId,
-      p_academic_year_id: data.academicYearId ?? null,
+      ...(typeof data.academicYearId === "string"
+        ? { p_academic_year_id: data.academicYearId }
+        : {}),
     });
     if (error) fail(error, "report-card candidate list");
     return result ?? [];
