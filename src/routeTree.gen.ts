@@ -22,6 +22,7 @@ import { Route as AuthenticatedNotificationsRouteImport } from './routes/_authen
 import { Route as AuthenticatedSelectOrganizationRouteImport } from './routes/_authenticated/select-organization'
 import { Route as AuthenticatedSelectSchoolRouteImport } from './routes/_authenticated/select-school'
 import { Route as AuthenticatedSisExportRouteImport } from './routes/_authenticated/sis-export'
+import { Route as PpdbCycleIdRouteImport } from './routes/ppdb/$cycleId'
 import { Route as AuthenticatedAcademicCalendarRouteImport } from './routes/_authenticated/academic/calendar'
 import { Route as AuthenticatedAcademicClassroomsRouteImport } from './routes/_authenticated/academic/classrooms'
 import { Route as AuthenticatedAcademicCurriculaRouteImport } from './routes/_authenticated/academic/curricula'
@@ -29,6 +30,8 @@ import { Route as AuthenticatedAcademicGradeLevelsRouteImport } from './routes/_
 import { Route as AuthenticatedAcademicSubjectsRouteImport } from './routes/_authenticated/academic/subjects'
 import { Route as AuthenticatedAcademicTermsRouteImport } from './routes/_authenticated/academic/terms'
 import { Route as AuthenticatedAcademicYearsRouteImport } from './routes/_authenticated/academic/years'
+import { Route as AuthenticatedAdmissionsIndexRouteImport } from './routes/_authenticated/admissions/index'
+import { Route as AuthenticatedAdmissionsApplicationIdRouteImport } from './routes/_authenticated/admissions/$applicationId'
 import { Route as AuthenticatedAssessmentsIndexRouteImport } from './routes/_authenticated/assessments/index'
 import { Route as AuthenticatedAssessmentsIdRouteImport } from './routes/_authenticated/assessments/$id'
 import { Route as AuthenticatedAttendanceIndexRouteImport } from './routes/_authenticated/attendance/index'
@@ -137,6 +140,11 @@ const AuthenticatedSisExportRoute = AuthenticatedSisExportRouteImport.update({
   path: '/sis-export',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
+const PpdbCycleIdRoute = PpdbCycleIdRouteImport.update({
+  id: '/ppdb/$cycleId',
+  path: '/ppdb/$cycleId',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const AuthenticatedAcademicCalendarRoute =
   AuthenticatedAcademicCalendarRouteImport.update({
     id: '/academic/calendar',
@@ -177,6 +185,18 @@ const AuthenticatedAcademicYearsRoute =
   AuthenticatedAcademicYearsRouteImport.update({
     id: '/academic/years',
     path: '/academic/years',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
+const AuthenticatedAdmissionsIndexRoute =
+  AuthenticatedAdmissionsIndexRouteImport.update({
+    id: '/admissions/',
+    path: '/admissions/',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
+const AuthenticatedAdmissionsApplicationIdRoute =
+  AuthenticatedAdmissionsApplicationIdRouteImport.update({
+    id: '/admissions/$applicationId',
+    path: '/admissions/$applicationId',
     getParentRoute: () => AuthenticatedRouteRoute,
   } as any)
 const AuthenticatedAssessmentsIndexRoute =
@@ -425,6 +445,7 @@ export interface FileRoutesByFullPath {
   '/select-organization': typeof AuthenticatedSelectOrganizationRoute
   '/select-school': typeof AuthenticatedSelectSchoolRoute
   '/sis-export': typeof AuthenticatedSisExportRoute
+  '/ppdb/$cycleId': typeof PpdbCycleIdRoute
   '/academic/calendar': typeof AuthenticatedAcademicCalendarRoute
   '/academic/classrooms': typeof AuthenticatedAcademicClassroomsRoute
   '/academic/curricula': typeof AuthenticatedAcademicCurriculaRoute
@@ -432,6 +453,7 @@ export interface FileRoutesByFullPath {
   '/academic/subjects': typeof AuthenticatedAcademicSubjectsRoute
   '/academic/terms': typeof AuthenticatedAcademicTermsRoute
   '/academic/years': typeof AuthenticatedAcademicYearsRoute
+  '/admissions/$applicationId': typeof AuthenticatedAdmissionsApplicationIdRoute
   '/assessments/$id': typeof AuthenticatedAssessmentsIdRoute
   '/guardians/$guardianId': typeof AuthenticatedGuardiansGuardianIdRoute
   '/permission-requests/$requestId': typeof AuthenticatedPermissionRequestsRequestIdRouteWithChildren
@@ -453,6 +475,7 @@ export interface FileRoutesByFullPath {
   '/student/scores': typeof AuthenticatedStudentScoresRoute
   '/students/$studentId': typeof AuthenticatedStudentsStudentIdRoute
   '/teaching-journals/manage': typeof AuthenticatedTeachingJournalsManageRoute
+  '/admissions/': typeof AuthenticatedAdmissionsIndexRoute
   '/assessments/': typeof AuthenticatedAssessmentsIndexRoute
   '/attendance/': typeof AuthenticatedAttendanceIndexRoute
   '/guardians/': typeof AuthenticatedGuardiansIndexRoute
@@ -485,6 +508,7 @@ export interface FileRoutesByTo {
   '/select-organization': typeof AuthenticatedSelectOrganizationRoute
   '/select-school': typeof AuthenticatedSelectSchoolRoute
   '/sis-export': typeof AuthenticatedSisExportRoute
+  '/ppdb/$cycleId': typeof PpdbCycleIdRoute
   '/academic/calendar': typeof AuthenticatedAcademicCalendarRoute
   '/academic/classrooms': typeof AuthenticatedAcademicClassroomsRoute
   '/academic/curricula': typeof AuthenticatedAcademicCurriculaRoute
@@ -492,6 +516,7 @@ export interface FileRoutesByTo {
   '/academic/subjects': typeof AuthenticatedAcademicSubjectsRoute
   '/academic/terms': typeof AuthenticatedAcademicTermsRoute
   '/academic/years': typeof AuthenticatedAcademicYearsRoute
+  '/admissions/$applicationId': typeof AuthenticatedAdmissionsApplicationIdRoute
   '/assessments/$id': typeof AuthenticatedAssessmentsIdRoute
   '/guardians/$guardianId': typeof AuthenticatedGuardiansGuardianIdRoute
   '/permission-requests/$requestId': typeof AuthenticatedPermissionRequestsRequestIdRouteWithChildren
@@ -513,6 +538,7 @@ export interface FileRoutesByTo {
   '/student/scores': typeof AuthenticatedStudentScoresRoute
   '/students/$studentId': typeof AuthenticatedStudentsStudentIdRoute
   '/teaching-journals/manage': typeof AuthenticatedTeachingJournalsManageRoute
+  '/admissions': typeof AuthenticatedAdmissionsIndexRoute
   '/assessments': typeof AuthenticatedAssessmentsIndexRoute
   '/attendance': typeof AuthenticatedAttendanceIndexRoute
   '/guardians': typeof AuthenticatedGuardiansIndexRoute
@@ -547,6 +573,7 @@ export interface FileRoutesById {
   '/_authenticated/select-organization': typeof AuthenticatedSelectOrganizationRoute
   '/_authenticated/select-school': typeof AuthenticatedSelectSchoolRoute
   '/_authenticated/sis-export': typeof AuthenticatedSisExportRoute
+  '/ppdb/$cycleId': typeof PpdbCycleIdRoute
   '/_authenticated/academic/calendar': typeof AuthenticatedAcademicCalendarRoute
   '/_authenticated/academic/classrooms': typeof AuthenticatedAcademicClassroomsRoute
   '/_authenticated/academic/curricula': typeof AuthenticatedAcademicCurriculaRoute
@@ -554,6 +581,7 @@ export interface FileRoutesById {
   '/_authenticated/academic/subjects': typeof AuthenticatedAcademicSubjectsRoute
   '/_authenticated/academic/terms': typeof AuthenticatedAcademicTermsRoute
   '/_authenticated/academic/years': typeof AuthenticatedAcademicYearsRoute
+  '/_authenticated/admissions/$applicationId': typeof AuthenticatedAdmissionsApplicationIdRoute
   '/_authenticated/assessments/$id': typeof AuthenticatedAssessmentsIdRoute
   '/_authenticated/guardians/$guardianId': typeof AuthenticatedGuardiansGuardianIdRoute
   '/_authenticated/permission-requests/$requestId': typeof AuthenticatedPermissionRequestsRequestIdRouteWithChildren
@@ -575,6 +603,7 @@ export interface FileRoutesById {
   '/_authenticated/student/scores': typeof AuthenticatedStudentScoresRoute
   '/_authenticated/students/$studentId': typeof AuthenticatedStudentsStudentIdRoute
   '/_authenticated/teaching-journals/manage': typeof AuthenticatedTeachingJournalsManageRoute
+  '/_authenticated/admissions/': typeof AuthenticatedAdmissionsIndexRoute
   '/_authenticated/assessments/': typeof AuthenticatedAssessmentsIndexRoute
   '/_authenticated/attendance/': typeof AuthenticatedAttendanceIndexRoute
   '/_authenticated/guardians/': typeof AuthenticatedGuardiansIndexRoute
@@ -609,6 +638,7 @@ export interface FileRouteTypes {
     | '/select-organization'
     | '/select-school'
     | '/sis-export'
+    | '/ppdb/$cycleId'
     | '/academic/calendar'
     | '/academic/classrooms'
     | '/academic/curricula'
@@ -616,6 +646,7 @@ export interface FileRouteTypes {
     | '/academic/subjects'
     | '/academic/terms'
     | '/academic/years'
+    | '/admissions/$applicationId'
     | '/assessments/$id'
     | '/guardians/$guardianId'
     | '/permission-requests/$requestId'
@@ -637,6 +668,7 @@ export interface FileRouteTypes {
     | '/student/scores'
     | '/students/$studentId'
     | '/teaching-journals/manage'
+    | '/admissions/'
     | '/assessments/'
     | '/attendance/'
     | '/guardians/'
@@ -669,6 +701,7 @@ export interface FileRouteTypes {
     | '/select-organization'
     | '/select-school'
     | '/sis-export'
+    | '/ppdb/$cycleId'
     | '/academic/calendar'
     | '/academic/classrooms'
     | '/academic/curricula'
@@ -676,6 +709,7 @@ export interface FileRouteTypes {
     | '/academic/subjects'
     | '/academic/terms'
     | '/academic/years'
+    | '/admissions/$applicationId'
     | '/assessments/$id'
     | '/guardians/$guardianId'
     | '/permission-requests/$requestId'
@@ -697,6 +731,7 @@ export interface FileRouteTypes {
     | '/student/scores'
     | '/students/$studentId'
     | '/teaching-journals/manage'
+    | '/admissions'
     | '/assessments'
     | '/attendance'
     | '/guardians'
@@ -730,6 +765,7 @@ export interface FileRouteTypes {
     | '/_authenticated/select-organization'
     | '/_authenticated/select-school'
     | '/_authenticated/sis-export'
+    | '/ppdb/$cycleId'
     | '/_authenticated/academic/calendar'
     | '/_authenticated/academic/classrooms'
     | '/_authenticated/academic/curricula'
@@ -737,6 +773,7 @@ export interface FileRouteTypes {
     | '/_authenticated/academic/subjects'
     | '/_authenticated/academic/terms'
     | '/_authenticated/academic/years'
+    | '/_authenticated/admissions/$applicationId'
     | '/_authenticated/assessments/$id'
     | '/_authenticated/guardians/$guardianId'
     | '/_authenticated/permission-requests/$requestId'
@@ -758,6 +795,7 @@ export interface FileRouteTypes {
     | '/_authenticated/student/scores'
     | '/_authenticated/students/$studentId'
     | '/_authenticated/teaching-journals/manage'
+    | '/_authenticated/admissions/'
     | '/_authenticated/assessments/'
     | '/_authenticated/attendance/'
     | '/_authenticated/guardians/'
@@ -786,6 +824,7 @@ export interface RootRouteChildren {
   ForgotPasswordRoute: typeof ForgotPasswordRoute
   HealthzRoute: typeof HealthzRoute
   ResetPasswordRoute: typeof ResetPasswordRoute
+  PpdbCycleIdRoute: typeof PpdbCycleIdRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -881,6 +920,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedSisExportRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+    '/ppdb/$cycleId': {
+      id: '/ppdb/$cycleId'
+      path: '/ppdb/$cycleId'
+      fullPath: '/ppdb/$cycleId'
+      preLoaderRoute: typeof PpdbCycleIdRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/_authenticated/academic/calendar': {
       id: '/_authenticated/academic/calendar'
       path: '/academic/calendar'
@@ -928,6 +974,20 @@ declare module '@tanstack/react-router' {
       path: '/academic/years'
       fullPath: '/academic/years'
       preLoaderRoute: typeof AuthenticatedAcademicYearsRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/admissions/': {
+      id: '/_authenticated/admissions/'
+      path: '/admissions'
+      fullPath: '/admissions/'
+      preLoaderRoute: typeof AuthenticatedAdmissionsIndexRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/admissions/$applicationId': {
+      id: '/_authenticated/admissions/$applicationId'
+      path: '/admissions/$applicationId'
+      fullPath: '/admissions/$applicationId'
+      preLoaderRoute: typeof AuthenticatedAdmissionsApplicationIdRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
     '/_authenticated/assessments/': {
@@ -1250,6 +1310,7 @@ interface AuthenticatedRouteRouteChildren {
   AuthenticatedAcademicSubjectsRoute: typeof AuthenticatedAcademicSubjectsRoute
   AuthenticatedAcademicTermsRoute: typeof AuthenticatedAcademicTermsRoute
   AuthenticatedAcademicYearsRoute: typeof AuthenticatedAcademicYearsRoute
+  AuthenticatedAdmissionsApplicationIdRoute: typeof AuthenticatedAdmissionsApplicationIdRoute
   AuthenticatedAssessmentsIdRoute: typeof AuthenticatedAssessmentsIdRoute
   AuthenticatedGuardiansGuardianIdRoute: typeof AuthenticatedGuardiansGuardianIdRoute
   AuthenticatedPermissionRequestsRequestIdRoute: typeof AuthenticatedPermissionRequestsRequestIdRouteWithChildren
@@ -1271,6 +1332,7 @@ interface AuthenticatedRouteRouteChildren {
   AuthenticatedStudentScoresRoute: typeof AuthenticatedStudentScoresRoute
   AuthenticatedStudentsStudentIdRoute: typeof AuthenticatedStudentsStudentIdRoute
   AuthenticatedTeachingJournalsManageRoute: typeof AuthenticatedTeachingJournalsManageRoute
+  AuthenticatedAdmissionsIndexRoute: typeof AuthenticatedAdmissionsIndexRoute
   AuthenticatedAssessmentsIndexRoute: typeof AuthenticatedAssessmentsIndexRoute
   AuthenticatedAttendanceIndexRoute: typeof AuthenticatedAttendanceIndexRoute
   AuthenticatedGuardiansIndexRoute: typeof AuthenticatedGuardiansIndexRoute
@@ -1303,6 +1365,8 @@ const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedAcademicSubjectsRoute: AuthenticatedAcademicSubjectsRoute,
   AuthenticatedAcademicTermsRoute: AuthenticatedAcademicTermsRoute,
   AuthenticatedAcademicYearsRoute: AuthenticatedAcademicYearsRoute,
+  AuthenticatedAdmissionsApplicationIdRoute:
+    AuthenticatedAdmissionsApplicationIdRoute,
   AuthenticatedAssessmentsIdRoute: AuthenticatedAssessmentsIdRoute,
   AuthenticatedGuardiansGuardianIdRoute: AuthenticatedGuardiansGuardianIdRoute,
   AuthenticatedPermissionRequestsRequestIdRoute:
@@ -1329,6 +1393,7 @@ const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedStudentsStudentIdRoute: AuthenticatedStudentsStudentIdRoute,
   AuthenticatedTeachingJournalsManageRoute:
     AuthenticatedTeachingJournalsManageRoute,
+  AuthenticatedAdmissionsIndexRoute: AuthenticatedAdmissionsIndexRoute,
   AuthenticatedAssessmentsIndexRoute: AuthenticatedAssessmentsIndexRoute,
   AuthenticatedAttendanceIndexRoute: AuthenticatedAttendanceIndexRoute,
   AuthenticatedGuardiansIndexRoute: AuthenticatedGuardiansIndexRoute,
@@ -1363,6 +1428,7 @@ const rootRouteChildren: RootRouteChildren = {
   ForgotPasswordRoute: ForgotPasswordRoute,
   HealthzRoute: HealthzRoute,
   ResetPasswordRoute: ResetPasswordRoute,
+  PpdbCycleIdRoute: PpdbCycleIdRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)

@@ -33,6 +33,481 @@ export type Database = {
   };
   public: {
     Tables: {
+      admission_application_guardians: {
+        Row: {
+          application_id: string;
+          created_at: string;
+          email: string | null;
+          full_name: string;
+          id: string;
+          is_primary: boolean;
+          organization_id: string;
+          phone: string | null;
+          relationship: string;
+          school_id: string;
+          updated_at: string;
+        };
+        Insert: {
+          application_id: string;
+          created_at?: string;
+          email?: string | null;
+          full_name: string;
+          id?: string;
+          is_primary?: boolean;
+          organization_id: string;
+          phone?: string | null;
+          relationship: string;
+          school_id: string;
+          updated_at?: string;
+        };
+        Update: {
+          application_id?: string;
+          created_at?: string;
+          email?: string | null;
+          full_name?: string;
+          id?: string;
+          is_primary?: boolean;
+          organization_id?: string;
+          phone?: string | null;
+          relationship?: string;
+          school_id?: string;
+          updated_at?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "admission_application_guardians_application_fk";
+            columns: ["application_id", "organization_id", "school_id"];
+            isOneToOne: false;
+            referencedRelation: "admission_applications";
+            referencedColumns: ["id", "organization_id", "school_id"];
+          },
+        ];
+      };
+      admission_applications: {
+        Row: {
+          admission_cycle_id: string;
+          applicant_birth_date: string | null;
+          applicant_birth_place: string | null;
+          applicant_email: string | null;
+          applicant_full_name: string;
+          applicant_gender: string | null;
+          applicant_nisn: string | null;
+          applicant_phone: string | null;
+          applicant_preferred_name: string | null;
+          application_number: string | null;
+          created_at: string;
+          decided_at: string | null;
+          decided_by_profile_id: string | null;
+          decision_reason: string | null;
+          id: string;
+          organization_id: string;
+          row_version: number;
+          school_id: string;
+          status: string;
+          submission_note: string | null;
+          submitted_at: string | null;
+          target_academic_year_id: string;
+          target_grade_level_id: string;
+          updated_at: string;
+        };
+        Insert: {
+          admission_cycle_id: string;
+          applicant_birth_date?: string | null;
+          applicant_birth_place?: string | null;
+          applicant_email?: string | null;
+          applicant_full_name: string;
+          applicant_gender?: string | null;
+          applicant_nisn?: string | null;
+          applicant_phone?: string | null;
+          applicant_preferred_name?: string | null;
+          application_number?: string | null;
+          created_at?: string;
+          decided_at?: string | null;
+          decided_by_profile_id?: string | null;
+          decision_reason?: string | null;
+          id?: string;
+          organization_id: string;
+          row_version?: number;
+          school_id: string;
+          status?: string;
+          submission_note?: string | null;
+          submitted_at?: string | null;
+          target_academic_year_id: string;
+          target_grade_level_id: string;
+          updated_at?: string;
+        };
+        Update: {
+          admission_cycle_id?: string;
+          applicant_birth_date?: string | null;
+          applicant_birth_place?: string | null;
+          applicant_email?: string | null;
+          applicant_full_name?: string;
+          applicant_gender?: string | null;
+          applicant_nisn?: string | null;
+          applicant_phone?: string | null;
+          applicant_preferred_name?: string | null;
+          application_number?: string | null;
+          created_at?: string;
+          decided_at?: string | null;
+          decided_by_profile_id?: string | null;
+          decision_reason?: string | null;
+          id?: string;
+          organization_id?: string;
+          row_version?: number;
+          school_id?: string;
+          status?: string;
+          submission_note?: string | null;
+          submitted_at?: string | null;
+          target_academic_year_id?: string;
+          target_grade_level_id?: string;
+          updated_at?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "admission_applications_cycle_scope_fk";
+            columns: ["admission_cycle_id", "organization_id", "school_id"];
+            isOneToOne: false;
+            referencedRelation: "admission_cycles";
+            referencedColumns: ["id", "organization_id", "school_id"];
+          },
+          {
+            foreignKeyName: "admission_applications_cycle_year_fk";
+            columns: [
+              "admission_cycle_id",
+              "organization_id",
+              "school_id",
+              "target_academic_year_id",
+            ];
+            isOneToOne: false;
+            referencedRelation: "admission_cycles";
+            referencedColumns: ["id", "organization_id", "school_id", "academic_year_id"];
+          },
+          {
+            foreignKeyName: "admission_applications_decided_by_profile_id_fkey";
+            columns: ["decided_by_profile_id"];
+            isOneToOne: false;
+            referencedRelation: "profiles";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "admission_applications_grade_scope_fk";
+            columns: ["target_grade_level_id", "organization_id", "school_id"];
+            isOneToOne: false;
+            referencedRelation: "grade_levels";
+            referencedColumns: ["id", "organization_id", "school_id"];
+          },
+          {
+            foreignKeyName: "admission_applications_year_scope_fk";
+            columns: ["target_academic_year_id", "organization_id", "school_id"];
+            isOneToOne: false;
+            referencedRelation: "academic_years";
+            referencedColumns: ["id", "organization_id", "school_id"];
+          },
+        ];
+      };
+      admission_command_requests: {
+        Row: {
+          actor_kind: string;
+          actor_profile_id: string | null;
+          command: string;
+          completed_at: string | null;
+          created_at: string;
+          id: string;
+          organization_id: string;
+          request_id: string;
+          result_payload: Json | null;
+          school_id: string;
+          semantic_fingerprint: string;
+          started_at: string;
+          status: string;
+        };
+        Insert: {
+          actor_kind: string;
+          actor_profile_id?: string | null;
+          command: string;
+          completed_at?: string | null;
+          created_at?: string;
+          id?: string;
+          organization_id: string;
+          request_id: string;
+          result_payload?: Json | null;
+          school_id: string;
+          semantic_fingerprint: string;
+          started_at?: string;
+          status?: string;
+        };
+        Update: {
+          actor_kind?: string;
+          actor_profile_id?: string | null;
+          command?: string;
+          completed_at?: string | null;
+          created_at?: string;
+          id?: string;
+          organization_id?: string;
+          request_id?: string;
+          result_payload?: Json | null;
+          school_id?: string;
+          semantic_fingerprint?: string;
+          started_at?: string;
+          status?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "admission_command_requests_actor_profile_id_fkey";
+            columns: ["actor_profile_id"];
+            isOneToOne: false;
+            referencedRelation: "profiles";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "admission_command_requests_organization_id_fkey";
+            columns: ["organization_id"];
+            isOneToOne: false;
+            referencedRelation: "organizations";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "admission_command_requests_school_fk";
+            columns: ["school_id", "organization_id"];
+            isOneToOne: false;
+            referencedRelation: "schools";
+            referencedColumns: ["id", "organization_id"];
+          },
+        ];
+      };
+      admission_consents: {
+        Row: {
+          application_id: string;
+          consent_source: string;
+          consented_at: string;
+          created_at: string;
+          id: string;
+          organization_id: string;
+          policy_version: string;
+          school_id: string;
+        };
+        Insert: {
+          application_id: string;
+          consent_source: string;
+          consented_at: string;
+          created_at?: string;
+          id?: string;
+          organization_id: string;
+          policy_version: string;
+          school_id: string;
+        };
+        Update: {
+          application_id?: string;
+          consent_source?: string;
+          consented_at?: string;
+          created_at?: string;
+          id?: string;
+          organization_id?: string;
+          policy_version?: string;
+          school_id?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "admission_consents_application_fk";
+            columns: ["application_id", "organization_id", "school_id"];
+            isOneToOne: false;
+            referencedRelation: "admission_applications";
+            referencedColumns: ["id", "organization_id", "school_id"];
+          },
+        ];
+      };
+      admission_conversions: {
+        Row: {
+          application_id: string;
+          converted_at: string;
+          converted_by_profile_id: string;
+          id: string;
+          organization_id: string;
+          request_id: string;
+          school_id: string;
+          student_enrollment_id: string;
+          student_id: string;
+        };
+        Insert: {
+          application_id: string;
+          converted_at?: string;
+          converted_by_profile_id: string;
+          id?: string;
+          organization_id: string;
+          request_id: string;
+          school_id: string;
+          student_enrollment_id: string;
+          student_id: string;
+        };
+        Update: {
+          application_id?: string;
+          converted_at?: string;
+          converted_by_profile_id?: string;
+          id?: string;
+          organization_id?: string;
+          request_id?: string;
+          school_id?: string;
+          student_enrollment_id?: string;
+          student_id?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "admission_conversions_application_fk";
+            columns: ["application_id", "organization_id", "school_id"];
+            isOneToOne: false;
+            referencedRelation: "admission_applications";
+            referencedColumns: ["id", "organization_id", "school_id"];
+          },
+          {
+            foreignKeyName: "admission_conversions_converted_by_profile_id_fkey";
+            columns: ["converted_by_profile_id"];
+            isOneToOne: false;
+            referencedRelation: "profiles";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "admission_conversions_enrollment_fk";
+            columns: ["student_enrollment_id", "organization_id", "school_id"];
+            isOneToOne: false;
+            referencedRelation: "student_enrollments";
+            referencedColumns: ["id", "organization_id", "school_id"];
+          },
+          {
+            foreignKeyName: "admission_conversions_student_fk";
+            columns: ["student_id", "organization_id"];
+            isOneToOne: false;
+            referencedRelation: "students";
+            referencedColumns: ["id", "organization_id"];
+          },
+        ];
+      };
+      admission_cycles: {
+        Row: {
+          academic_year_id: string;
+          closes_at: string | null;
+          created_at: string;
+          created_by_profile_id: string | null;
+          id: string;
+          name: string;
+          opens_at: string | null;
+          organization_id: string;
+          row_version: number;
+          school_id: string;
+          slug: string;
+          status: string;
+          updated_at: string;
+        };
+        Insert: {
+          academic_year_id: string;
+          closes_at?: string | null;
+          created_at?: string;
+          created_by_profile_id?: string | null;
+          id?: string;
+          name: string;
+          opens_at?: string | null;
+          organization_id: string;
+          row_version?: number;
+          school_id: string;
+          slug: string;
+          status?: string;
+          updated_at?: string;
+        };
+        Update: {
+          academic_year_id?: string;
+          closes_at?: string | null;
+          created_at?: string;
+          created_by_profile_id?: string | null;
+          id?: string;
+          name?: string;
+          opens_at?: string | null;
+          organization_id?: string;
+          row_version?: number;
+          school_id?: string;
+          slug?: string;
+          status?: string;
+          updated_at?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "admission_cycles_created_by_profile_id_fkey";
+            columns: ["created_by_profile_id"];
+            isOneToOne: false;
+            referencedRelation: "profiles";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "admission_cycles_school_fk";
+            columns: ["school_id", "organization_id"];
+            isOneToOne: false;
+            referencedRelation: "schools";
+            referencedColumns: ["id", "organization_id"];
+          },
+          {
+            foreignKeyName: "admission_cycles_year_fk";
+            columns: ["academic_year_id", "organization_id", "school_id"];
+            isOneToOne: false;
+            referencedRelation: "academic_years";
+            referencedColumns: ["id", "organization_id", "school_id"];
+          },
+        ];
+      };
+      admission_stage_history: {
+        Row: {
+          actor_kind: string;
+          actor_profile_id: string | null;
+          application_id: string;
+          from_status: string | null;
+          id: string;
+          occurred_at: string;
+          organization_id: string;
+          reason: string | null;
+          request_id: string | null;
+          school_id: string;
+          to_status: string;
+        };
+        Insert: {
+          actor_kind: string;
+          actor_profile_id?: string | null;
+          application_id: string;
+          from_status?: string | null;
+          id?: string;
+          occurred_at?: string;
+          organization_id: string;
+          reason?: string | null;
+          request_id?: string | null;
+          school_id: string;
+          to_status: string;
+        };
+        Update: {
+          actor_kind?: string;
+          actor_profile_id?: string | null;
+          application_id?: string;
+          from_status?: string | null;
+          id?: string;
+          occurred_at?: string;
+          organization_id?: string;
+          reason?: string | null;
+          request_id?: string | null;
+          school_id?: string;
+          to_status?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "admission_stage_history_actor_profile_id_fkey";
+            columns: ["actor_profile_id"];
+            isOneToOne: false;
+            referencedRelation: "profiles";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "admission_stage_history_application_fk";
+            columns: ["application_id", "organization_id", "school_id"];
+            isOneToOne: false;
+            referencedRelation: "admission_applications";
+            referencedColumns: ["id", "organization_id", "school_id"];
+          },
+        ];
+      };
       academic_calendar_events: {
         Row: {
           academic_year_id: string;
@@ -4261,6 +4736,151 @@ export type Database = {
       [_ in never]: never;
     };
     Functions: {
+      b18_accept_admission_application: {
+        Args: {
+          p_application_id: string;
+          p_expected_row_version: number;
+          p_reason?: string;
+          p_request_id: string;
+        };
+        Returns: Json;
+      };
+      b18_archive_admission_cycle: {
+        Args: {
+          p_cycle_id: string;
+          p_expected_row_version: number;
+          p_request_id: string;
+        };
+        Returns: Json;
+      };
+      b18_close_admission_cycle: {
+        Args: {
+          p_cycle_id: string;
+          p_expected_row_version: number;
+          p_request_id: string;
+        };
+        Returns: Json;
+      };
+      b18_convert_admission_application: {
+        Args: {
+          p_application_id: string;
+          p_expected_row_version: number;
+          p_request_id: string;
+        };
+        Returns: Json;
+      };
+      b18_cycle_transition: {
+        Args: {
+          p_command: string;
+          p_cycle_id: string;
+          p_expected_row_version: number;
+          p_reason: string;
+          p_request_id: string;
+        };
+        Returns: Json;
+      };
+      b18_get_admission_application: {
+        Args: { p_application_id: string };
+        Returns: Json;
+      };
+      b18_get_admission_cycle: { Args: { p_cycle_id: string }; Returns: Json };
+      b18_get_public_admission_cycle: {
+        Args: { p_admission_cycle_id: string };
+        Returns: {
+          academic_year_name: string;
+          available: boolean;
+          closes_at: string;
+          grades: Json;
+          id: string;
+          name: string;
+          opens_at: string;
+          school_name: string;
+        }[];
+      };
+      b18_list_admission_applications: {
+        Args: {
+          p_cycle_id?: string;
+          p_grade_level_id?: string;
+          p_limit?: number;
+          p_offset?: number;
+          p_status?: string;
+        };
+        Returns: Json;
+      };
+      b18_list_admission_cycles: {
+        Args: { p_school_id?: string };
+        Returns: {
+          academic_year_id: string;
+          closes_at: string;
+          id: string;
+          name: string;
+          opens_at: string;
+          row_version: number;
+          school_id: string;
+          status: string;
+        }[];
+      };
+      b18_open_admission_cycle: {
+        Args: {
+          p_cycle_id: string;
+          p_expected_row_version: number;
+          p_request_id: string;
+        };
+        Returns: Json;
+      };
+      b18_reject_admission_application: {
+        Args: {
+          p_application_id: string;
+          p_expected_row_version: number;
+          p_reason: string;
+          p_request_id: string;
+        };
+        Returns: Json;
+      };
+      b18_reopen_admission_cycle: {
+        Args: {
+          p_cycle_id: string;
+          p_expected_row_version: number;
+          p_reason: string;
+          p_request_id: string;
+        };
+        Returns: Json;
+      };
+      b18_start_admission_review: {
+        Args: {
+          p_application_id: string;
+          p_expected_row_version: number;
+          p_request_id: string;
+        };
+        Returns: Json;
+      };
+      b18_submit_admission_application: {
+        Args: {
+          p_admission_cycle_id: string;
+          p_payload: Json;
+          p_request_id: string;
+        };
+        Returns: Json;
+      };
+      b18_transition_admission_application: {
+        Args: {
+          p_application_id: string;
+          p_command: string;
+          p_expected_row_version: number;
+          p_reason?: string;
+          p_request_id: string;
+        };
+        Returns: Json;
+      };
+      b18_withdraw_admission_application: {
+        Args: {
+          p_application_id: string;
+          p_expected_row_version: number;
+          p_reason: string;
+          p_request_id: string;
+        };
+        Returns: Json;
+      };
       b17_close_academic_year: {
         Args: {
           p_academic_year_id: string;

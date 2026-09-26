@@ -182,6 +182,18 @@ const NAV_GROUPS: NavGroup[] = [
     ],
   },
   {
+    label: "Admissions",
+    audience: "staff",
+    items: [
+      {
+        to: "/admissions",
+        label: "Admissions",
+        icon: ClipboardCheck,
+        permission: "admission.read",
+      },
+    ],
+  },
+  {
     label: "Academic Operations",
     audience: "staff",
     items: [
