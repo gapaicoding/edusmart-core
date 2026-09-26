@@ -27,7 +27,7 @@ export const createAssessmentCommand = createServerFn({ method: "POST" })
       p_academic_year_id: data.academicYearId ?? undefined,
       p_assessment_date: data.assessmentDate,
       p_assessment_type_id: data.assessmentTypeId,
-      p_description: data.description,
+      p_description: data.description as never,
       p_max_score: data.maxScore,
       p_min_score: data.minScore,
       p_organization_id: data.organizationId,
@@ -36,7 +36,7 @@ export const createAssessmentCommand = createServerFn({ method: "POST" })
       p_teaching_assignment_id: data.teachingAssignmentId,
       p_term_id: data.termId,
       p_title: data.title,
-      p_weight: data.weight,
+      p_weight: data.weight as never,
     });
     if (error) raise(error, "assessment creation");
     return result?.[0] ?? null;
@@ -50,7 +50,7 @@ export const updateAssessmentDraftCommand = createServerFn({ method: "POST" })
       p_assessment_date: data.assessmentDate,
       p_assessment_id: data.assessmentId,
       p_assessment_type_id: data.assessmentTypeId,
-      p_description: data.description,
+      p_description: data.description as never,
       p_expected_version: data.expectedVersion,
       p_max_score: data.maxScore,
       p_min_score: data.minScore,
@@ -58,7 +58,7 @@ export const updateAssessmentDraftCommand = createServerFn({ method: "POST" })
       p_request_id: data.requestId,
       p_school_id: data.schoolId,
       p_title: data.title,
-      p_weight: data.weight,
+      p_weight: data.weight as never,
     });
     if (error) raise(error, "assessment update");
     return result?.[0] ?? null;
@@ -93,7 +93,7 @@ export const saveAssessmentScoresCommand = createServerFn({ method: "POST" })
         feedback: entry.feedback,
         expected_score_version: entry.expectedScoreVersion,
       })) as Database["public"]["Functions"]["b15_assessment_save_scores"]["Args"]["p_entries"],
-      p_expected_assessment_version: data.expectedAssessmentVersion,
+      p_expected_assessment_version: data.expectedAssessmentVersion as never,
       p_organization_id: data.organizationId,
       p_request_id: data.requestId,
       p_school_id: data.schoolId,
@@ -126,13 +126,13 @@ export const listAssessmentProjection = createServerFn({ method: "GET" })
   .inputValidator((value: unknown) => assessmentGradebookListInput.parse(value))
   .handler(async ({ data, context }) => {
     const { data: result, error } = await context.supabase.rpc("b15_list_assessments", {
-      p_academic_year_id: data.academicYearId,
+      ...(data.academicYearId === null ? {} : { p_academic_year_id: data.academicYearId }),
       p_limit: data.limit,
       p_offset: data.offset,
       p_organization_id: data.organizationId,
       p_school_id: data.schoolId,
-      p_status: data.status ?? null,
-      p_term_id: data.termId ?? null,
+      ...(data.status === null ? {} : { p_status: data.status }),
+      ...(data.termId === null ? {} : { p_term_id: data.termId }),
     });
     if (error) raise(error, "assessment list");
     return result ?? [];

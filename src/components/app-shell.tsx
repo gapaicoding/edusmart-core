@@ -25,6 +25,7 @@ import {
   ShieldCheck,
   UserRound,
   Users,
+  WalletCards,
   X,
 } from "lucide-react";
 
@@ -251,6 +252,11 @@ const NAV_GROUPS: NavGroup[] = [
     ],
   },
   {
+    label: "Finance",
+    audience: "staff",
+    items: [{ to: "/finance", label: "Finance", icon: WalletCards, permission: "finance.read" }],
+  },
+  {
     label: "Parent Portal",
     audience: "parent",
     items: [
@@ -279,6 +285,12 @@ const NAV_GROUPS: NavGroup[] = [
         label: "Report Cards",
         icon: FileText,
         permission: "report_card.read",
+      },
+      {
+        to: "/portal/billing",
+        label: "Billing",
+        icon: WalletCards,
+        permission: "finance.portal_read",
       },
     ],
   },

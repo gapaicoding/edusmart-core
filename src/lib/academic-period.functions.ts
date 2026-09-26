@@ -47,7 +47,7 @@ export const closeTermCommand = createServerFn({ method: "POST" })
       p_school_id: data.schoolId,
       p_term_id: data.periodId,
       p_expected_updated_at: data.expectedUpdatedAt,
-      p_reason: data.reason ?? null,
+      ...(typeof data.reason === "string" ? { p_reason: data.reason } : {}),
     });
     if (error) fail(error, "Term closure");
     return result;
@@ -62,7 +62,7 @@ export const closeAcademicYearCommand = createServerFn({ method: "POST" })
       p_school_id: data.schoolId,
       p_academic_year_id: data.periodId,
       p_expected_updated_at: data.expectedUpdatedAt,
-      p_reason: data.reason ?? null,
+      ...(typeof data.reason === "string" ? { p_reason: data.reason } : {}),
     });
     if (error) fail(error, "Academic year closure");
     return result;
