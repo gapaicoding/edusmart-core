@@ -1,6 +1,7 @@
 import type { ReactNode } from "react";
 import { AppShell } from "@/components/app-shell";
 import { useAppContext } from "@/lib/app-context";
+import { translateUiText, useAppPreferences } from "@/lib/app-preferences";
 import { Button } from "@/components/ui/button";
 import { Card, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -27,7 +28,9 @@ export function SisPage({
   actions?: ReactNode;
   children: ReactNode;
 }) {
-  const { activeOrganization, activeSchool, hasPermission, contextLoading, error } = useAppContext();
+  const { activeOrganization, activeSchool, hasPermission, contextLoading, error } =
+    useAppContext();
+  const { t, locale } = useAppPreferences();
 
   let body: ReactNode = children;
 
@@ -42,11 +45,8 @@ export function SisPage({
     body = (
       <Card>
         <CardHeader>
-          <CardTitle className="text-base">You don't have access to this area</CardTitle>
-          <CardDescription>
-            Viewing this data requires the <code className="font-mono">{readPermission}</code>{" "}
-            permission in the active organization.
-          </CardDescription>
+          <CardTitle className="text-base">{t("common.accessDenied")}</CardTitle>
+          <CardDescription>{t("common.accessDeniedDescription")}</CardDescription>
         </CardHeader>
       </Card>
     );
@@ -54,11 +54,8 @@ export function SisPage({
     body = (
       <Card>
         <CardHeader>
-          <CardTitle className="text-base">Select an organization first</CardTitle>
-          <CardDescription>
-            Student, guardian and staff records are scoped to one organization. Choose an
-            organization in the top bar to continue.
-          </CardDescription>
+          <CardTitle className="text-base">{t("common.selectOrganization")}</CardTitle>
+          <CardDescription>{t("common.selectOrganizationDescription")}</CardDescription>
         </CardHeader>
       </Card>
     );
@@ -69,12 +66,17 @@ export function SisPage({
       <div className="space-y-6">
         <div className="flex flex-wrap items-start justify-between gap-3">
           <div>
-            <h1 className="text-2xl font-semibold tracking-tight">{title}</h1>
-            <p className="text-sm text-muted-foreground">{description}</p>
+            <h1 className="text-2xl font-semibold tracking-tight">
+              {translateUiText(title, locale)}
+            </h1>
+            <p className="text-sm text-muted-foreground">{translateUiText(description, locale)}</p>
             {activeOrganization && (
               <p className="mt-1 text-xs text-muted-foreground">
-                Organization: {activeOrganization.name}
-                {activeSchool ? ` · School filter: ${activeSchool.name}` : ""}
+                {locale === "id" ? "Organisasi: " : "Organization: "}
+                {activeOrganization.name}
+                {activeSchool
+                  ? ` · ${locale === "id" ? "Filter sekolah" : "School filter"}: ${activeSchool.name}`
+                  : ""}
               </p>
             )}
           </div>
@@ -97,11 +99,12 @@ export function Pager({
   total: number;
   onPageChange: (page: number) => void;
 }) {
+  const { t } = useAppPreferences();
   const pages = Math.max(1, Math.ceil(total / pageSize));
   return (
     <div className="flex flex-wrap items-center justify-between gap-2 pt-2">
       <p className="text-xs text-muted-foreground">
-        {total} record{total === 1 ? "" : "s"} · page {page} of {pages}
+        {total} {t("common.records")} · {t("common.page")} {page} / {pages}
       </p>
       <div className="flex gap-2">
         <Button
@@ -110,7 +113,7 @@ export function Pager({
           disabled={page <= 1}
           onClick={() => onPageChange(page - 1)}
         >
-          Previous
+          {t("common.previous")}
         </Button>
         <Button
           size="sm"
@@ -118,7 +121,7 @@ export function Pager({
           disabled={page >= pages}
           onClick={() => onPageChange(page + 1)}
         >
-          Next
+          {t("common.next")}
         </Button>
       </div>
     </div>

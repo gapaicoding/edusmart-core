@@ -93,8 +93,8 @@ describe("B12 Phase 4 Parent permission UI source contract", () => {
       "DialogTitle",
       "DialogDescription",
       "PAGE_SIZE = 20",
-      "Previous",
-      "Next",
+      'preferences.t("common.previous")',
+      'preferences.t("common.next")',
       "sm:flex-row",
       "flex-wrap",
     ])

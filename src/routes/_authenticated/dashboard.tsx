@@ -1,19 +1,23 @@
 import { useEffect } from "react";
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
-import { Building2, CalendarRange, School, ShieldCheck } from "lucide-react";
+import { Building2, CalendarRange, School } from "lucide-react";
 import { AppShell } from "@/components/app-shell";
-import { PermissionGate, useAppContext } from "@/lib/app-context";
+import { useAppContext } from "@/lib/app-context";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
-import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
+import { PageHeader } from "@/components/ui/page-header";
+import { useAppPreferences } from "@/lib/app-preferences";
 
 export const Route = createFileRoute("/_authenticated/dashboard")({
   head: () => ({
     meta: [
       { title: "Dashboard — EduSmart SchoolOS" },
-      { name: "description", content: "Your EduSmart SchoolOS workspace: active organization, school, academic year and term." },
+      {
+        name: "description",
+        content:
+          "Your EduSmart SchoolOS workspace: active organization, school, academic year and term.",
+      },
       { property: "og:title", content: "Dashboard — EduSmart SchoolOS" },
       { property: "og:description", content: "Your EduSmart SchoolOS workspace overview." },
       { property: "og:type", content: "website" },
@@ -38,8 +42,8 @@ function DashboardPage() {
     activeTerm,
     academicYears,
     academicLoading,
-    permissions,
   } = useAppContext();
+  const { t } = useAppPreferences();
 
   useEffect(() => {
     if (contextLoading || error) return;
@@ -55,7 +59,6 @@ function DashboardPage() {
       navigate({ to: "/select-school", replace: true });
     }
   }, [contextLoading, error, organizations, activeOrganization, activeSchool, navigate]);
-
 
   if (error) {
     return (
@@ -74,7 +77,6 @@ function DashboardPage() {
   }
 
   if (isLoading || contextLoading || !activeOrganization) {
-
     return (
       <div className="space-y-4 p-6">
         <Skeleton className="h-8 w-56" />
@@ -90,11 +92,12 @@ function DashboardPage() {
   return (
     <AppShell>
       <div className="space-y-6">
-        <div>
-          <h1 className="text-2xl font-semibold tracking-tight">Dashboard</h1>
-          <p className="text-sm text-muted-foreground">
-            Foundation shell — module screens arrive in later batches.
+        <PageHeader title={t("dashboard.title")} description={t("dashboard.description")} />
+        <div className="rounded-lg border border-border bg-card px-5 py-4">
+          <p className="text-sm font-medium text-foreground">
+            {t("dashboard.welcome")}, {activeOrganization.name}
           </p>
+          <p className="mt-1 text-sm text-muted-foreground">{t("dashboard.workspaceReady")}</p>
         </div>
 
         <div className="grid gap-4 md:grid-cols-3">
@@ -102,7 +105,7 @@ function DashboardPage() {
             <CardHeader className="pb-2">
               <CardTitle className="flex items-center gap-2 text-sm font-medium">
                 <Building2 className="h-4 w-4 text-muted-foreground" />
-                Organization
+                {t("dashboard.organization")}
               </CardTitle>
             </CardHeader>
             <CardContent>
@@ -115,11 +118,13 @@ function DashboardPage() {
             <CardHeader className="pb-2">
               <CardTitle className="flex items-center gap-2 text-sm font-medium">
                 <School className="h-4 w-4 text-muted-foreground" />
-                School
+                {t("dashboard.school")}
               </CardTitle>
             </CardHeader>
             <CardContent>
-              <p className="text-lg font-semibold">{activeSchool?.name ?? "No school selected"}</p>
+              <p className="text-lg font-semibold">
+                {activeSchool?.name ?? t("dashboard.noSchool")}
+              </p>
               <p className="text-xs text-muted-foreground">{activeSchool?.code ?? "—"}</p>
             </CardContent>
           </Card>
@@ -128,96 +133,25 @@ function DashboardPage() {
             <CardHeader className="pb-2">
               <CardTitle className="flex items-center gap-2 text-sm font-medium">
                 <CalendarRange className="h-4 w-4 text-muted-foreground" />
-                Academic context
+                {t("dashboard.academicContext")}
               </CardTitle>
             </CardHeader>
             <CardContent>
               {academicLoading ? (
                 <Skeleton className="h-6 w-32" />
               ) : academicYears.length === 0 ? (
-                <p className="text-sm text-muted-foreground">No academic year visible for this school.</p>
+                <p className="text-sm text-muted-foreground">{t("dashboard.noYear")}</p>
               ) : (
                 <>
                   <p className="text-lg font-semibold">{activeAcademicYear?.name ?? "—"}</p>
-                  <p className="text-xs text-muted-foreground">{activeTerm?.name ?? "No term selected"}</p>
+                  <p className="text-xs text-muted-foreground">
+                    {activeTerm?.name ?? "No term selected"}
+                  </p>
                 </>
               )}
             </CardContent>
           </Card>
         </div>
-
-        <Card>
-          <CardHeader className="pb-2">
-            <CardTitle className="flex items-center gap-2 text-base">
-              <ShieldCheck className="h-4 w-4 text-muted-foreground" />
-              Your access
-            </CardTitle>
-            <CardDescription>
-              Role grants and permissions shown here drive UI visibility only — the database enforces access.
-            </CardDescription>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            <div className="flex flex-wrap gap-1">
-              {activeOrganization.roles.map((role, index) => (
-                <Badge key={`${role.code}-${index}`} variant="secondary">
-                  {role.name} · {role.scopeType}
-                </Badge>
-              ))}
-              {activeOrganization.roles.length === 0 && (
-                <p className="text-sm text-muted-foreground">No active role grants.</p>
-              )}
-            </div>
-
-            <div className="grid gap-2 sm:grid-cols-2">
-              <PermissionGate
-                permission="membership.read"
-                fallback={
-                  <Alert>
-                    <AlertDescription className="text-xs">
-                      People &amp; memberships are hidden — membership.read not granted.
-                    </AlertDescription>
-                  </Alert>
-                }
-              >
-                <Alert>
-                  <AlertDescription className="text-xs">
-                    People &amp; memberships area unlocked (membership.read).
-                  </AlertDescription>
-                </Alert>
-              </PermissionGate>
-
-              <PermissionGate
-                permission="membership.invite"
-                fallback={
-                  <Alert>
-                    <AlertDescription className="text-xs">
-                      Invitations are hidden — membership.invite not granted.
-                    </AlertDescription>
-                  </Alert>
-                }
-              >
-                <Alert>
-                  <AlertDescription className="text-xs">
-                    Invitation issuance unlocked (membership.invite).
-                  </AlertDescription>
-                </Alert>
-              </PermissionGate>
-            </div>
-
-            <div className="flex flex-wrap gap-1">
-              {permissions.slice(0, 24).map((code) => (
-                <Badge key={code} variant="outline" className="text-[10px] font-normal">
-                  {code}
-                </Badge>
-              ))}
-              {permissions.length > 24 && (
-                <Badge variant="outline" className="text-[10px] font-normal">
-                  +{permissions.length - 24} more
-                </Badge>
-              )}
-            </div>
-          </CardContent>
-        </Card>
       </div>
     </AppShell>
   );

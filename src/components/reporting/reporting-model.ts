@@ -60,7 +60,7 @@ export function formatReportingMutationError(error: unknown) {
   const message = error instanceof Error ? error.message : "";
   if (/changed|stale|refresh/i.test(message))
     return "This report card changed in another session. Reload the latest version before continuing.";
-  return message || "We couldn't complete that report card action right now.";
+  return "We couldn't complete that report card action right now.";
 }
 
 export function safeAttendance(value: unknown) {

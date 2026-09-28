@@ -29,6 +29,7 @@ import {
 import { Skeleton } from "@/components/ui/skeleton";
 import { Textarea } from "@/components/ui/textarea";
 import { useAppContext } from "@/lib/app-context";
+import { formatPreferredDate, translateUiText, useAppPreferences } from "@/lib/app-preferences";
 import { B13DomainError } from "@/lib/teacher-daily-operations.server";
 import {
   createTeachingJournal,
@@ -69,9 +70,10 @@ const dateText = (value: unknown) => {
 const displayDate = (value: unknown) => {
   const raw = dateText(value);
   if (!raw) return "—";
-  return new Intl.DateTimeFormat(undefined, { dateStyle: "medium" }).format(
-    new Date(`${raw}T12:00:00`),
-  );
+  return formatPreferredDate(new Date(`${raw}T12:00:00Z`), {
+    dateStyle: "medium",
+    timeZone: "UTC",
+  });
 };
 const displayTime = (value: unknown) => {
   const raw = text(value);
@@ -105,14 +107,19 @@ function PageFrame({
   children: ReactNode;
 }) {
   const { activeSchool } = useAppContext();
+  const { locale } = useAppPreferences();
   return (
     <AppShell>
       <div className="space-y-6">
         <div>
-          <h1 className="text-2xl font-semibold tracking-tight">{title}</h1>
-          <p className="text-sm text-muted-foreground">{description}</p>
+          <h1 className="text-2xl font-semibold tracking-tight">
+            {translateUiText(title, locale)}
+          </h1>
+          <p className="text-sm text-muted-foreground">{translateUiText(description, locale)}</p>
           {activeSchool && (
-            <p className="mt-1 text-xs text-muted-foreground">Scope: {activeSchool.name}</p>
+            <p className="mt-1 text-xs text-muted-foreground">
+              {locale === "id" ? "Lingkup" : "Scope"}: {activeSchool.name}
+            </p>
           )}
         </div>
         {children}
@@ -318,7 +325,8 @@ function JournalEditor({ occurrence, journal, onClose, onSaved }: EditorProps) {
 }
 
 export function TeachingJournalPage() {
-  const { hasPermission } = useAppContext();
+  const { hasPermission, contextLoading } = useAppContext();
+  const { locale } = useAppPreferences();
   const canUse = [
     "teaching_journal.read",
     "teaching_journal.create",
@@ -351,6 +359,20 @@ export function TeachingJournalPage() {
       ),
     [journalsQuery.data],
   );
+  if (contextLoading)
+    return (
+      <PageFrame
+        title="Teaching Journal"
+        description="Record the work completed in scheduled teaching sessions."
+      >
+        <Card>
+          <CardContent className="space-y-3 p-6">
+            <Skeleton className="h-5 w-40" />
+            <Skeleton className="h-24 w-full" />
+          </CardContent>
+        </Card>
+      </PageFrame>
+    );
   if (!canUse)
     return (
       <PageFrame
@@ -359,9 +381,12 @@ export function TeachingJournalPage() {
       >
         <Card>
           <CardHeader>
-            <CardTitle>Access unavailable</CardTitle>
+            <CardTitle>{translateUiText("Access unavailable", locale)}</CardTitle>
             <CardDescription>
-              Your active account does not have a Teaching Journal permission.
+              {translateUiText(
+                "Your active account does not have a Teaching Journal permission.",
+                locale,
+              )}
             </CardDescription>
           </CardHeader>
         </Card>

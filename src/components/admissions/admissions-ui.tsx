@@ -30,6 +30,7 @@ import {
 } from "@/components/ui/select";
 import { supabase } from "@/integrations/supabase/client";
 import { useAppContext, PermissionGate } from "@/lib/app-context";
+import { formatPreferredDate, translateUiText, useAppPreferences } from "@/lib/app-preferences";
 import {
   acceptAdmissionApplication,
   archiveAdmissionCycle,
@@ -116,7 +117,7 @@ const safeError = (error: unknown) => {
     message.toLowerCase().includes("duplicate")
   )
     return "A student with the same canonical student identifier already exists. This application was not converted.";
-  return message || "This action could not be completed.";
+  return "This action could not be completed.";
 };
 const requestId = () => crypto.randomUUID();
 
@@ -147,6 +148,7 @@ function PageState({
 }
 
 export function PublicAdmissionPage({ cycleId }: { cycleId: string }) {
+  const preferences = useAppPreferences();
   const query = useQuery({
     queryKey: ["b18", "public-cycle", cycleId],
     queryFn: async () =>
@@ -281,8 +283,14 @@ export function PublicAdmissionPage({ cycleId }: { cycleId: string }) {
             {cycle.available ? "Applications open" : "Applications unavailable"}
           </Badge>
           <span className="text-muted-foreground">
-            Window: {cycle.opens_at ? new Date(cycle.opens_at).toLocaleString() : "Any time"} –{" "}
-            {cycle.closes_at ? new Date(cycle.closes_at).toLocaleString() : "No closing date"}
+            {translateUiText("Window", preferences.locale)}:{" "}
+            {cycle.opens_at
+              ? formatPreferredDate(cycle.opens_at, { dateStyle: "medium", timeStyle: "short" })
+              : translateUiText("Any time", preferences.locale)}{" "}
+            –{" "}
+            {cycle.closes_at
+              ? formatPreferredDate(cycle.closes_at, { dateStyle: "medium", timeStyle: "short" })
+              : translateUiText("No closing date", preferences.locale)}
           </span>
         </div>
         <p className="mt-4 text-sm text-muted-foreground">
@@ -545,6 +553,7 @@ export function AdmissionsWorkspace({ applicationId }: { applicationId?: string 
 
 function AdmissionsDashboard() {
   const { activeSchool, hasPermission } = useAppContext();
+  const { locale, t } = useAppPreferences();
   const schoolId = activeSchool?.id;
   const queryClient = useQueryClient();
   const cyclesFn = useServerFn(listAdmissionCycles);
@@ -558,10 +567,15 @@ function AdmissionsDashboard() {
   return (
     <div className="space-y-6">
       <header>
-        <p className="text-sm font-medium text-primary">Admissions</p>
-        <h1 className="text-3xl font-bold tracking-tight">PPDB workspace</h1>
+        <p className="text-sm font-medium text-primary">{translateUiText("Admissions", locale)}</p>
+        <h1 className="text-3xl font-bold tracking-tight">
+          {translateUiText("PPDB workspace", locale)}
+        </h1>
         <p className="mt-2 text-muted-foreground">
-          Manage admission cycles and review applications within your active school.
+          {translateUiText(
+            "Manage admission cycles and review applications within your active school.",
+            locale,
+          )}
         </p>
       </header>
       <PageState error={cyclesQuery.error} onRetry={() => void cyclesQuery.refetch()}>
@@ -593,6 +607,7 @@ function CyclePanel({
   onChanged: () => void;
 }) {
   const { hasPermission } = useAppContext();
+  const { locale } = useAppPreferences();
   const [reasonOpen, setReasonOpen] = useState(false);
   const [action, setAction] = useState<"reopen" | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -660,8 +675,21 @@ function CyclePanel({
                 </Badge>
               </div>
               <p className="mt-1 text-xs text-muted-foreground">
-                {item.opens_at ? new Date(item.opens_at).toLocaleDateString() : "No opening date"} –{" "}
-                {item.closes_at ? new Date(item.closes_at).toLocaleDateString() : "No closing date"}
+                {item.opens_at
+                  ? formatPreferredDate(
+                      item.opens_at,
+                      { dateStyle: "medium", timeZone: "UTC" },
+                      locale,
+                    )
+                  : translateUiText("No opening date", locale)}{" "}
+                –{" "}
+                {item.closes_at
+                  ? formatPreferredDate(
+                      item.closes_at,
+                      { dateStyle: "medium", timeZone: "UTC" },
+                      locale,
+                    )
+                  : translateUiText("No closing date", locale)}
               </p>
             </button>
           ))}
@@ -737,6 +765,7 @@ function CyclePanel({
 }
 
 function ApplicationQueue({ cycleId }: { cycleId: string | null }) {
+  const { locale, t } = useAppPreferences();
   const fn = useServerFn(listAdmissionApplications);
   const [status, setStatus] = useState("all");
   const [offset, setOffset] = useState(0);
@@ -764,9 +793,9 @@ function ApplicationQueue({ cycleId }: { cycleId: string | null }) {
       <CardHeader>
         <div className="flex items-start justify-between gap-3">
           <div>
-            <CardTitle>Applications</CardTitle>
+            <CardTitle>{translateUiText("Applications", locale)}</CardTitle>
             <CardDescription>
-              {data.total ?? 0} bounded results in the selected cycle.
+              {t("admissions.applicationCount", { count: String(data.total ?? 0) })}
             </CardDescription>
           </div>
           <Select
@@ -780,7 +809,7 @@ function ApplicationQueue({ cycleId }: { cycleId: string | null }) {
               <SelectValue />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="all">All statuses</SelectItem>
+              <SelectItem value="all">{translateUiText("All statuses", locale)}</SelectItem>
               {["submitted", "under_review", "accepted", "rejected", "withdrawn", "converted"].map(
                 (item) => (
                   <SelectItem key={item} value={item}>
@@ -801,7 +830,7 @@ function ApplicationQueue({ cycleId }: { cycleId: string | null }) {
             </div>
           ) : data.items.length === 0 ? (
             <p className="py-8 text-center text-sm text-muted-foreground">
-              No applications match this filter.
+              {translateUiText("No applications match this filter.", locale)}
             </p>
           ) : (
             <div className="space-y-2">
@@ -817,7 +846,11 @@ function ApplicationQueue({ cycleId }: { cycleId: string | null }) {
                     <Badge variant="secondary">{statusLabel(item.status)}</Badge>
                   </div>
                   <p className="mt-1 text-xs text-muted-foreground">
-                    {item.application_number} · {new Date(item.submitted_at).toLocaleDateString()}
+                    {item.application_number} ·{" "}
+                    {formatPreferredDate(item.submitted_at, {
+                      dateStyle: "medium",
+                      timeZone: "UTC",
+                    })}
                   </p>
                 </Link>
               ))}
@@ -830,10 +863,10 @@ function ApplicationQueue({ cycleId }: { cycleId: string | null }) {
               disabled={offset === 0}
               onClick={() => setOffset(Math.max(0, offset - 50))}
             >
-              Previous
+              {t("common.previous")}
             </Button>
             <span className="text-xs text-muted-foreground">
-              Page {Math.floor(offset / 50) + 1}
+              {t("common.page")} {Math.floor(offset / 50) + 1}
             </span>
             <Button
               variant="outline"
@@ -841,7 +874,7 @@ function ApplicationQueue({ cycleId }: { cycleId: string | null }) {
               disabled={offset + 50 >= (data.total ?? 0)}
               onClick={() => setOffset(offset + 50)}
             >
-              Next
+              {t("common.next")}
             </Button>
           </div>
         </PageState>

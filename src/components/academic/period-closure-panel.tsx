@@ -25,6 +25,7 @@ import {
 } from "@/components/ui/dialog";
 import { Textarea } from "@/components/ui/textarea";
 import { useAppContext } from "@/lib/app-context";
+import { formatPreferredDate, translateUiText, useAppPreferences } from "@/lib/app-preferences";
 import {
   closeAcademicYearCommand,
   closeTermCommand,
@@ -57,6 +58,7 @@ type Props = {
 };
 
 export function PeriodClosurePanel(props: Props) {
+  const preferences = useAppPreferences();
   const { hasPermission } = useAppContext();
   const queryClient = useQueryClient();
   const [reopenOpen, setReopenOpen] = useState(false);
@@ -118,7 +120,20 @@ export function PeriodClosurePanel(props: Props) {
       ) {
         unresolvedAction.current = null;
       }
-      setErrorMessage(message);
+      const safeMessage = /changed in another session/i.test(message)
+        ? "This period changed in another session. Reload the latest period before trying again."
+        : /still has closure blockers/i.test(message)
+          ? "This period still has items to resolve before it can be closed. Refresh readiness and review the checklist."
+          : /not have permission/i.test(message)
+            ? "You do not have permission to perform this period action."
+            : /cannot make that lifecycle/i.test(message)
+              ? "This period is no longer in a state that allows this action."
+              : /already used with different details/i.test(message)
+                ? "This request could not be confirmed. Start a new request after checking the period status."
+                : /reason of at least/i.test(message)
+                  ? "Enter a reason with at least the required detail before reopening this period."
+                  : "The academic period action could not be completed. Reload and try again.";
+      setErrorMessage(translateUiText(safeMessage, preferences.locale));
     },
   });
 
@@ -161,7 +176,12 @@ export function PeriodClosurePanel(props: Props) {
             : "Historical period — archived"}
         </AlertTitle>
         <AlertDescription className="mt-2 space-y-2">
-          {props.closedAt && <p>Closure recorded {new Date(props.closedAt).toLocaleString()}.</p>}
+          {props.closedAt && (
+            <p>
+              {translateUiText("Closure recorded", preferences.locale)}{" "}
+              {formatPreferredDate(props.closedAt, { dateStyle: "medium", timeStyle: "short" })}.
+            </p>
+          )}
           {props.closedByProfileId && <p>Closed by an authorized school operator.</p>}
           {props.status === "closed" && hasPermission(reopenPermission) && (
             <Button

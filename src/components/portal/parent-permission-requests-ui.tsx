@@ -28,6 +28,7 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { Skeleton } from "@/components/ui/skeleton";
+import { formatPreferredDate, translateUiText, useAppPreferences } from "@/lib/app-preferences";
 import {
   getParentPermissionRequest,
   listParentPermissionRequests,
@@ -151,7 +152,7 @@ function formatDate(value: string | null) {
   const date = new Date(value);
   return Number.isNaN(date.valueOf())
     ? "Deadline unavailable"
-    : new Intl.DateTimeFormat("en", { dateStyle: "medium", timeStyle: "short" }).format(date);
+    : formatPreferredDate(date, { dateStyle: "medium", timeStyle: "short" });
 }
 
 function label(value: string | null) {
@@ -372,6 +373,7 @@ function ConfirmationDialog({
 }
 
 export function ParentPermissionRequestListPage() {
+  const preferences = useAppPreferences();
   const fetch = useServerFn(listParentPermissionRequests);
   const [page, setPage] = useState(1);
   const query = useQuery({
@@ -381,12 +383,19 @@ export function ParentPermissionRequestListPage() {
   const requests = parseRequests(query.data);
   return (
     <AppShell>
-      <main className="mx-auto max-w-4xl space-y-6">
+      <div className="mx-auto max-w-4xl space-y-6">
         <header>
-          <p className="text-xs uppercase tracking-wide text-muted-foreground">Parent Portal</p>
-          <h1 className="text-2xl font-semibold tracking-tight">Permission Requests</h1>
+          <p className="text-xs uppercase tracking-wide text-muted-foreground">
+            {translateUiText("Parent Portal", preferences.locale)}
+          </p>
+          <h1 className="text-2xl font-semibold tracking-tight">
+            {translateUiText("Permission Requests", preferences.locale)}
+          </h1>
           <p className="mt-1 text-sm text-muted-foreground">
-            Review and respond to permission requests for your children.
+            {translateUiText(
+              "Review and respond to permission requests for your children.",
+              preferences.locale,
+            )}
           </p>
         </header>
         {query.isPending ? (
@@ -464,19 +473,21 @@ export function ParentPermissionRequestListPage() {
             disabled={page <= 1}
             onClick={() => setPage((value) => value - 1)}
           >
-            <ChevronLeft /> Previous
+            <ChevronLeft /> {preferences.t("common.previous")}
           </Button>
-          <span className="self-center text-sm text-muted-foreground">Page {page}</span>
+          <span className="self-center text-sm text-muted-foreground">
+            {preferences.t("common.page")} {page}
+          </span>
           <Button
             size="sm"
             variant="outline"
             disabled={requests.length < PAGE_SIZE}
             onClick={() => setPage((value) => value + 1)}
           >
-            Next <ChevronRight />
+            {preferences.t("common.next")} <ChevronRight />
           </Button>
         </div>
-      </main>
+      </div>
     </AppShell>
   );
 }
@@ -559,16 +570,16 @@ export function ParentPermissionRequestDetailPage({ requestId }: { requestId: st
   if (detailQuery.isPending)
     return (
       <AppShell>
-        <main className="mx-auto max-w-4xl space-y-4">
+        <div className="mx-auto max-w-4xl space-y-4">
           <Skeleton className="h-8 w-48" />
           <Skeleton className="h-56 w-full" />
-        </main>
+        </div>
       </AppShell>
     );
   if (detailQuery.error || !request)
     return (
       <AppShell>
-        <main className="mx-auto max-w-4xl space-y-4">
+        <div className="mx-auto max-w-4xl space-y-4">
           <Alert variant="destructive">
             <AlertTitle>We couldn't load this permission request</AlertTitle>
             <AlertDescription>
@@ -578,12 +589,12 @@ export function ParentPermissionRequestDetailPage({ requestId }: { requestId: st
           <Button variant="outline" onClick={() => navigate({ to: "/portal/permission-requests" })}>
             Back to permission requests
           </Button>
-        </main>
+        </div>
       </AppShell>
     );
   return (
     <AppShell>
-      <main className="mx-auto max-w-4xl space-y-6">
+      <div className="mx-auto max-w-4xl space-y-6">
         <div className="flex flex-wrap items-start justify-between gap-3">
           <div>
             <Link
@@ -692,7 +703,7 @@ export function ParentPermissionRequestDetailPage({ requestId }: { requestId: st
             if (action) mutation.mutate(action);
           }}
         />
-      </main>
+      </div>
     </AppShell>
   );
 }

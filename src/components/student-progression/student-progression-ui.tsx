@@ -12,9 +12,16 @@ import {
   ShieldAlert,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { AppShell } from "@/components/app-shell";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { PermissionGate, useAppContext } from "@/lib/app-context";
+import {
+  formatPreferredDate,
+  translateUiNode,
+  translateUiText,
+  useAppPreferences,
+} from "@/lib/app-preferences";
 import { listGradeLevels, listClassrooms } from "@/lib/academic.functions";
 import {
   approveProgressionBatch,
@@ -43,6 +50,7 @@ const safeError = (error: unknown) =>
     : "The progression operation could not be completed.";
 
 function Status({ value }: { value: string }) {
+  const { locale } = useAppPreferences();
   return (
     <Badge
       variant={
@@ -53,7 +61,7 @@ function Status({ value }: { value: string }) {
             : "secondary"
       }
     >
-      {value.replaceAll("_", " ")}
+      {translateUiText(value.replaceAll("_", " "), locale)}
     </Badge>
   );
 }
@@ -67,14 +75,23 @@ function Shell({
   title: string;
   description?: string;
 }) {
+  const { locale } = useAppPreferences();
   return (
-    <main className="mx-auto w-full max-w-7xl space-y-6 p-4 sm:p-6">
-      <div>
-        <h1 className="text-2xl font-semibold tracking-tight">{title}</h1>
-        {description && <p className="mt-1 text-sm text-muted-foreground">{description}</p>}
+    <AppShell>
+      <div className="mx-auto w-full max-w-7xl space-y-6 p-4 sm:p-6">
+        <div>
+          <h1 className="text-2xl font-semibold tracking-tight">
+            {translateUiText(title, locale)}
+          </h1>
+          {description && (
+            <p className="mt-1 text-sm text-muted-foreground">
+              {translateUiText(description, locale)}
+            </p>
+          )}
+        </div>
+        {translateUiNode(children, locale)}
       </div>
-      {children}
-    </main>
+    </AppShell>
   );
 }
 
@@ -726,7 +743,12 @@ export function StudentProgressionDetailPage({ batchId }: { batchId: string }) {
               <div>
                 <dt className="text-sm text-muted-foreground">Applied at</dt>
                 <dd className="text-sm font-medium">
-                  {batch.applied_at ? new Date(String(batch.applied_at)).toLocaleString() : "—"}
+                  {batch.applied_at
+                    ? formatPreferredDate(String(batch.applied_at), {
+                        dateStyle: "medium",
+                        timeStyle: "short",
+                      })
+                    : "—"}
                 </dd>
               </div>
             </dl>

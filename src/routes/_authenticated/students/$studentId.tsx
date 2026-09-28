@@ -6,6 +6,7 @@ import { toast } from "sonner";
 
 import { Field, FormDialog, QueryState, SisPage, StatusBadge } from "@/components/sis/sis-ui";
 import { useAppContext } from "@/lib/app-context";
+import { translateUiText, useAppPreferences } from "@/lib/app-preferences";
 import {
   getStudentDetail,
   listGuardians,
@@ -102,6 +103,7 @@ function today() {
 function StudentDetailPage() {
   const { studentId } = Route.useParams();
   const { activeOrganization, hasPermission } = useAppContext();
+  const { locale, formatDate } = useAppPreferences();
   const queryClient = useQueryClient();
 
   const fetchDetail = useServerFn(getStudentDetail);
@@ -172,9 +174,10 @@ function StudentDetailPage() {
   const [invitationEmail, setInvitationEmail] = useState("");
   const [invitationSchoolId, setInvitationSchoolId] = useState("");
   const [invitationError, setInvitationError] = useState<string | null>(null);
-  const [invitationResult, setInvitationResult] = useState<{ token: string; expiresAt: string } | null>(
-    null,
-  );
+  const [invitationResult, setInvitationResult] = useState<{
+    token: string;
+    expiresAt: string;
+  } | null>(null);
 
   const yearsQuery = useQuery({
     queryKey: ["academic", "years", enrollmentForm.schoolId],
@@ -235,7 +238,9 @@ function StudentDetailPage() {
       void queryClient.invalidateQueries({ queryKey: ["sis"] });
     },
     onError: (error: unknown) =>
-      setEnrollmentError(error instanceof Error ? error.message : "We couldn't save this enrolment."),
+      setEnrollmentError(
+        error instanceof Error ? error.message : "We couldn't save this enrolment.",
+      ),
   });
 
   const placementMutation = useMutation({
@@ -329,7 +334,11 @@ function StudentDetailPage() {
 
   function submitEnrollment(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
-    if (!enrollmentForm.schoolId || !enrollmentForm.academicYearId || !enrollmentForm.gradeLevelId) {
+    if (
+      !enrollmentForm.schoolId ||
+      !enrollmentForm.academicYearId ||
+      !enrollmentForm.gradeLevelId
+    ) {
       setEnrollmentError("School, academic year and grade level are required.");
       return;
     }
@@ -419,14 +428,11 @@ function StudentDetailPage() {
               {student?.hasLogin ? (
                 <p className="text-sm">
                   Portal access is <span className="font-medium">linked</span>. This student can
-                  sign in and see their own schedule, attendance, scores and published report
-                  cards.
+                  sign in and see their own schedule, attendance, scores and published report cards.
                 </p>
               ) : (
                 <>
-                  <p className="text-muted-foreground">
-                    No Student Portal account is linked yet.
-                  </p>
+                  <p className="text-muted-foreground">No Student Portal account is linked yet.</p>
                   {canInviteStudent ? (
                     <Button
                       size="sm"
@@ -500,7 +506,9 @@ function StudentDetailPage() {
                     {(detailQuery.data?.enrollments ?? []).map((e) => (
                       <TableRow key={e.id}>
                         <TableCell>{schoolName(e.schoolId)}</TableCell>
-                        <TableCell className="font-mono text-xs">{e.studentNumber ?? "—"}</TableCell>
+                        <TableCell className="font-mono text-xs">
+                          {e.studentNumber ?? "—"}
+                        </TableCell>
                         <TableCell className="text-xs">
                           {e.enrolledOn}
                           {e.endedOn ? ` → ${e.endedOn}` : ""}
@@ -565,8 +573,8 @@ function StudentDetailPage() {
             <CardHeader>
               <CardTitle className="text-base">Classroom placements</CardTitle>
               <CardDescription>
-                A placement always belongs to one enrolment, and must match its school, academic year
-                and grade level.
+                A placement always belongs to one enrolment, and must match its school, academic
+                year and grade level.
               </CardDescription>
             </CardHeader>
             <CardContent>
@@ -593,7 +601,9 @@ function StudentDetailPage() {
                             </span>
                           )}
                           {p.classroomCode ? (
-                            <span className="ml-2 text-xs text-muted-foreground">{p.classroomCode}</span>
+                            <span className="ml-2 text-xs text-muted-foreground">
+                              {p.classroomCode}
+                            </span>
                           ) : null}
                         </TableCell>
                         <TableCell className="text-xs">
@@ -758,7 +768,12 @@ function StudentDetailPage() {
           <Select
             value={enrollmentForm.schoolId}
             onValueChange={(v) =>
-              setEnrollmentForm({ ...enrollmentForm, schoolId: v, academicYearId: "", gradeLevelId: "" })
+              setEnrollmentForm({
+                ...enrollmentForm,
+                schoolId: v,
+                academicYearId: "",
+                gradeLevelId: "",
+              })
             }
           >
             <SelectTrigger>
@@ -1003,7 +1018,10 @@ function StudentDetailPage() {
           />
         </Field>
         <Field label="Status">
-          <Select value={linkForm.status} onValueChange={(v) => setLinkForm({ ...linkForm, status: v })}>
+          <Select
+            value={linkForm.status}
+            onValueChange={(v) => setLinkForm({ ...linkForm, status: v })}
+          >
             <SelectTrigger>
               <SelectValue />
             </SelectTrigger>
@@ -1070,12 +1088,12 @@ function StudentDetailPage() {
         </Field>
         {invitationResult && (
           <div className="rounded-md border border-border bg-muted/50 p-3 text-xs">
-            <p className="font-medium">Invitation created.</p>
+            <p className="font-medium">{translateUiText("Invitation created.", locale)}</p>
             <p className="mt-1 break-all">
               Link: {window.location.origin}/accept-invite?token={invitationResult.token}
             </p>
             <p className="mt-1 text-muted-foreground">
-              Expires {new Date(invitationResult.expiresAt).toLocaleString()}
+              {translateUiText("Expires", locale)} {formatDate(invitationResult.expiresAt)}
             </p>
           </div>
         )}

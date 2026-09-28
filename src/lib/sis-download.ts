@@ -32,7 +32,8 @@ const SIS_ERROR_MESSAGES: Record<string, string> = {
   B10_CONFIRMATION_TOKEN_INVALID: "Confirmation authorization expired. Revalidate the workbook.",
   B10_STALE_PREVIEW: "School data changed after validation. Revalidate before confirming.",
   B10_EXTERNAL_REF_CONFLICT: "A durable reference changed after validation. Revalidate first.",
-  B10_CLASS_ENROLLMENT_OVERLAP: "A class placement now overlaps another placement. Revalidate first.",
+  B10_CLASS_ENROLLMENT_OVERLAP:
+    "A class placement now overlaps another placement. Revalidate first.",
   B10_AY_GRADE_MISMATCH: "Academic year, grade, or classroom data changed. Revalidate first.",
   B10_EXPORT_REFERENCES_NOT_READY: "Prepare durable references before exporting.",
   B10_IMPORT_COMMIT_FAILED: "The operation could not be completed safely.",
@@ -40,5 +41,5 @@ const SIS_ERROR_MESSAGES: Record<string, string> = {
 
 export function sisErrorMessage(error: unknown) {
   const code = sisErrorCode(error);
-  return `${SIS_ERROR_MESSAGES[code] ?? SIS_ERROR_MESSAGES["B10_IMPORT_COMMIT_FAILED"]} (${code})`;
+  return SIS_ERROR_MESSAGES[code] ?? "The operation could not be completed safely.";
 }

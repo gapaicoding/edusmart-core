@@ -5,6 +5,7 @@ import { useServerFn } from "@tanstack/react-start";
 import { ArrowLeft, ClipboardCheck, Pencil, Plus } from "lucide-react";
 import { toast } from "sonner";
 import { useAppContext, PermissionGate } from "@/lib/app-context";
+import { formatPreferredDate, translateUiText, useAppPreferences } from "@/lib/app-preferences";
 import { getAssessmentOptions } from "@/lib/assessment.functions";
 import {
   correctFinalScoreCommand,
@@ -72,6 +73,7 @@ function AssessmentForm({
   scope: NonNullable<ReturnType<typeof useScope>["scope"]>;
   onSaved: () => void;
 }) {
+  const { locale } = useAppPreferences();
   const optionsFn = useServerFn(getAssessmentOptions);
   const createFn = useServerFn(createAssessmentCommand);
   const [open, setOpen] = useState(false);
@@ -105,11 +107,14 @@ function AssessmentForm({
         },
       }),
     onSuccess: () => {
-      toast.success("Assessment draft created.");
+      toast.success(translateUiText("Assessment draft created.", locale));
       setOpen(false);
       onSaved();
     },
-    onError: (error: Error) => toast.error(error.message),
+    onError: () =>
+      toast.error(
+        translateUiText("The assessment action could not be completed. Please try again.", locale),
+      ),
   });
   return (
     <Dialog open={open} onOpenChange={setOpen}>
@@ -129,9 +134,9 @@ function AssessmentForm({
         ) : (
           <div className="grid gap-4 sm:grid-cols-2">
             <div className="sm:col-span-2">
-              <Label>Teaching assignment</Label>
+              <Label htmlFor="assessment-assignment">Teaching assignment</Label>
               <Select value={assignment} onValueChange={setAssignment}>
-                <SelectTrigger>
+                <SelectTrigger id="assessment-assignment">
                   <SelectValue placeholder="Choose class and subject" />
                 </SelectTrigger>
                 <SelectContent>
@@ -144,7 +149,7 @@ function AssessmentForm({
               </Select>
             </div>
             <div>
-              <Label>Assessment type</Label>
+              <Label htmlFor="assessment-type">Assessment type</Label>
               <Select
                 value={type}
                 onValueChange={(value) => {
@@ -155,7 +160,7 @@ function AssessmentForm({
                   setWeight(defaultWeight == null ? "" : String(defaultWeight));
                 }}
               >
-                <SelectTrigger>
+                <SelectTrigger id="assessment-type">
                   <SelectValue placeholder="Choose type" />
                 </SelectTrigger>
                 <SelectContent>
@@ -168,20 +173,27 @@ function AssessmentForm({
               </Select>
             </div>
             <div>
-              <Label>Date</Label>
-              <Input type="date" value={date} onChange={(event) => setDate(event.target.value)} />
+              <Label htmlFor="assessment-date">Date</Label>
+              <Input
+                id="assessment-date"
+                type="date"
+                value={date}
+                onChange={(event) => setDate(event.target.value)}
+              />
             </div>
             <div className="sm:col-span-2">
-              <Label>Title</Label>
+              <Label htmlFor="assessment-title">Title</Label>
               <Input
+                id="assessment-title"
                 value={title}
                 maxLength={160}
                 onChange={(event) => setTitle(event.target.value)}
               />
             </div>
             <div>
-              <Label>Minimum score</Label>
+              <Label htmlFor="assessment-min-score">Minimum score</Label>
               <Input
+                id="assessment-min-score"
                 type="number"
                 step="0.01"
                 value={min}
@@ -189,8 +201,9 @@ function AssessmentForm({
               />
             </div>
             <div>
-              <Label>Maximum score</Label>
+              <Label htmlFor="assessment-max-score">Maximum score</Label>
               <Input
+                id="assessment-max-score"
                 type="number"
                 step="0.01"
                 value={max}
@@ -198,8 +211,9 @@ function AssessmentForm({
               />
             </div>
             <div>
-              <Label>Weight (optional)</Label>
+              <Label htmlFor="assessment-weight">Weight (optional)</Label>
               <Input
+                id="assessment-weight"
                 type="number"
                 min="0"
                 step="0.0001"
@@ -208,8 +222,9 @@ function AssessmentForm({
               />
             </div>
             <div className="sm:col-span-2">
-              <Label>Description (optional)</Label>
+              <Label htmlFor="assessment-description">Description (optional)</Label>
               <Textarea
+                id="assessment-description"
                 value={description}
                 onChange={(event) => setDescription(event.target.value)}
               />
@@ -233,6 +248,7 @@ function AssessmentForm({
 }
 
 export function AssessmentsPage() {
+  const { locale, t } = useAppPreferences();
   const { context, scope } = useScope();
   const qc = useQueryClient();
   const listFn = useServerFn(listAssessmentProjection);
@@ -251,7 +267,8 @@ export function AssessmentsPage() {
   if (context.contextLoading || context.academicLoading || (!scope && !context.error)) {
     return <Skeleton className="h-56" />;
   }
-  if (context.error) return <StateMessage>{context.error.message}</StateMessage>;
+  if (context.error)
+    return <StateMessage>We couldn't load assessments. Please try again.</StateMessage>;
   if (!scope) return <StateMessage>Select a complete academic context.</StateMessage>;
   if (!canRead) return <StateMessage>Access unavailable.</StateMessage>;
   const assignmentLabels = new Map(
@@ -262,9 +279,12 @@ export function AssessmentsPage() {
     <div className="space-y-6">
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div>
-          <h1 className="text-2xl font-bold">Assessments</h1>
+          <h1 className="text-2xl font-bold">{translateUiText("Assessments", locale)}</h1>
           <p className="text-sm text-muted-foreground">
-            Create assessments and manage scoring for the selected term.
+            {translateUiText(
+              "Create assessments and manage scoring for the selected term.",
+              locale,
+            )}
           </p>
         </div>
         <PermissionGate permission="assessment.create">
@@ -277,7 +297,7 @@ export function AssessmentsPage() {
       {query.isPending ? (
         <Skeleton className="h-48" />
       ) : query.error ? (
-        <StateMessage>{(query.error as Error).message}</StateMessage>
+        <StateMessage>We couldn't load assessments. Please try again.</StateMessage>
       ) : query.data.length === 0 ? (
         <StateMessage>No assessments in this term.</StateMessage>
       ) : (
@@ -301,7 +321,8 @@ export function AssessmentsPage() {
                   </div>
                 </CardHeader>
                 <CardContent className="text-sm text-muted-foreground">
-                  {assessment.assessment_date} · Version {assessment.version}
+                  {formatPreferredDate(assessment.assessment_date)} · {t("common.version")}{" "}
+                  {assessment.version}
                 </CardContent>
               </Card>
             </Link>
@@ -325,6 +346,7 @@ type GradebookRow = {
 };
 
 export function AssessmentDetailPage({ id }: { id: string }) {
+  const { locale, t } = useAppPreferences();
   const { context, scope } = useScope();
   const qc = useQueryClient();
   const detailFn = useServerFn(getAssessmentProjection);
@@ -384,12 +406,14 @@ export function AssessmentDetailPage({ id }: { id: string }) {
         },
       }),
     onSuccess: () => {
-      toast.success("Scores saved.");
+      toast.success(translateUiText("Scores saved.", locale));
       refresh();
     },
     onError: (error: Error) => {
       setConflict(/changed|refresh|stale/i.test(error.message));
-      toast.error(error.message);
+      toast.error(
+        translateUiText("The assessment action could not be completed. Please try again.", locale),
+      );
     },
   });
   const lifecycle = useMutation({
@@ -405,12 +429,14 @@ export function AssessmentDetailPage({ id }: { id: string }) {
         },
       }),
     onSuccess: () => {
-      toast.success("Assessment status updated.");
+      toast.success(translateUiText("Assessment status updated.", locale));
       refresh();
     },
     onError: (error: Error) => {
       setConflict(/changed|refresh|stale/i.test(error.message));
-      toast.error(error.message);
+      toast.error(
+        translateUiText("The assessment action could not be completed. Please try again.", locale),
+      );
     },
   });
   const updateDraft = useMutation({
@@ -432,12 +458,14 @@ export function AssessmentDetailPage({ id }: { id: string }) {
         },
       }),
     onSuccess: () => {
-      toast.success("Draft updated.");
+      toast.success(translateUiText("Draft updated.", locale));
       refresh();
     },
     onError: (error: Error) => {
       setConflict(/changed|refresh|stale/i.test(error.message));
-      toast.error(error.message);
+      toast.error(
+        translateUiText("The assessment action could not be completed. Please try again.", locale),
+      );
     },
   });
   const correction = useMutation({
@@ -456,23 +484,22 @@ export function AssessmentDetailPage({ id }: { id: string }) {
         },
       }),
     onSuccess: () => {
-      toast.success("Final score corrected.");
+      toast.success(translateUiText("Final score corrected.", locale));
       setCorrectionRow(null);
       setCorrectionReason("");
       refresh();
     },
-    onError: (error: Error) => toast.error(error.message),
+    onError: () =>
+      toast.error(
+        translateUiText("The assessment action could not be completed. Please try again.", locale),
+      ),
   });
   if (context.contextLoading || detail.isPending || gradebook.isPending)
     return <Skeleton className="h-72" />;
   if (!scope) return <StateMessage>Select a complete academic context.</StateMessage>;
   if (!canRead) return <StateMessage>Access unavailable.</StateMessage>;
   if (detail.error || gradebook.error || !detail.data) {
-    return (
-      <StateMessage>
-        {(detail.error ?? (gradebook.error as Error))?.message ?? "Assessment unavailable."}
-      </StateMessage>
-    );
+    return <StateMessage>{translateUiText("Assessment unavailable.", locale)}</StateMessage>;
   }
   const assessment = detail.data;
   const isOrdinaryEditable = ["draft", "open", "closed"].includes(assessment.status);
@@ -490,7 +517,7 @@ export function AssessmentDetailPage({ id }: { id: string }) {
   return (
     <div className="space-y-5">
       <Link to="/assessments" className="inline-flex items-center text-sm text-muted-foreground">
-        <ArrowLeft className="mr-1 h-4 w-4" /> Assessments
+        <ArrowLeft className="mr-1 h-4 w-4" /> {translateUiText("Assessments", locale)}
       </Link>
       <Card>
         <CardHeader>
@@ -498,7 +525,8 @@ export function AssessmentDetailPage({ id }: { id: string }) {
             <div>
               <CardTitle>{assessment.title}</CardTitle>
               <CardDescription>
-                {assessment.assessment_date} · Version {assessment.version}
+                {formatPreferredDate(assessment.assessment_date)} · {t("common.version")}{" "}
+                {assessment.version}
               </CardDescription>
             </div>
             <Badge>{assessment.status}</Badge>
@@ -578,16 +606,20 @@ export function AssessmentDetailPage({ id }: { id: string }) {
       <Card>
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
-            <ClipboardCheck className="h-5 w-5" /> Score entry
+            <ClipboardCheck className="h-5 w-5" /> {translateUiText("Score entry", locale)}
           </CardTitle>
           <CardDescription>
-            {rows.length} roster rows. Historical non-eligible scores remain visible and read-only.
+            {rows.length}{" "}
+            {translateUiText(
+              "students in the roster. Historical non-eligible scores remain visible and read-only.",
+              locale,
+            )}
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-3">
           {rows.length === 0 ? (
             <p className="py-8 text-center text-sm text-muted-foreground">
-              No students are available for this assessment.
+              {translateUiText("No students are available for this assessment.", locale)}
             </p>
           ) : (
             rows.map((row, index) => {
@@ -606,7 +638,10 @@ export function AssessmentDetailPage({ id }: { id: string }) {
                   <div>
                     <p className="font-medium">{row.student_name}</p>
                     <p className="text-xs text-muted-foreground">
-                      {row.current_eligible ? "Eligible" : "Historical · read-only"}
+                      {translateUiText(
+                        row.current_eligible ? "Eligible" : "Historical · read-only",
+                        locale,
+                      )}
                     </p>
                   </div>
                   <div>

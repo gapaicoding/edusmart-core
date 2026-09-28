@@ -6,6 +6,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Alert, AlertDescription } from "@/components/ui/alert";
+import { useAppPreferences } from "@/lib/app-preferences";
 
 export const Route = createFileRoute("/reset-password")({
   ssr: false,
@@ -14,7 +15,10 @@ export const Route = createFileRoute("/reset-password")({
       { title: "Set a new password — EduSmart SchoolOS" },
       { name: "description", content: "Choose a new password for your EduSmart SchoolOS account." },
       { property: "og:title", content: "Set a new password — EduSmart SchoolOS" },
-      { property: "og:description", content: "Choose a new password for your EduSmart SchoolOS account." },
+      {
+        property: "og:description",
+        content: "Choose a new password for your EduSmart SchoolOS account.",
+      },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary" },
       { name: "robots", content: "noindex" },
@@ -24,6 +28,7 @@ export const Route = createFileRoute("/reset-password")({
 });
 
 function ResetPasswordPage() {
+  const { t } = useAppPreferences();
   const navigate = useNavigate();
   const [recoveryReady, setRecoveryReady] = useState(false);
   const [password, setPassword] = useState("");
@@ -53,11 +58,11 @@ function ResetPasswordPage() {
     event.preventDefault();
     setError(null);
     if (password.length < 8) {
-      setError("Use at least 8 characters.");
+      setError(t("auth.useAtLeastEight"));
       return;
     }
     if (password !== confirm) {
-      setError("Passwords do not match.");
+      setError(t("auth.passwordMismatch"));
       return;
     }
     setSubmitting(true);
@@ -75,24 +80,22 @@ function ResetPasswordPage() {
     <div className="flex min-h-screen items-center justify-center bg-muted/30 px-4">
       <Card className="w-full max-w-sm">
         <CardHeader>
-          <CardTitle>Set a new password</CardTitle>
-          <CardDescription>Choose a password you haven't used before.</CardDescription>
+          <CardTitle>{t("auth.newPasswordTitle")}</CardTitle>
+          <CardDescription>{t("auth.newPasswordDescription")}</CardDescription>
         </CardHeader>
         <CardContent>
           {done ? (
             <Alert>
-              <AlertDescription>Password updated. Taking you to your dashboard…</AlertDescription>
+              <AlertDescription>{t("auth.passwordUpdated")}</AlertDescription>
             </Alert>
           ) : !recoveryReady ? (
             <Alert variant="destructive">
-              <AlertDescription>
-                This reset link is missing or expired. Request a new one from the forgot password page.
-              </AlertDescription>
+              <AlertDescription>{t("auth.resetLinkInvalid")}</AlertDescription>
             </Alert>
           ) : (
             <form className="space-y-4" onSubmit={handleSubmit}>
               <div className="space-y-2">
-                <Label htmlFor="password">New password</Label>
+                <Label htmlFor="password">{t("auth.newPassword")}</Label>
                 <Input
                   id="password"
                   type="password"
@@ -103,7 +106,7 @@ function ResetPasswordPage() {
                 />
               </div>
               <div className="space-y-2">
-                <Label htmlFor="confirm">Confirm password</Label>
+                <Label htmlFor="confirm">{t("auth.confirmPassword")}</Label>
                 <Input
                   id="confirm"
                   type="password"
@@ -119,17 +122,20 @@ function ResetPasswordPage() {
                 </Alert>
               )}
               <Button type="submit" className="w-full" disabled={submitting}>
-                {submitting ? "Saving…" : "Update password"}
+                {submitting ? t("auth.updating") : t("auth.updatePassword")}
               </Button>
             </form>
           )}
 
           <div className="mt-4 flex justify-between text-sm">
-            <Link to="/forgot-password" className="text-muted-foreground underline-offset-4 hover:underline">
-              Request new link
+            <Link
+              to="/forgot-password"
+              className="text-muted-foreground underline-offset-4 hover:underline"
+            >
+              {t("auth.requestNewLink")}
             </Link>
             <Link to="/auth" className="text-muted-foreground underline-offset-4 hover:underline">
-              Sign in
+              {t("auth.signIn")}
             </Link>
           </div>
         </CardContent>
