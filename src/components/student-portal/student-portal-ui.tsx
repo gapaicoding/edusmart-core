@@ -12,6 +12,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { cn } from "@/lib/utils";
 import { useAppContext } from "@/lib/app-context";
+import { formatPreferredDate, translateUiText, useAppPreferences } from "@/lib/app-preferences";
 import {
   getStudentOverview,
   getStudentReportCard,
@@ -45,6 +46,7 @@ const STUDENT_TABS = [
 
 function StudentTabs() {
   const pathname = useRouterState({ select: (s) => s.location.pathname });
+  const { locale } = useAppPreferences();
   return (
     <nav className="flex flex-wrap gap-2 border-b border-border pb-2">
       {STUDENT_TABS.map((t) => {
@@ -61,7 +63,7 @@ function StudentTabs() {
             )}
           >
             <t.icon className="h-4 w-4" />
-            {t.label}
+            {translateUiText(t.label, locale)}
           </Link>
         );
       })}
@@ -78,6 +80,11 @@ function EmptyStudentPortal({ title, description }: { title: string; description
   );
 }
 
+function StudentPortalLoadFailure() {
+  const { t } = useAppPreferences();
+  return <>{t("common.loadErrorDescription")}</>;
+}
+
 function useOrganizationSchoolContext() {
   const { activeOrganization, activeSchool } = useAppContext();
   return {
@@ -88,6 +95,7 @@ function useOrganizationSchoolContext() {
 
 function StudentShell({ children: content }: { children: React.ReactNode }) {
   const { organizationId } = useOrganizationSchoolContext();
+  const { t } = useAppPreferences();
   const fn = useServerFn(getStudentOverview);
   const overviewQuery = useQuery({
     queryKey: ["student-portal", "overview", organizationId],
@@ -100,23 +108,22 @@ function StudentShell({ children: content }: { children: React.ReactNode }) {
     <AppShell>
       <div className="mx-auto flex max-w-4xl flex-col gap-4">
         <header>
-          <p className="text-xs uppercase tracking-wide text-muted-foreground">Student Portal</p>
-          <h1 className="text-2xl font-semibold">
-            {overviewQuery.data?.fullName ?? "My workspace"}
-          </h1>
-          <p className="text-sm text-muted-foreground">
-            Read-only view of your own academic record. What you see here is exactly what your
-            school has published.
+          <p className="text-xs uppercase tracking-wide text-muted-foreground">
+            {t("portal.studentEyebrow")}
           </p>
+          <h1 className="text-2xl font-semibold">
+            {overviewQuery.data?.fullName ?? t("portal.studentTitle")}
+          </h1>
+          <p className="text-sm text-muted-foreground">{t("portal.studentDescription")}</p>
         </header>
 
         {overviewQuery.error && (
           <Alert variant="destructive">
-            <AlertTitle>We couldn't load your Student Portal</AlertTitle>
+            <AlertTitle>{t("portal.studentLoadError")}</AlertTitle>
             <AlertDescription>
-              {(overviewQuery.error as Error).message}
+              {t("common.loadErrorDescription")}
               <button className="ml-2 underline" onClick={() => void overviewQuery.refetch()}>
-                Try again
+                {t("common.retry")}
               </button>
             </AlertDescription>
           </Alert>
@@ -129,8 +136,8 @@ function StudentShell({ children: content }: { children: React.ReactNode }) {
           </div>
         ) : !overviewQuery.data ? (
           <EmptyStudentPortal
-            title="No Student Portal account linked"
-            description="Your login is not yet linked to a student record in this organization. Contact the school office to complete Student Portal access."
+            title={t("portal.studentEmptyTitle")}
+            description={t("portal.studentEmptyDescription")}
           />
         ) : (
           <>
@@ -156,7 +163,9 @@ function OverviewSection() {
     return (
       <Alert variant="destructive">
         <AlertTitle>We couldn't load your overview</AlertTitle>
-        <AlertDescription>{(error as Error).message}</AlertDescription>
+        <AlertDescription>
+          <StudentPortalLoadFailure />
+        </AlertDescription>
       </Alert>
     );
   }
@@ -209,7 +218,9 @@ function ScheduleSection() {
     return (
       <Alert variant="destructive">
         <AlertTitle>We couldn't load your schedule</AlertTitle>
-        <AlertDescription>{(error as Error).message}</AlertDescription>
+        <AlertDescription>
+          <StudentPortalLoadFailure />
+        </AlertDescription>
       </Alert>
     );
   }
@@ -267,7 +278,9 @@ function AttendanceSection() {
     return (
       <Alert variant="destructive">
         <AlertTitle>We couldn't load attendance</AlertTitle>
-        <AlertDescription>{(error as Error).message}</AlertDescription>
+        <AlertDescription>
+          <StudentPortalLoadFailure />
+        </AlertDescription>
       </Alert>
     );
   }
@@ -287,7 +300,7 @@ function AttendanceSection() {
         <Card key={r.recordId}>
           <CardContent className="flex items-center justify-between p-3 text-sm">
             <div>
-              <p className="font-medium">{new Date(r.sessionDate).toLocaleDateString()}</p>
+              <p className="font-medium">{formatPreferredDate(r.sessionDate)}</p>
               <p className="text-xs text-muted-foreground capitalize">Session {r.sessionStatus}</p>
             </div>
             <Badge
@@ -316,7 +329,9 @@ function ScoresSection() {
     return (
       <Alert variant="destructive">
         <AlertTitle>We couldn't load results</AlertTitle>
-        <AlertDescription>{(error as Error).message}</AlertDescription>
+        <AlertDescription>
+          <StudentPortalLoadFailure />
+        </AlertDescription>
       </Alert>
     );
   }
@@ -397,7 +412,9 @@ function ReportCardsSection() {
     return (
       <Alert variant="destructive">
         <AlertTitle>We couldn't load report cards</AlertTitle>
-        <AlertDescription>{(listQuery.error as Error).message}</AlertDescription>
+        <AlertDescription>
+          <StudentPortalLoadFailure />
+        </AlertDescription>
       </Alert>
     );
   }
@@ -438,7 +455,7 @@ function ReportCardsSection() {
           <CardContent>
             <p className="text-sm text-muted-foreground">
               Official frozen Report Card snapshot published{" "}
-              {new Date(report.card.published_at!).toLocaleDateString()}.
+              {formatPreferredDate(report.card.published_at!)}.
             </p>
           </CardContent>
         </Card>
@@ -463,11 +480,7 @@ function ReportCardsSection() {
               <p className="text-sm text-muted-foreground">PDF not available yet.</p>
             )}
             {documentDownload.error && (
-              <p className="mt-2 text-sm text-destructive">
-                {documentDownload.error instanceof Error
-                  ? documentDownload.error.message
-                  : "Secure download failed."}
-              </p>
+              <p className="mt-2 text-sm text-destructive">Secure download failed.</p>
             )}
           </CardContent>
         </Card>
@@ -568,7 +581,7 @@ function ReportCardsSection() {
               <div className="sm:text-right">
                 <Badge>Published · Version {row.version}</Badge>
                 <p className="mt-1 text-xs text-muted-foreground">
-                  {new Date(row.publishedAt).toLocaleDateString()}
+                  {formatPreferredDate(row.publishedAt)}
                 </p>
               </div>
             </CardContent>

@@ -12,6 +12,7 @@ import {
   StatusBadge,
 } from "@/components/academic/academic-ui";
 import { PermissionGate, useAppContext } from "@/lib/app-context";
+import { useAppPreferences } from "@/lib/app-preferences";
 import {
   listAcademicYears,
   saveAcademicYear,
@@ -78,6 +79,7 @@ const EMPTY: FormState = {
 
 function AcademicYearsPage() {
   const { activeSchool, hasPermission } = useAppContext();
+  const { formatDate } = useAppPreferences();
   const schoolId = activeSchool?.id ?? null;
   const queryClient = useQueryClient();
   const fetchYears = useServerFn(listAcademicYears);
@@ -183,8 +185,12 @@ function AcademicYearsPage() {
                         <span className="ml-2 text-xs text-muted-foreground">· current</span>
                       )}
                     </TableCell>
-                    <TableCell>{row.startsOn}</TableCell>
-                    <TableCell>{row.endsOn}</TableCell>
+                    <TableCell>
+                      {formatDate(row.startsOn, { dateStyle: "medium", timeZone: "UTC" })}
+                    </TableCell>
+                    <TableCell>
+                      {formatDate(row.endsOn, { dateStyle: "medium", timeZone: "UTC" })}
+                    </TableCell>
                     <TableCell>
                       <StatusBadge status={row.status} />
                     </TableCell>

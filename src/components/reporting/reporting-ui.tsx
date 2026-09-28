@@ -51,6 +51,7 @@ import {
 import { Skeleton } from "@/components/ui/skeleton";
 import { Textarea } from "@/components/ui/textarea";
 import { useAppContext } from "@/lib/app-context";
+import { formatPreferredDate, translateUiText, useAppPreferences } from "@/lib/app-preferences";
 import { getAcademicContext } from "@/lib/context.functions";
 import { useReportCardRequestAction } from "@/lib/report-card-request-identity";
 import type {
@@ -82,7 +83,7 @@ import {
   safeAttendance,
 } from "./reporting-model";
 
-const date = (value: string | null) => (value ? new Date(value).toLocaleDateString() : "—");
+const date = (value: string | null) => (value ? formatPreferredDate(value) : "—");
 
 export function ReportCardStatusBadge({ status }: { status: string }) {
   const variant =
@@ -105,6 +106,7 @@ export function GenerateReportCardDialog({
   defaultAcademicYearId?: string | null;
   defaultTermId?: string | null;
 }) {
+  const { locale } = useAppPreferences();
   const [open, setOpen] = useState(false);
   const [search, setSearch] = useState("");
   const [enrollmentId, setEnrollmentId] = useState<string | null>(null);
@@ -173,7 +175,7 @@ export function GenerateReportCardDialog({
     onSuccess: async (result, action) => {
       await queryClient.invalidateQueries({ queryKey: ["report-cards"] });
       requestAction.succeed(action);
-      toast.success("Report card draft created.");
+      toast.success(translateUiText("Report card draft created.", locale));
       setOpen(false);
       reset();
       if (result?.report_card_id)
@@ -181,13 +183,15 @@ export function GenerateReportCardDialog({
     },
     onError: async (error, action) => {
       requestAction.fail(error, action);
-      toast.error(formatReportingMutationError(error));
+      toast.error(translateUiText(formatReportingMutationError(error), locale));
     },
   });
   const startGenerate = () => {
     if (!enrollmentId || !termId || generate.isPending) return;
     if (!eligibleTerms.some((t) => t.id === termId)) {
-      toast.error("Selected term is not part of this enrollment's academic year.");
+      toast.error(
+        translateUiText("Selected term is not part of this enrollment's academic year.", locale),
+      );
       return;
     }
     const action = requestAction.begin({ studentEnrollmentId: enrollmentId, termId });
@@ -237,7 +241,9 @@ export function GenerateReportCardDialog({
             ) : candidates.error ? (
               <Alert variant="destructive">
                 <AlertTitle>Candidates could not be loaded</AlertTitle>
-                <AlertDescription>{(candidates.error as Error).message}</AlertDescription>
+                <AlertDescription>
+                  Student candidates could not be loaded. Please retry.
+                </AlertDescription>
               </Alert>
             ) : !candidateRows.length ? (
               <Alert>
@@ -329,6 +335,7 @@ export function GenerateReportCardDialog({
 
 export function ReportCardsPage() {
   const { activeSchool, activeAcademicYear, activeTerm, terms, permissions } = useAppContext();
+  const { locale } = useAppPreferences();
   const fn = useServerFn(listReportCardsProjection);
   const canRead = permissions.includes("report_card.read");
   const canGenerate = permissions.includes("report_card.generate");
@@ -371,11 +378,14 @@ export function ReportCardsPage() {
         <header className="flex flex-col gap-3 md:flex-row md:items-end md:justify-between">
           <div>
             <p className="text-xs font-semibold uppercase tracking-[0.2em] text-primary">
-              Reporting
+              {translateUiText("Reporting", locale)}
             </p>
-            <h1 className="text-3xl font-semibold">Report Cards</h1>
+            <h1 className="text-3xl font-semibold">{translateUiText("Report Cards", locale)}</h1>
             <p className="text-sm text-muted-foreground">
-              Build and manage frozen academic snapshots through publication.
+              {translateUiText(
+                "Build and manage frozen academic snapshots through publication.",
+                locale,
+              )}
             </p>
           </div>
           {canGenerate && activeSchool ? (
@@ -444,7 +454,7 @@ export function ReportCardsPage() {
           <Alert variant="destructive">
             <AlertTitle>Report cards could not be loaded</AlertTitle>
             <AlertDescription>
-              {(query.error as Error).message}{" "}
+              Report card data could not be loaded.{" "}
               <button className="underline" onClick={() => void query.refetch()}>
                 Try again
               </button>
@@ -825,6 +835,7 @@ export function ReviewPublishBar({
   rowVersion: number;
   reportCardId: string;
 }) {
+  const { locale } = useAppPreferences();
   const { permissions } = useAppContext();
   const actions = reportActions(status, permissions);
   const queryClient = useQueryClient();
@@ -884,11 +895,11 @@ export function ReviewPublishBar({
       requestAction.succeed(request);
       if (request.payload.command === "revision" && result?.report_card_id)
         navigate({ to: "/report-cards/$id", params: { id: result.report_card_id } });
-      else toast.success("Report card workflow updated.");
+      else toast.success(translateUiText("Report card workflow updated.", locale));
     },
     onError: async (error, request) => {
       requestAction.fail(error, request);
-      toast.error(formatReportingMutationError(error));
+      toast.error(translateUiText(formatReportingMutationError(error), locale));
       await queryClient.invalidateQueries({ queryKey: ["report-card", reportCardId] });
     },
   });
@@ -1021,6 +1032,7 @@ function ReportCardDocumentSection({
   reportCardId: string;
   status: string;
 }) {
+  const { locale } = useAppPreferences();
   const statusFn = useServerFn(getReportCardDocumentStatus);
   const generateFn = useServerFn(generateReportCardDocument);
   const regenerateFn = useServerFn(regenerateReportCardDocument);
@@ -1034,30 +1046,31 @@ function ReportCardDocumentSection({
   const generate = useMutation({
     mutationFn: () => generateFn({ data: { reportCardId } }),
     onSuccess: async () => {
-      toast.success("Official PDF is available.");
+      toast.success(translateUiText("Official PDF is available.", locale));
       await queryClient.invalidateQueries({ queryKey: ["report-card-document", reportCardId] });
     },
-    onError: (error) =>
-      toast.error(error instanceof Error ? error.message : "PDF generation failed."),
+    onError: () => toast.error(translateUiText("PDF generation failed. Please try again.", locale)),
   });
   const regenerate = useMutation({
     mutationFn: () => regenerateFn({ data: { reportCardId } }),
     onSuccess: async (result) => {
       if (result.cleanupPending)
         toast.warning(
-          "Official PDF regenerated. The previous non-authoritative Storage object still needs orphan cleanup.",
+          translateUiText(
+            "Official PDF regenerated. The previous non-authoritative Storage object still needs orphan cleanup.",
+            locale,
+          ),
         );
-      else toast.success("Official PDF regenerated.");
+      else toast.success(translateUiText("Official PDF regenerated.", locale));
       await queryClient.invalidateQueries({ queryKey: ["report-card-document", reportCardId] });
     },
-    onError: (error) =>
-      toast.error(error instanceof Error ? error.message : "PDF regeneration failed."),
+    onError: () =>
+      toast.error(translateUiText("PDF regeneration failed. Please try again.", locale)),
   });
   const download = useMutation({
     mutationFn: () => downloadFn({ data: { reportCardId } }),
     onSuccess: (result) => window.location.assign(result.url),
-    onError: (error) =>
-      toast.error(error instanceof Error ? error.message : "Secure download failed."),
+    onError: () => toast.error(translateUiText("Secure download failed.", locale)),
   });
   return (
     <Card>
@@ -1074,9 +1087,7 @@ function ReportCardDocumentSection({
           <Alert variant="destructive">
             <AlertTitle>Document status unavailable</AlertTitle>
             <AlertDescription>
-              {query.error instanceof Error
-                ? query.error.message
-                : "This document is outside your authorized scope."}
+              This document status could not be retrieved. Please retry.
             </AlertDescription>
           </Alert>
         ) : (
@@ -1153,8 +1164,10 @@ function ReportCardDocumentSection({
                 )}
               </div>
             </div>
-            {query.data.state === "failed" && "message" in query.data && (
-              <p className="text-sm text-destructive">{query.data.message}</p>
+            {query.data.state === "failed" && (
+              <p className="text-sm text-destructive">
+                The document could not be prepared. Please try again.
+              </p>
             )}
           </>
         )}
@@ -1164,6 +1177,7 @@ function ReportCardDocumentSection({
 }
 
 export function ReportCardBuilder({ id }: { id: string }) {
+  const { locale } = useAppPreferences();
   const fn = useServerFn(getReportCardProjection);
   const queryClient = useQueryClient();
   const { permissions, activeOrganization } = useAppContext();
@@ -1208,7 +1222,7 @@ export function ReportCardBuilder({ id }: { id: string }) {
     },
     onSuccess: async (_result, request) => {
       setConflict(false);
-      toast.success("Report card saved.");
+      toast.success(translateUiText("Report card saved.", locale));
       await refresh();
       requestAction.succeed(request);
     },
@@ -1216,7 +1230,7 @@ export function ReportCardBuilder({ id }: { id: string }) {
       requestAction.fail(error, request);
       const message = formatReportingMutationError(error);
       if (/changed|stale|refresh/i.test(message)) setConflict(true);
-      else toast.error(message);
+      else toast.error(translateUiText(message, locale));
     },
   });
   const runDraftAction = (payload: DraftAction) => {
@@ -1254,7 +1268,12 @@ export function ReportCardBuilder({ id }: { id: string }) {
         <Alert variant="destructive">
           <AlertCircle className="h-4 w-4" />
           <AlertTitle>Report card could not be loaded</AlertTitle>
-          <AlertDescription>{(query.error as Error).message}</AlertDescription>
+          <AlertDescription>
+            Report card data could not be loaded. Please retry.{" "}
+            <button className="underline" onClick={() => void query.refetch()}>
+              Try again
+            </button>
+          </AlertDescription>
         </Alert>
       </AppShell>
     );

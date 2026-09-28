@@ -15,6 +15,7 @@ import {
   listMyNotifications,
   markNotificationRead,
 } from "@/lib/notifications-parent-permissions.functions";
+import { useAppPreferences } from "@/lib/app-preferences";
 
 const PAGE_SIZE = 20;
 type NotificationRow = {
@@ -42,11 +43,6 @@ const KNOWN_NOTIFICATION_TYPES = new Set([
 function rows(value: unknown): NotificationRow[] {
   return Array.isArray(value) ? (value as NotificationRow[]) : [];
 }
-function date(value: string) {
-  return new Intl.DateTimeFormat("en", { dateStyle: "medium", timeStyle: "short" }).format(
-    new Date(value),
-  );
-}
 function isSafeDeepLink(link: string | null) {
   return Boolean(link && link.startsWith("/"));
 }
@@ -56,6 +52,7 @@ function safeNotificationTitle(item: NotificationRow) {
 }
 
 export function NotificationInboxPage() {
+  const { t, formatDate } = useAppPreferences();
   const navigate = useNavigate();
   const queryClient = useQueryClient();
   const fetch = useServerFn(listMyNotifications);
@@ -70,7 +67,7 @@ export function NotificationInboxPage() {
     onSuccess: () => {
       void queryClient.invalidateQueries({ queryKey: ["notifications"] });
     },
-    onError: () => toast.error("Notification could not be marked as read."),
+    onError: () => toast.error(t("notifications.loadError")),
   });
   const data = rows(query.data);
   const unread = data[0]?.unread_count ?? 0;
@@ -79,12 +76,14 @@ export function NotificationInboxPage() {
       <div className="mx-auto max-w-3xl space-y-6">
         <div className="flex flex-wrap items-start justify-between gap-3">
           <div>
-            <h1 className="text-2xl font-semibold tracking-tight">Notifications</h1>
-            <p className="text-sm text-muted-foreground">
-              Your authenticated in-app notification inbox.
-            </p>
+            <h1 className="text-2xl font-semibold tracking-tight">{t("notifications.title")}</h1>
+            <p className="text-sm text-muted-foreground">{t("notifications.description")}</p>
           </div>
-          {unread > 0 && <Badge variant="default">{unread} unread</Badge>}
+          {unread > 0 && (
+            <Badge variant="default">
+              {unread} {t("notifications.unread")}
+            </Badge>
+          )}
         </div>
         {query.isPending ? (
           <div className="space-y-3">
@@ -93,16 +92,16 @@ export function NotificationInboxPage() {
           </div>
         ) : query.error ? (
           <Alert variant="destructive">
-            <AlertTitle>We couldn't load notifications</AlertTitle>
+            <AlertTitle>{t("notifications.loadError")}</AlertTitle>
             <AlertDescription>
-              <p>Please try again. If the problem continues, contact your school administrator.</p>
+              <p>{t("notifications.tryAgain")}</p>
               <Button
                 className="mt-3"
                 size="sm"
                 variant="outline"
                 onClick={() => void query.refetch()}
               >
-                Try again
+                {t("notifications.tryAgain")}
               </Button>
             </AlertDescription>
           </Alert>
@@ -110,8 +109,8 @@ export function NotificationInboxPage() {
           <Card>
             <CardContent className="flex flex-col items-center gap-2 p-12 text-center">
               <Bell className="h-8 w-8 text-muted-foreground" />
-              <CardTitle className="text-base">You're all caught up</CardTitle>
-              <CardDescription>New in-app notifications will appear here.</CardDescription>
+              <CardTitle className="text-base">{t("notifications.caughtUp")}</CardTitle>
+              <CardDescription>{t("notifications.empty")}</CardDescription>
             </CardContent>
           </Card>
         ) : (
@@ -131,10 +130,19 @@ export function NotificationInboxPage() {
                         <div>
                           <h2 className="font-medium">{safeNotificationTitle(item)}</h2>
                           <p className="mt-1 text-xs text-muted-foreground">
-                            {date(item.created_at)} · {item.read_at ? "Read" : "Unread"}
+                            {formatDate(item.created_at, {
+                              dateStyle: "medium",
+                              timeStyle: "short",
+                            })}{" "}
+                            ·{" "}
+                            {item.read_at
+                              ? t("notifications.read")
+                              : t("notifications.unreadLabel")}
                           </p>
                         </div>
-                        {!item.read_at && <Badge variant="secondary">Unread</Badge>}
+                        {!item.read_at && (
+                          <Badge variant="secondary">{t("notifications.unreadLabel")}</Badge>
+                        )}
                       </div>
                       <p className="mt-3 text-sm text-muted-foreground">{item.preview}</p>
                       <div className="mt-3 flex flex-wrap gap-2">
@@ -148,7 +156,7 @@ export function NotificationInboxPage() {
                             }}
                           >
                             <ExternalLink className="mr-2 h-4 w-4" />
-                            Open
+                            {t("notifications.open")}
                           </Button>
                         ) : item.source_request_id ? (
                           <Button
@@ -163,7 +171,7 @@ export function NotificationInboxPage() {
                               to="/permission-requests/$requestId"
                               params={{ requestId: item.source_request_id }}
                             >
-                              Open request
+                              {t("notifications.openRequest")}
                             </Link>
                           </Button>
                         ) : null}
@@ -175,7 +183,7 @@ export function NotificationInboxPage() {
                             onClick={() => read.mutate(item.delivery_id)}
                           >
                             <Check className="mr-2 h-4 w-4" />
-                            Mark read
+                            {t("notifications.markRead")}
                           </Button>
                         )}
                       </div>

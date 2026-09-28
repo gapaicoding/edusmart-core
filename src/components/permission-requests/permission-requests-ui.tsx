@@ -71,6 +71,7 @@ import {
 } from "@/lib/notifications-parent-permissions.functions";
 import { listClassrooms } from "@/lib/academic.functions";
 import { listStudents, type StudentRow } from "@/lib/sis.functions";
+import { formatPreferredDate, translateUiText, useAppPreferences } from "@/lib/app-preferences";
 
 const PAGE_SIZE = 20;
 const ALL = "__all__";
@@ -121,9 +122,7 @@ export function toDueAtIso(value: string): string | null {
 
 function formatDate(value: string | null | undefined) {
   if (!value) return "—";
-  return new Intl.DateTimeFormat("en", { dateStyle: "medium", timeStyle: "short" }).format(
-    new Date(value),
-  );
+  return formatPreferredDate(value, { dateStyle: "medium", timeStyle: "short" });
 }
 
 function isExpired(row: { status: string; due_at: string | null }) {
@@ -150,19 +149,20 @@ function statusTone(
 function errorMessage(error: unknown) {
   const text = error instanceof Error ? error.message : String(error ?? "");
   if (text.includes("STALE_VERSION"))
-    return "Permintaan ini sudah berubah. Muat ulang data terbaru sebelum menyimpan lagi.";
+    return "This request changed. Reload the latest data before saving again.";
   if (text.includes("NO_ELIGIBLE_RECIPIENTS"))
-    return "Tidak ada penerima aktif yang memenuhi syarat untuk permintaan ini.";
-  if (text.includes("REQUEST_NOT_DRAFT"))
-    return "Hanya permintaan draft yang dapat diedit atau dipublikasikan.";
-  if (text.includes("REQUEST_NOT_OPEN"))
-    return "Permintaan ini tidak sedang terbuka untuk tindakan tersebut.";
-  if (text.includes("REQUEST_EXPIRED")) return "Batas waktu permintaan sudah lewat.";
+    return "No active recipients are eligible for this request.";
+  if (text.includes("REQUEST_NOT_DRAFT")) return "Only draft requests can be edited or published.";
+  if (text.includes("REQUEST_NOT_OPEN")) return "This request is not open for that action.";
+  if (text.includes("REQUEST_EXPIRED")) return "The request deadline has passed.";
   if (text.includes("INVALID_TARGET_SET"))
-    return "Target siswa atau kelas belum lengkap dan valid.";
-  if (text.includes("PERMISSION_DENIED")) return "Anda tidak memiliki izin untuk tindakan ini.";
-  return "Tindakan tidak dapat diselesaikan. Coba lagi.";
+    return "The student or classroom target is incomplete or invalid.";
+  if (text.includes("PERMISSION_DENIED")) return "You do not have permission to take this action.";
+  return "This action could not be completed. Try again.";
 }
+
+const localizedErrorMessage = (error: unknown, locale: "id" | "en") =>
+  translateUiText(errorMessage(error), locale);
 
 function Stat({ icon: Icon, label, value }: { icon: typeof Users; label: string; value: number }) {
   return (
@@ -185,11 +185,12 @@ function PageHeader({
   description: string;
   actions?: ReactNode;
 }) {
+  const { locale } = useAppPreferences();
   return (
     <div className="flex flex-wrap items-start justify-between gap-3">
       <div>
-        <h1 className="text-2xl font-semibold tracking-tight">{title}</h1>
-        <p className="text-sm text-muted-foreground">{description}</p>
+        <h1 className="text-2xl font-semibold tracking-tight">{translateUiText(title, locale)}</h1>
+        <p className="text-sm text-muted-foreground">{translateUiText(description, locale)}</p>
       </div>
       {actions}
     </div>
@@ -205,9 +206,12 @@ function Pager({
   hasNext: boolean;
   onChange: (page: number) => void;
 }) {
+  const { t } = useAppPreferences();
   return (
     <div className="flex flex-wrap items-center justify-between gap-2 pt-2">
-      <p className="text-xs text-muted-foreground">Page {page}</p>
+      <p className="text-xs text-muted-foreground">
+        {t("common.page")} {page}
+      </p>
       <div className="flex gap-2">
         <Button size="sm" variant="outline" disabled={page <= 1} onClick={() => onChange(page - 1)}>
           <ChevronLeft className="mr-1 h-4 w-4" />
@@ -224,6 +228,7 @@ function Pager({
 
 export function PermissionRequestListPage() {
   const { activeOrganization, activeSchool, hasPermission } = useAppContext();
+  const preferences = useAppPreferences();
   const navigate = useNavigate();
   const fetch = useServerFn(listStaffPermissionRequests);
   const [page, setPage] = useState(1);
@@ -258,7 +263,9 @@ export function PermissionRequestListPage() {
       <div className="space-y-6">
         <PageHeader
           title="Permission Requests"
-          description={`Staff workflow for ${activeSchool?.name ?? "the active school"}.`}
+          description={preferences.t("permissionRequests.staffDescription", {
+            school: activeSchool?.name ?? preferences.t("permissionRequests.activeSchool"),
+          })}
           actions={
             <PermissionGate permission="permission_request.create">
               <Button
@@ -276,7 +283,7 @@ export function PermissionRequestListPage() {
             <div className="relative">
               <ListFilter className="absolute left-3 top-2.5 h-4 w-4 text-muted-foreground" />
               <Input
-                aria-label="Search permission requests"
+                aria-label={translateUiText("Search permission requests", preferences.locale)}
                 className="pl-9"
                 placeholder="Search title or type"
                 value={search}
@@ -293,7 +300,9 @@ export function PermissionRequestListPage() {
                 setPage(1);
               }}
             >
-              <SelectTrigger aria-label="Filter request status">
+              <SelectTrigger
+                aria-label={translateUiText("Filter request status", preferences.locale)}
+              >
                 <SelectValue placeholder="Status" />
               </SelectTrigger>
               <SelectContent>
@@ -305,7 +314,7 @@ export function PermissionRequestListPage() {
               </SelectContent>
             </Select>
             <div className="flex items-center text-xs text-muted-foreground">
-              Server page {page}
+              {preferences.t("permissionRequests.serverPage", { page: String(page) })}
             </div>
           </CardContent>
         </Card>
@@ -315,7 +324,7 @@ export function PermissionRequestListPage() {
           <Alert variant="destructive">
             <AlertTitle>We couldn't load permission requests</AlertTitle>
             <AlertDescription>
-              <p>{errorMessage(query.error)}</p>
+              <p>{localizedErrorMessage(query.error, preferences.locale)}</p>
               <Button
                 className="mt-3"
                 size="sm"
@@ -452,6 +461,7 @@ export function PermissionRequestFormPage({
   initial?: (RequestDetail & { targetStudentIds?: string[] }) | undefined;
 }) {
   const { activeOrganization, activeSchool, activeAcademicYear, hasPermission } = useAppContext();
+  const preferences = useAppPreferences();
   const navigate = useNavigate();
   const queryClient = useQueryClient();
   const getClassrooms = useServerFn(listClassrooms);
@@ -539,11 +549,13 @@ export function PermissionRequestFormPage({
     },
     onSuccess: (result) => {
       const row = result as { request_id: string };
-      toast.success(requestId ? "Draft updated." : "Draft saved.");
+      toast.success(
+        translateUiText(requestId ? "Draft updated." : "Draft saved.", preferences.locale),
+      );
       void queryClient.invalidateQueries({ queryKey: ["permission-requests"] });
       navigate({ to: "/permission-requests/$requestId", params: { requestId: row.request_id } });
     },
-    onError: (error) => setFormError(errorMessage(error)),
+    onError: (error) => setFormError(localizedErrorMessage(error, preferences.locale)),
   });
   const selectedStudents = useMemo(
     () => (students.data?.rows ?? []).filter((student) => form.studentIds.includes(student.id)),
@@ -830,6 +842,7 @@ export function PermissionRequestFormPage({
 }
 
 export function PermissionRequestDetailPage({ requestId }: { requestId: string }) {
+  const preferences = useAppPreferences();
   const { activeOrganization, activeSchool, hasPermission } = useAppContext();
   const navigate = useNavigate();
   const queryClient = useQueryClient();
@@ -908,14 +921,18 @@ export function PermissionRequestDetailPage({ requestId }: { requestId: string }
       });
     },
     onSuccess: (_, kind) => {
-      toast.success(
+      const successMessage =
         kind === "reminder"
           ? "In-app reminder sent."
-          : `Request ${kind === "publish" ? "published" : `${kind}d`}.`,
-      );
+          : kind === "publish"
+            ? "Request published."
+            : kind === "close"
+              ? "Request closed."
+              : "Request cancelled.";
+      toast.success(translateUiText(successMessage, preferences.locale));
       void queryClient.invalidateQueries({ queryKey: ["permission-requests"] });
     },
-    onError: (error) => toast.error(errorMessage(error)),
+    onError: (error) => toast.error(localizedErrorMessage(error, preferences.locale)),
   });
   if (detail.isPending)
     return (
@@ -928,7 +945,9 @@ export function PermissionRequestDetailPage({ requestId }: { requestId: string }
       <AppShell>
         <Alert variant="destructive">
           <AlertTitle>Permission request unavailable</AlertTitle>
-          <AlertDescription>{errorMessage(detail.error)}</AlertDescription>
+          <AlertDescription>
+            {localizedErrorMessage(detail.error, preferences.locale)}
+          </AlertDescription>
         </Alert>
       </AppShell>
     );
@@ -1119,7 +1138,9 @@ export function PermissionRequestDetailPage({ requestId }: { requestId: string }
                 <Skeleton className="h-40 w-full" />
               ) : responseQuery.error ? (
                 <Alert variant="destructive">
-                  <AlertDescription>{errorMessage(responseQuery.error)}</AlertDescription>
+                  <AlertDescription>
+                    {localizedErrorMessage(responseQuery.error, preferences.locale)}
+                  </AlertDescription>
                 </Alert>
               ) : rows<ResponseRow>(responseQuery.data).length === 0 ? (
                 <p className="py-8 text-center text-sm text-muted-foreground">

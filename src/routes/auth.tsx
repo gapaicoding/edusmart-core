@@ -8,13 +8,16 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Alert, AlertDescription } from "@/components/ui/alert";
+import { useAppPreferences } from "@/lib/app-preferences";
 
 export const Route = createFileRoute("/auth")({
-  ssr: false,
   head: () => ({
     meta: [
       { title: "Sign in — EduSmart SchoolOS" },
-      { name: "description", content: "Sign in to your EduSmart SchoolOS account to access your school workspace." },
+      {
+        name: "description",
+        content: "Sign in to your EduSmart SchoolOS account to access your school workspace.",
+      },
       { property: "og:title", content: "Sign in — EduSmart SchoolOS" },
       { property: "og:description", content: "Sign in to your EduSmart SchoolOS account." },
       { property: "og:type", content: "website" },
@@ -32,6 +35,7 @@ function SignInPage() {
   const [password, setPassword] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
+  const { t } = useAppPreferences();
 
   useEffect(() => {
     if (!loading && session) navigate({ to: "/dashboard", replace: true });
@@ -62,13 +66,13 @@ function SignInPage() {
     <div className="flex min-h-screen items-center justify-center bg-muted/30 px-4">
       <Card className="w-full max-w-sm">
         <CardHeader>
-          <CardTitle>Sign in</CardTitle>
-          <CardDescription>EduSmart SchoolOS workspace access</CardDescription>
+          <CardTitle>{t("auth.signIn")}</CardTitle>
+          <CardDescription>{t("auth.signInDescription")}</CardDescription>
         </CardHeader>
         <CardContent>
           <form className="space-y-4" onSubmit={handleSubmit}>
             <div className="space-y-2">
-              <Label htmlFor="email">Email</Label>
+              <Label htmlFor="email">{t("auth.email")}</Label>
               <Input
                 id="email"
                 type="email"
@@ -79,7 +83,7 @@ function SignInPage() {
               />
             </div>
             <div className="space-y-2">
-              <Label htmlFor="password">Password</Label>
+              <Label htmlFor="password">{t("auth.password")}</Label>
               <Input
                 id="password"
                 type="password"
@@ -97,16 +101,19 @@ function SignInPage() {
             )}
 
             <Button type="submit" className="w-full" disabled={submitting}>
-              {submitting ? "Signing in…" : "Sign in"}
+              {submitting ? t("auth.signingIn") : t("auth.signIn")}
             </Button>
           </form>
 
           <div className="mt-4 flex justify-between text-sm">
-            <Link to="/forgot-password" className="text-muted-foreground underline-offset-4 hover:underline">
-              Forgot password?
+            <Link
+              to="/forgot-password"
+              className="text-muted-foreground underline-offset-4 hover:underline"
+            >
+              {t("auth.forgotPassword")}
             </Link>
             <Link to="/" className="text-muted-foreground underline-offset-4 hover:underline">
-              Back home
+              {t("auth.backHome")}
             </Link>
           </div>
         </CardContent>

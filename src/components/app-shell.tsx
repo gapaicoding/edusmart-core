@@ -1,4 +1,4 @@
-import { useState, type ReactNode } from "react";
+import { useEffect, useRef, useState, type ReactNode } from "react";
 import { Link, useNavigate, useRouterState } from "@tanstack/react-router";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import {
@@ -24,6 +24,7 @@ import {
   Megaphone,
   School,
   ShieldCheck,
+  Settings,
   UserRound,
   Users,
   WalletCards,
@@ -53,6 +54,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { cn } from "@/lib/utils";
+import { useAppPreferences } from "@/lib/app-preferences";
 
 type NavItem = {
   to: string;
@@ -330,6 +332,7 @@ const NAV_GROUPS: NavGroup[] = [
 ];
 
 function ContextSwitchers({ compact = false }: { compact?: boolean }) {
+  const { t } = useAppPreferences();
   const {
     organizations,
     activeOrganization,
@@ -369,8 +372,8 @@ function ContextSwitchers({ compact = false }: { compact?: boolean }) {
     <div className={cn("flex gap-2", compact ? "flex-col" : "flex-wrap items-center")}>
       {organizations.length > 1 && (
         <Select value={activeOrganization?.organizationId ?? ""} onValueChange={setOrganization}>
-          <SelectTrigger className={triggerClass} aria-label="Organization">
-            <SelectValue placeholder="Organization" />
+          <SelectTrigger className={triggerClass} aria-label={t("dashboard.organization")}>
+            <SelectValue placeholder={t("dashboard.organization")} />
           </SelectTrigger>
           <SelectContent>
             {organizations.map((org) => (
@@ -383,8 +386,8 @@ function ContextSwitchers({ compact = false }: { compact?: boolean }) {
       )}
 
       <Select value={activeSchool?.id ?? ""} onValueChange={setSchool}>
-        <SelectTrigger className={triggerClass} aria-label="School">
-          <SelectValue placeholder="Select school" />
+        <SelectTrigger className={triggerClass} aria-label={t("dashboard.school")}>
+          <SelectValue placeholder={t("common.selectSchool")} />
         </SelectTrigger>
         <SelectContent>
           {(activeOrganization?.schools ?? []).map((school) => (
@@ -399,9 +402,11 @@ function ContextSwitchers({ compact = false }: { compact?: boolean }) {
         <Skeleton className={cn("rounded-md", yearClass)} />
       ) : (
         <Select value={activeAcademicYear?.id ?? ""} onValueChange={setAcademicYear}>
-          <SelectTrigger className={yearClass} aria-label="Academic year">
+          <SelectTrigger className={yearClass} aria-label={t("common.academicYear")}>
             <SelectValue
-              placeholder={academicYears.length === 0 ? "No academic year" : "Academic year"}
+              placeholder={
+                academicYears.length === 0 ? t("common.noAcademicYear") : t("common.academicYear")
+              }
             />
           </SelectTrigger>
           <SelectContent>
@@ -418,8 +423,8 @@ function ContextSwitchers({ compact = false }: { compact?: boolean }) {
         <Skeleton className={cn("rounded-md", termClass)} />
       ) : (
         <Select value={activeTerm?.id ?? ""} onValueChange={setTerm}>
-          <SelectTrigger className={termClass} aria-label="Term">
-            <SelectValue placeholder={terms.length === 0 ? "No term" : "Term"} />
+          <SelectTrigger className={termClass} aria-label={t("common.term")}>
+            <SelectValue placeholder={terms.length === 0 ? t("common.noTerm") : t("common.term")} />
           </SelectTrigger>
           <SelectContent>
             {terms.map((term) => (
@@ -437,6 +442,7 @@ function ContextSwitchers({ compact = false }: { compact?: boolean }) {
 function Sidebar({ onNavigate }: { onNavigate?: () => void }) {
   const pathname = useRouterState({ select: (s) => s.location.pathname });
   const { activeOrganization, hasPermission, contextLoading, error } = useAppContext();
+  const { t } = useAppPreferences();
   const orgResolving = contextLoading && !error;
 
   // UX-only persona gate: hides operational groups from PARENT/STUDENT
@@ -461,6 +467,45 @@ function Sidebar({ onNavigate }: { onNavigate?: () => void }) {
     }))
     .filter((group) => group.items.length > 0);
 
+  const navigationLabels: Record<string, string> = {
+    Dashboard: t("navigation.dashboard"),
+    Notifications: t("navigation.notifications"),
+    "Permission Requests": t("navigation.permissionRequests"),
+    "Communication Center": t("navigation.communication"),
+    "Academic Setup": t("navigation.academicSetup"),
+    "Student Information": t("navigation.studentInformation"),
+    Admissions: t("navigation.admissions"),
+    "Academic Operations": t("navigation.academicOperations"),
+    Finance: t("navigation.finance"),
+    "Parent Portal": t("navigation.parentPortal"),
+    "Student Portal": t("navigation.studentPortal"),
+    "Academic Years": t("navigation.academicYears"),
+    Terms: t("navigation.terms"),
+    "Grade Levels": t("navigation.gradeLevels"),
+    Classrooms: t("navigation.classrooms"),
+    Subjects: t("navigation.subjects"),
+    Curricula: t("navigation.curricula"),
+    "Academic Calendar": t("navigation.calendar"),
+    Students: t("navigation.students"),
+    "Student Progression": t("navigation.studentProgression"),
+    Guardians: t("navigation.guardians"),
+    Staff: t("navigation.staff"),
+    "SIS Imports": t("navigation.sisImports"),
+    "SIS Export": t("navigation.sisExport"),
+    "Teacher Assignments": t("navigation.teacherAssignments"),
+    Schedule: t("navigation.schedule"),
+    "My Schedule": t("navigation.mySchedule"),
+    Attendance: t("navigation.attendance"),
+    Assessments: t("navigation.assessments"),
+    "Report Cards": t("navigation.reportCards"),
+    Scores: t("navigation.scores"),
+    "Teaching Journal": t("navigation.teachingJournal"),
+    "Journal Monitor": t("navigation.journalMonitor"),
+    "Staff Attendance": t("navigation.staffAttendance"),
+    Overview: t("navigation.overview"),
+    Billing: t("navigation.billing"),
+  };
+
   return (
     <div className="flex h-full flex-col gap-6 p-4">
       <div className="flex items-center gap-2">
@@ -478,7 +523,7 @@ function Sidebar({ onNavigate }: { onNavigate?: () => void }) {
           <div key={group.label ?? "root"} className="flex flex-col gap-1">
             {group.label && (
               <p className="px-3 pb-1 text-[11px] font-semibold uppercase tracking-wide text-muted-foreground/70">
-                {group.label}
+                {navigationLabels[group.label] ?? group.label}
               </p>
             )}
             {group.items.map((item) => (
@@ -494,7 +539,7 @@ function Sidebar({ onNavigate }: { onNavigate?: () => void }) {
                 )}
               >
                 <item.icon className="h-4 w-4" />
-                {item.label}
+                {navigationLabels[item.label] ?? item.label}
               </Link>
             ))}
           </div>
@@ -529,7 +574,11 @@ function Sidebar({ onNavigate }: { onNavigate?: () => void }) {
 
 export function AppShell({ children }: { children: ReactNode }) {
   const [mobileOpen, setMobileOpen] = useState(false);
+  const mobilePanelRef = useRef<HTMLDivElement>(null);
+  const mobileCloseRef = useRef<HTMLButtonElement>(null);
+  const mobileTriggerRef = useRef<HTMLButtonElement>(null);
   const { snapshot, activeOrganization, identityLoading, contextLoading, error } = useAppContext();
+  const { t } = useAppPreferences();
   const navigate = useNavigate();
   const queryClient = useQueryClient();
   const fetchNotifications = useServerFn(listMyNotifications);
@@ -543,6 +592,41 @@ export function AppShell({ children }: { children: ReactNode }) {
         (notificationsQuery.data[0] as { unread_count?: number } | undefined)?.unread_count ?? 0,
       )
     : 0;
+
+  useEffect(() => {
+    if (!mobileOpen) return;
+    mobileCloseRef.current?.focus();
+    const trigger = mobileTriggerRef.current;
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if (event.key === "Escape") {
+        event.preventDefault();
+        setMobileOpen(false);
+        return;
+      }
+      if (event.key !== "Tab" || !mobilePanelRef.current) return;
+      const focusable = Array.from(
+        mobilePanelRef.current.querySelectorAll<HTMLElement>(
+          'button:not([disabled]):not([tabindex="-1"]), a[href], input:not([disabled]), select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex="-1"])',
+        ),
+      );
+      if (focusable.length === 0) return;
+      const first = focusable[0];
+      const last = focusable[focusable.length - 1];
+      if (!first || !last) return;
+      if (event.shiftKey && document.activeElement === first) {
+        event.preventDefault();
+        last.focus();
+      } else if (!event.shiftKey && document.activeElement === last) {
+        event.preventDefault();
+        first.focus();
+      }
+    };
+    document.addEventListener("keydown", handleKeyDown);
+    return () => {
+      document.removeEventListener("keydown", handleKeyDown);
+      trigger?.focus();
+    };
+  }, [mobileOpen]);
 
   async function handleSignOut() {
     await queryClient.cancelQueries();
@@ -565,15 +649,29 @@ export function AppShell({ children }: { children: ReactNode }) {
       </aside>
 
       {mobileOpen && (
-        <div className="fixed inset-0 z-50 lg:hidden">
+        <div
+          ref={mobilePanelRef}
+          role="dialog"
+          aria-modal="true"
+          aria-label={t("common.navigationMenu")}
+          className="fixed inset-0 z-50 lg:hidden"
+        >
           <button
-            aria-label="Close navigation"
+            aria-label={t("common.dismissNavigationOverlay")}
+            aria-hidden="true"
+            tabIndex={-1}
             className="absolute inset-0 bg-foreground/40"
             onClick={() => setMobileOpen(false)}
           />
           <div className="absolute inset-y-0 left-0 w-64 bg-background shadow-lg">
             <div className="flex justify-end p-2">
-              <Button variant="ghost" size="icon" onClick={() => setMobileOpen(false)}>
+              <Button
+                ref={mobileCloseRef}
+                variant="ghost"
+                size="icon"
+                onClick={() => setMobileOpen(false)}
+                aria-label={t("common.closeNavigation")}
+              >
                 <X className="h-4 w-4" />
               </Button>
             </div>
@@ -582,15 +680,16 @@ export function AppShell({ children }: { children: ReactNode }) {
         </div>
       )}
 
-      <div className="lg:pl-60">
+      <div className="min-w-0 lg:pl-60">
         <header className="sticky top-0 z-40 border-b border-border bg-background/95 backdrop-blur">
-          <div className="flex flex-wrap items-center gap-3 px-4 py-3">
+          <div className="flex flex-wrap items-center gap-3 px-3 py-3 sm:px-4">
             <Button
+              ref={mobileTriggerRef}
               variant="ghost"
               size="icon"
               className="lg:hidden"
               onClick={() => setMobileOpen(true)}
-              aria-label="Open navigation"
+              aria-label={t("common.openNavigation")}
             >
               <Menu className="h-4 w-4" />
             </Button>
@@ -603,7 +702,9 @@ export function AppShell({ children }: { children: ReactNode }) {
               <Link
                 to="/notifications"
                 aria-label={
-                  unreadCount > 0 ? `${unreadCount} unread notifications` : "Notifications"
+                  unreadCount > 0
+                    ? t("notifications.unreadAria", { count: String(unreadCount) })
+                    : t("notifications.aria")
                 }
                 className="relative rounded-md p-2 text-muted-foreground hover:bg-accent hover:text-accent-foreground"
               >
@@ -630,17 +731,23 @@ export function AppShell({ children }: { children: ReactNode }) {
                   </DropdownMenuTrigger>
                   <DropdownMenuContent align="end" className="w-56">
                     <DropdownMenuLabel className="space-y-1">
-                      <p className="text-sm">{snapshot?.profile?.fullName ?? "Account"}</p>
+                      <p className="text-sm">
+                        {snapshot?.profile?.fullName ?? t("common.account")}
+                      </p>
                       <p className="text-xs font-normal text-muted-foreground">
                         {contextLoading && !error
-                          ? "Loading workspace…"
-                          : (activeOrganization?.name ?? "No active organization")}
+                          ? t("common.loading")
+                          : (activeOrganization?.name ?? t("common.noOrganization"))}
                       </p>
                     </DropdownMenuLabel>
                     <DropdownMenuSeparator />
+                    <DropdownMenuItem onSelect={() => navigate({ to: "/settings" })}>
+                      <Settings className="mr-2 h-4 w-4" />
+                      {t("common.settings")}
+                    </DropdownMenuItem>
                     <DropdownMenuItem onSelect={() => void handleSignOut()}>
                       <LogOut className="mr-2 h-4 w-4" />
-                      Sign out
+                      {t("common.signOut")}
                     </DropdownMenuItem>
                   </DropdownMenuContent>
                 </DropdownMenu>
@@ -653,7 +760,7 @@ export function AppShell({ children }: { children: ReactNode }) {
           </div>
         </header>
 
-        <main className="p-4 lg:p-6">{children}</main>
+        <main className="min-w-0 overflow-x-hidden p-4 lg:p-6">{children}</main>
       </div>
     </div>
   );

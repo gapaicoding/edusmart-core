@@ -33,6 +33,7 @@ import {
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Textarea } from "@/components/ui/textarea";
 import { useAppContext } from "@/lib/app-context";
+import { formatPreferredDate } from "@/lib/app-preferences";
 import {
   applyAttendanceCorrectionToDetail,
   beginStableAction,
@@ -641,7 +642,8 @@ function Timeline({
                 </b>
                 <p>{x.reason}</p>
                 <small>
-                  {x.actor_name ?? "Authorized staff"} · {new Date(x.changed_at).toLocaleString()}
+                  {x.actor_name ?? "Authorized staff"} ·{" "}
+                  {formatPreferredDate(x.changed_at, { dateStyle: "medium", timeStyle: "short" })}
                 </small>
               </li>
             ))}
@@ -705,7 +707,8 @@ function StudentHistory({
                   )}
                   {x.note && <p className="text-sm">Note: {x.note}</p>}
                   <small>
-                    {x.origin} · {new Date(x.updated_at).toLocaleString()}
+                    {x.origin} ·{" "}
+                    {formatPreferredDate(x.updated_at, { dateStyle: "medium", timeStyle: "short" })}
                   </small>
                 </CardContent>
               </Card>

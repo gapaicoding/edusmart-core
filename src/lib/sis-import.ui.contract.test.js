@@ -4,6 +4,7 @@ import { join } from "node:path";
 
 const root = join(import.meta.dir, "..");
 const ui = readFileSync(join(root, "components/sis-import/sis-import-ui.tsx"), "utf8");
+const compactUi = ui.replace(/\s+/g, "");
 const nav = readFileSync(join(root, "components/app-shell.tsx"), "utf8");
 const tree = readFileSync(join(root, "routeTree.gen.ts"), "utf8");
 const download = readFileSync(join(import.meta.dir, "sis-download.ts"), "utf8");
@@ -12,9 +13,15 @@ const route = (name) => readFileSync(join(root, `routes/_authenticated/${name}`)
 
 describe("Batch 10 Phase 4 route and navigation contract", () => {
   test("all four authenticated routes exist", () => {
-    expect(route("sis-imports/index.tsx")).toContain('createFileRoute("/_authenticated/sis-imports/")');
-    expect(route("sis-imports/new.tsx")).toContain('createFileRoute("/_authenticated/sis-imports/new")');
-    expect(route("sis-imports/$jobId.tsx")).toContain('createFileRoute("/_authenticated/sis-imports/$jobId")');
+    expect(route("sis-imports/index.tsx")).toContain(
+      'createFileRoute("/_authenticated/sis-imports/")',
+    );
+    expect(route("sis-imports/new.tsx")).toContain(
+      'createFileRoute("/_authenticated/sis-imports/new")',
+    );
+    expect(route("sis-imports/$jobId.tsx")).toContain(
+      'createFileRoute("/_authenticated/sis-imports/$jobId")',
+    );
     expect(route("sis-export.tsx")).toContain('createFileRoute("/_authenticated/sis-export")');
   });
 
@@ -25,17 +32,23 @@ describe("Batch 10 Phase 4 route and navigation contract", () => {
 
   test("navigation adds import/export only to staff SIS group", () => {
     expect(nav).toContain('to: "/sis-imports"');
-    expect(nav).toContain('["student.import", "guardian.import", "staff.import", "enrollment.import"]');
+    expect(nav).toContain(
+      '["student.import", "guardian.import", "staff.import", "enrollment.import"]',
+    );
     expect(nav).toContain('to: "/sis-export"');
     expect(nav).toContain('["student.export", "guardian.export", "staff.export"]');
-    const parent = nav.slice(nav.indexOf('label: "Parent Portal"'), nav.indexOf('label: "Student Portal"'));
+    const parent = nav.slice(
+      nav.indexOf('label: "Parent Portal"'),
+      nav.indexOf('label: "Student Portal"'),
+    );
     expect(parent).not.toContain("SIS Import");
     expect(parent).not.toContain("SIS Export");
   });
 });
 
 describe("Batch 10 Phase 4 import trust boundary", () => {
-  test("history uses the server operation", () => expect(ui).toContain("useServerFn(listSisImportJobs)"));
+  test("history uses the server operation", () =>
+    expect(ui).toContain("useServerFn(listSisImportJobs)"));
   test("upload sends a real FormData and File", () => {
     expect(ui).toContain("new FormData()");
     expect(ui).toContain('form.set("file", file)');
@@ -43,14 +56,23 @@ describe("Batch 10 Phase 4 import trust boundary", () => {
   });
   test("validation submits job id only", () => {
     expect(ui).toContain("validateFn({ data: { jobId } })");
-    expect(ui).not.toMatch(/validateFn\(\{\s*data:\s*\{[^}]*\b(rows|issues|entityTypes|fingerprint|planAttestation)\b/s);
+    expect(ui).not.toMatch(
+      /validateFn\(\{\s*data:\s*\{[^}]*\b(rows|issues|entityTypes|fingerprint|planAttestation)\b/s,
+    );
   });
   test("confirmation submits job and ephemeral token only", () => {
     expect(ui).toContain("confirmFn({ data: { jobId, confirmationToken } })");
-    expect(ui).not.toMatch(/confirmFn\(\{\s*data:\s*\{[^}]*\b(rows|issues|entityTypes|fingerprint|resolved)/s);
+    expect(ui).not.toMatch(
+      /confirmFn\(\{\s*data:\s*\{[^}]*\b(rows|issues|entityTypes|fingerprint|resolved)/s,
+    );
   });
   test("client has no direct B10 table access", () => {
-    for (const table of ["sis_import_jobs", "sis_import_job_rows", "sis_import_job_issues", "sis_import_entity_refs"])
+    for (const table of [
+      "sis_import_jobs",
+      "sis_import_job_rows",
+      "sis_import_job_issues",
+      "sis_import_entity_refs",
+    ])
       expect(ui).not.toContain(`.from(\"${table}\")`);
   });
   test("client has no direct B10 RPC access", () => {
@@ -58,7 +80,8 @@ describe("Batch 10 Phase 4 import trust boundary", () => {
     expect(ui).not.toContain("commit_sis_import_job");
     expect(ui).not.toContain("persist_sis_import_validation");
   });
-  test("client has no direct private storage access", () => expect(ui).not.toMatch(/\.storage\.from|sis-imports\/source/));
+  test("client has no direct private storage access", () =>
+    expect(ui).not.toMatch(/\.storage\.from|sis-imports\/source/));
   test("client imports no attestation or service-role material", () => {
     expect(ui).not.toContain("sis-import.attestation.server");
     expect(ui).not.toContain("SIS_IMPORT_PLAN_ATTESTATION_SECRET");
@@ -74,22 +97,22 @@ describe("Batch 10 Phase 4 import trust boundary", () => {
   });
   test("token clears after success and school/job changes", () => {
     expect(ui).toMatch(/onSuccess:[\s\S]*setConfirmationToken\(null\)[\s\S]*Import completed/);
-    expect(ui).toContain("setConfirmationToken(null); setPageError(null)");
+    expect(compactUi).toContain("setConfirmationToken(null);setPageError(null)");
   });
   test("stale and invalid token errors clear the token", () => {
-    expect(ui).toContain('"B10_STALE_PREVIEW","B10_CONFIRMATION_TOKEN_INVALID"');
-    expect(ui).toMatch(/includes\(code\)\) setConfirmationToken\(null\)/);
+    expect(compactUi).toContain('"B10_STALE_PREVIEW","B10_CONFIRMATION_TOKEN_INVALID"');
+    expect(compactUi).toMatch(/includes\(code\)\)setConfirmationToken\(null\)/);
   });
   test("confirm is gated by zero errors and a token", () => {
-    expect(ui).toContain('job.status==="validated" && errors===0 && confirmationToken');
-    expect(ui).toContain("errors>0||!confirmationToken");
+    expect(compactUi).toContain('job.status==="validated"&&errors===0&&confirmationToken');
+    expect(compactUi).toContain("errors>0||!confirmationToken");
   });
   test("lost-token state offers explicit revalidation", () => {
     expect(ui).toContain("Revalidate to generate a new confirmation authorization");
     expect(ui).toContain('"Revalidate"');
   });
   test("terminal completed and failed states are rendered", () => {
-    expect(ui).toContain('job.status==="completed"');
+    expect(compactUi).toContain('job.status==="completed"');
     expect(ui).toContain("Import completed");
     expect(ui).toContain("Import failed safely");
   });
@@ -100,7 +123,9 @@ describe("Batch 10 Phase 4 import trust boundary", () => {
       expect(ui).toContain(`\"${action}\"`);
   });
   test("preview and issue display avoid internal UUID labels", () => {
-    expect(ui).not.toMatch(/student_id|guardian_id|staff_member_id|profile_id|storage path|token hash|plan attestation/i);
+    expect(ui).not.toMatch(
+      /student_id|guardian_id|staff_member_id|profile_id|storage path|token hash|plan attestation/i,
+    );
   });
   test("error report uses the server binary operation", () => {
     expect(ui).toContain("useServerFn(downloadSisImportErrors)");
@@ -115,16 +140,20 @@ describe("Batch 10 Phase 4 export and download contract", () => {
   });
   test("reference preparation requires an explicit dialog action", () => {
     expect(ui).toContain("Prepare durable SIS references?");
-    expect(ui).toContain("onClick={()=>prepare.mutate()}");
+    expect(compactUi).toContain("onClick={()=>prepare.mutate()}");
   });
   test("export does not automatically prepare references", () => {
-    const generateBody = ui.slice(ui.indexOf("const generate=useMutation"), ui.indexOf("useEffect", ui.indexOf("const generate=useMutation")));
+    const compact = compactUi;
+    const generateBody = compact.slice(
+      compact.indexOf("constgenerate=useMutation"),
+      compact.indexOf("useEffect", compact.indexOf("constgenerate=useMutation")),
+    );
     expect(generateBody).toContain("exportFn");
     expect(generateBody).not.toContain("prepareFn");
   });
   test("export uses server binary download", () => {
     expect(ui).toContain("useServerFn(exportSisData)");
-    expect(ui).toContain('downloadBinaryResponse(response,"edusmart-sis-export.xlsx")');
+    expect(compactUi).toContain('downloadBinaryResponse(response,"edusmart-sis-export.xlsx")');
   });
   test("reference results expose counts, not mappings", () => {
     expect(ui).toContain("mintedCount");

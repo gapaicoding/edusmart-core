@@ -3,11 +3,18 @@ import { useServerFn } from "@tanstack/react-start";
 import { useQuery } from "@tanstack/react-query";
 import { useEffect, useState, type FormEvent, type ReactNode } from "react";
 import { Badge } from "@/components/ui/badge";
+import { AppShell } from "@/components/app-shell";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { PermissionGate, useAppContext } from "@/lib/app-context";
+import {
+  formatPreferredDate,
+  formatPreferredNumber,
+  translateUiText,
+  useAppPreferences,
+} from "@/lib/app-preferences";
 import {
   archiveFinanceFeeDefinition,
   createFinanceBillingPlan,
@@ -36,7 +43,7 @@ import {
 type Row = any;
 const rows = (value: unknown): Row[] => (Array.isArray(value) ? value : []);
 const row = (value: unknown): Row => (value && typeof value === "object" ? (value as Row) : {});
-const idr = (value: unknown) => "Rp" + Number(value ?? 0).toLocaleString("id-ID");
+const idr = (value: unknown) => "Rp" + formatPreferredNumber(Number(value ?? 0));
 const requestId = () => crypto.randomUUID();
 const errorText = (error: unknown) => {
   const message = error instanceof Error ? error.message : "Finance request failed.";
@@ -63,22 +70,28 @@ function Page({
   description?: string;
   children: ReactNode;
 }) {
+  const { locale } = useAppPreferences();
   return (
-    <main className="space-y-6 p-4 md:p-6">
-      <div>
-        <h1 className="text-2xl font-semibold">{title}</h1>
-        {description ? <p className="text-sm text-muted-foreground">{description}</p> : null}
+    <AppShell>
+      <div className="space-y-6 p-4 md:p-6">
+        <div>
+          <h1 className="text-2xl font-semibold">{translateUiText(title, locale)}</h1>
+          {description ? (
+            <p className="text-sm text-muted-foreground">{translateUiText(description, locale)}</p>
+          ) : null}
+        </div>
+        {children}
       </div>
-      {children}
-    </main>
+    </AppShell>
   );
 }
 
 function StaffGate({ children }: { children: ReactNode }) {
   const { hasPermission } = useAppContext();
+  const { t } = useAppPreferences();
   if (!hasPermission("finance.read"))
     return (
-      <Page title="Finance">
+      <Page title={t("finance.title")}>
         <Card>
           <CardContent className="p-6">
             You do not have Finance visibility for the active school.
@@ -95,20 +108,24 @@ function useSchool() {
 }
 
 function AsyncError({ error }: { error: unknown }) {
-  return error ? <p className="text-sm text-destructive">{errorText(error)}</p> : null;
+  const { locale } = useAppPreferences();
+  return error ? (
+    <p className="text-sm text-destructive">{translateUiText(errorText(error), locale)}</p>
+  ) : null;
 }
 
 function InvoiceTable({ schoolId, rows: initialRows }: { schoolId: string; rows: Row[] }) {
+  const { locale } = useAppPreferences();
   return (
     <div className="overflow-x-auto">
       <table className="w-full text-sm">
         <thead>
           <tr className="border-b text-left">
-            <th className="p-2">Invoice</th>
-            <th className="p-2">Student</th>
-            <th className="p-2">Total</th>
-            <th className="p-2">Outstanding</th>
-            <th className="p-2">Status</th>
+            <th className="p-2">{translateUiText("Invoice", locale)}</th>
+            <th className="p-2">{translateUiText("Student", locale)}</th>
+            <th className="p-2">{translateUiText("Total", locale)}</th>
+            <th className="p-2">{translateUiText("Outstanding", locale)}</th>
+            <th className="p-2">{translateUiText("Status", locale)}</th>
           </tr>
         </thead>
         <tbody>
@@ -162,6 +179,7 @@ function InvoiceTable({ schoolId, rows: initialRows }: { schoolId: string; rows:
 
 export function FinanceDashboard() {
   const schoolId = useSchool();
+  const { t } = useAppPreferences();
   const summaryFn = useServerFn(getFinanceSummary);
   const invoicesFn = useServerFn(listFinanceInvoices);
   const summaryQuery = useQuery({
@@ -179,20 +197,23 @@ export function FinanceDashboard() {
   const error = summaryQuery.error ?? invoicesQuery.error;
   return (
     <StaffGate>
-      <Page title="Finance" description="Operational receivables for the active school.">
+      <Page title={t("finance.title")} description={t("finance.description")}>
         <AsyncError error={error} />
         <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
           {[
-            ["Issued", summary.issued_total ?? summary.issued_amount ?? summary.issuedAmount],
             [
-              "Collected",
+              t("finance.issued"),
+              summary.issued_total ?? summary.issued_amount ?? summary.issuedAmount,
+            ],
+            [
+              t("finance.collected"),
               summary.collected_total ?? summary.collected_amount ?? summary.collectedAmount,
             ],
             [
-              "Outstanding",
+              t("finance.outstanding"),
               summary.outstanding_total ?? summary.outstanding_amount ?? summary.outstanding,
             ],
-            ["Overdue", summary.overdue_amount ?? summary.overdueAmount],
+            [t("finance.overdue"), summary.overdue_amount ?? summary.overdueAmount],
           ].map(([label, value]) => (
             <Card key={String(label)}>
               <CardHeader>
@@ -204,7 +225,7 @@ export function FinanceDashboard() {
         </div>
         <Card>
           <CardHeader>
-            <CardTitle>Receivables</CardTitle>
+            <CardTitle>{t("finance.receivables")}</CardTitle>
           </CardHeader>
           <CardContent>
             <InvoiceTable schoolId={schoolId} rows={invoiceRows} />
@@ -216,6 +237,7 @@ export function FinanceDashboard() {
 }
 
 export function FinanceFees() {
+  const { locale } = useAppPreferences();
   const schoolId = useSchool();
   const { activeAcademicYear } = useAppContext();
   const listFeesFn = useServerFn(listFinanceFees);
@@ -316,12 +338,12 @@ export function FinanceFees() {
                 />
                 <select
                   className="h-10 w-full rounded-md border bg-background px-3"
-                  aria-label="Frequency"
+                  aria-label={translateUiText("Frequency", locale)}
                   value={feeForm.frequency}
                   onChange={(e) => setFeeForm({ ...feeForm, frequency: e.target.value })}
                 >
-                  <option value="monthly">Monthly</option>
-                  <option value="one_time">One-time</option>
+                  <option value="monthly">{translateUiText("Monthly", locale)}</option>
+                  <option value="one_time">{translateUiText("One-time", locale)}</option>
                 </select>
                 <PermissionGate permission="finance.manage_fees">
                   <Button type="submit">Create fee</Button>
@@ -349,11 +371,11 @@ export function FinanceFees() {
                 />
                 <select
                   className="h-10 w-full rounded-md border bg-background px-3"
-                  aria-label="Source fee"
+                  aria-label={translateUiText("Source fee", locale)}
                   value={planForm.feeId}
                   onChange={(e) => setPlanForm({ ...planForm, feeId: e.target.value })}
                 >
-                  <option value="">Select source fee</option>
+                  <option value="">{translateUiText("Select source fee", locale)}</option>
                   {fees.map((fee) => (
                     <option key={String(fee.id ?? fee.fee_id)} value={String(fee.id ?? fee.fee_id)}>
                       {String(fee.code ?? fee.fee_code)} — {String(fee.name ?? fee.fee_name)}
@@ -464,6 +486,7 @@ function PlanCard({
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   createVersionFn: any;
 }) {
+  const { locale } = useAppPreferences();
   const planId = String(plan.id ?? plan.billing_plan_id);
   const versionsFn = useServerFn(listFinanceBillingPlanVersions);
   const targetsFn = useServerFn(listFinanceBillingPlanTargets);
@@ -529,17 +552,18 @@ function PlanCard({
             </span>
           </p>
           <p className="text-xs text-muted-foreground">
-            Stable plan identity · {versions.length} version(s)
+            {translateUiText("Stable plan identity", locale)} · {versions.length}{" "}
+            {translateUiText("version(s)", locale)}
           </p>
         </div>
         <PermissionGate permission="finance.manage_billing">
           <select
             className="h-9 rounded-md border bg-background px-2 text-sm"
-            aria-label="Version source fee"
+            aria-label={translateUiText("Version source fee", locale)}
             value={feeDefinitionId}
             onChange={(event) => setFeeDefinitionId(event.target.value)}
           >
-            <option value="">Select fee</option>
+            <option value="">{translateUiText("Select fee", locale)}</option>
             {fees.map((fee) => (
               <option key={String(fee.id ?? fee.fee_id)} value={String(fee.id ?? fee.fee_id)}>
                 {String(fee.code ?? fee.fee_code)}
@@ -552,7 +576,7 @@ function PlanCard({
             disabled={!feeDefinitionId}
             onClick={() => void addVersion()}
           >
-            Create version
+            {translateUiText("Create version", locale)}
           </Button>
         </PermissionGate>
       </div>
@@ -564,7 +588,10 @@ function PlanCard({
             key={String(version.id ?? version.billing_plan_version_id)}
           >
             <div className="flex flex-wrap justify-between gap-2">
-              <span>Version {String(version.version_number ?? version.version_no ?? "—")}</span>
+              <span>
+                {translateUiText("Version", locale)}{" "}
+                {String(version.version_number ?? version.version_no ?? "—")}
+              </span>
               <span>
                 {idr(version.amount_idr ?? version.amount ?? version.snapshot_amount)} ·{" "}
                 {String(
@@ -573,9 +600,13 @@ function PlanCard({
               </span>
             </div>
             <p className="text-xs text-muted-foreground">
-              Target: {String(version.target_type ?? "school")} · immutable snapshot
+              {translateUiText("Target", locale)}:{" "}
+              {translateUiText(String(version.target_type ?? "school"), locale)} ·{" "}
+              {translateUiText("immutable snapshot", locale)}
             </p>
-            <p className="text-xs text-muted-foreground">Bounded target rows: {targets.length}</p>
+            <p className="text-xs text-muted-foreground">
+              {translateUiText("Bounded target rows:", locale)} {targets.length}
+            </p>
           </div>
         ))}
       </div>
@@ -584,6 +615,7 @@ function PlanCard({
 }
 
 export function FinanceBilling() {
+  const { locale } = useAppPreferences();
   const schoolId = useSchool();
   const plansFn = useServerFn(listFinanceBillingPlans);
   const versionsFn = useServerFn(listFinanceBillingPlanVersions);
@@ -644,8 +676,11 @@ export function FinanceBilling() {
             <AsyncError error={error} />
             <form className="space-y-4" onSubmit={generate}>
               <div>
-                <Label>Billing plan</Label>
+                <Label htmlFor="billing-plan-select">
+                  {translateUiText("Billing plan", locale)}
+                </Label>
                 <select
+                  id="billing-plan-select"
                   className="mt-1 h-10 w-full rounded-md border bg-background px-3"
                   value={selectedPlan}
                   onChange={(e) => {
@@ -653,7 +688,7 @@ export function FinanceBilling() {
                     setSelectedVersion("");
                   }}
                 >
-                  <option value="">Select plan</option>
+                  <option value="">{translateUiText("Select plan", locale)}</option>
                   {plans.map((p) => (
                     <option
                       key={String(p.id ?? p.billing_plan_id)}
@@ -665,13 +700,16 @@ export function FinanceBilling() {
                 </select>
               </div>
               <div>
-                <Label>Immutable plan version</Label>
+                <Label htmlFor="billing-plan-version-select">
+                  {translateUiText("Immutable plan version", locale)}
+                </Label>
                 <select
+                  id="billing-plan-version-select"
                   className="mt-1 h-10 w-full rounded-md border bg-background px-3"
                   value={selectedVersion}
                   onChange={(e) => setSelectedVersion(e.target.value)}
                 >
-                  <option value="">Select version</option>
+                  <option value="">{translateUiText("Select version", locale)}</option>
                   {versions.map((v) => (
                     <option
                       key={String(v.id ?? v.billing_plan_version_id)}
@@ -789,6 +827,7 @@ function PaymentForm({
 }
 
 export function FinanceInvoiceDetail() {
+  const { locale } = useAppPreferences();
   const schoolId = useSchool();
   const { invoiceId } = useParams({ strict: false }) as { invoiceId: string };
   const getFn = useServerFn(getFinanceInvoice);
@@ -865,13 +904,13 @@ export function FinanceInvoiceDetail() {
                   </strong>
                 </p>
                 <p>
-                  Paid:{" "}
+                  {translateUiText("Paid", locale)}:{" "}
                   <strong>
                     {idr(settlement.paid ?? invoice.valid_paid ?? invoice.paid_amount)}
                   </strong>
                 </p>
                 <p>
-                  Outstanding:{" "}
+                  {translateUiText("Outstanding", locale)}:{" "}
                   <strong>
                     {idr(
                       settlement.outstanding ?? invoice.outstanding_amount ?? invoice.outstanding,
@@ -879,7 +918,7 @@ export function FinanceInvoiceDetail() {
                   </strong>
                 </p>
                 <p>
-                  Document:{" "}
+                  {translateUiText("Document:", locale)}{" "}
                   <Badge variant="outline">{String(invoice.document_status ?? "—")}</Badge>{" "}
                   <Badge variant="secondary">
                     {String(settlement.settlement ?? invoice.settlement_status ?? "unpaid")}
@@ -978,6 +1017,7 @@ export function FinanceInvoiceDetail() {
 }
 
 export function FinancePayments() {
+  const { locale } = useAppPreferences();
   const schoolId = useSchool();
   const paymentsFn = useServerFn(listFinancePayments);
   const paymentsQuery = useQuery({
@@ -997,25 +1037,34 @@ export function FinancePayments() {
               <table className="w-full text-sm">
                 <thead>
                   <tr className="border-b text-left">
-                    <th className="p-3">Received</th>
-                    <th className="p-3">Reference</th>
-                    <th className="p-3">Amount</th>
-                    <th className="p-3">Method</th>
-                    <th className="p-3">State</th>
+                    <th className="p-3">{translateUiText("Received", locale)}</th>
+                    <th className="p-3">{translateUiText("Reference", locale)}</th>
+                    <th className="p-3">{translateUiText("Amount", locale)}</th>
+                    <th className="p-3">{translateUiText("Method", locale)}</th>
+                    <th className="p-3">{translateUiText("State", locale)}</th>
                   </tr>
                 </thead>
                 <tbody>
                   {payments.map((payment) => (
                     <tr className="border-b" key={String(payment.id ?? payment.payment_id)}>
                       <td className="p-3">
-                        {String(payment.received_at ?? payment.receivedAt ?? "—")}
+                        {(payment.received_at ?? payment.receivedAt)
+                          ? formatPreferredDate(String(payment.received_at ?? payment.receivedAt), {
+                              dateStyle: "medium",
+                              timeStyle: "short",
+                            })
+                          : "—"}
                       </td>
                       <td className="p-3">
                         {String(payment.reference ?? payment.manual_reference ?? "—")}
                       </td>
                       <td className="p-3">{idr(payment.amount_idr ?? payment.amount)}</td>
-                      <td className="p-3">{String(payment.method ?? "manual")}</td>
-                      <td className="p-3">{payment.reversed ? "Reversed" : "Valid"}</td>
+                      <td className="p-3">
+                        {translateUiText(String(payment.method ?? "manual"), locale)}
+                      </td>
+                      <td className="p-3">
+                        {translateUiText(payment.reversed ? "Reversed" : "Valid", locale)}
+                      </td>
                     </tr>
                   ))}
                 </tbody>
@@ -1033,6 +1082,7 @@ export function FinancePayments() {
 
 export function ParentBilling() {
   const { hasPermission } = useAppContext();
+  const { locale } = useAppPreferences();
   const listFn = useServerFn(listParentBilling);
   const billingQuery = useQuery({
     queryKey: ["b19-parent-billing"],
@@ -1046,7 +1096,7 @@ export function ParentBilling() {
       <Page title="Billing">
         <Card>
           <CardContent className="p-6">
-            Billing is available only to an authorized related parent.
+            {translateUiText("Billing is available only to an authorized related parent.", locale)}
           </CardContent>
         </Card>
       </Page>

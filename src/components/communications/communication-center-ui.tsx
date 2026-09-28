@@ -22,6 +22,7 @@ import {
 import { Skeleton } from "@/components/ui/skeleton";
 import { Textarea } from "@/components/ui/textarea";
 import { useAppContext } from "@/lib/app-context";
+import { formatPreferredDate, translateUiText, useAppPreferences } from "@/lib/app-preferences";
 import { listClassrooms } from "@/lib/academic.functions";
 import {
   createCommunicationAnnouncement,
@@ -66,11 +67,7 @@ function requestId() {
   return crypto.randomUUID();
 }
 function formatDate(value: string | null) {
-  return value
-    ? new Intl.DateTimeFormat("en", { dateStyle: "medium", timeStyle: "short" }).format(
-        new Date(value),
-      )
-    : "—";
+  return value ? formatPreferredDate(value, { dateStyle: "medium", timeStyle: "short" }) : "—";
 }
 function audiencesLabel(targets: Target[]) {
   return [...new Set(targets.flatMap((target) => target.audiences))].join(", ");
@@ -91,10 +88,11 @@ function targetsFromDetail(detail: AnnouncementDetail): Target[] {
 }
 
 function ErrorState({ message }: { message: string }) {
+  const { locale } = useAppPreferences();
   return (
     <Alert variant="destructive">
-      <AlertTitle>Communication Center unavailable</AlertTitle>
-      <AlertDescription>{message}</AlertDescription>
+      <AlertTitle>{translateUiText("Communication Center unavailable", locale)}</AlertTitle>
+      <AlertDescription>{translateUiText(message, locale)}</AlertDescription>
     </Alert>
   );
 }
@@ -131,6 +129,7 @@ function AnnouncementEditor({
   onDone: (id: string) => void;
 }) {
   const { activeSchool, activeAcademicYear } = useAppContext();
+  const { locale, t } = useAppPreferences();
   const create = useServerFn(createCommunicationAnnouncement);
   const update = useServerFn(updateCommunicationAnnouncement);
   const classroomFetch = useServerFn(listClassrooms);
@@ -176,13 +175,15 @@ function AnnouncementEditor({
     },
     onSuccess: (result) => {
       const value = result as { announcement_id?: string };
-      toast.success(initial ? "Draft updated." : "Draft created.");
+      toast.success(translateUiText(initial ? "Draft updated." : "Draft created.", locale));
       setPendingRequestId(null);
       if (value.announcement_id) onDone(value.announcement_id);
     },
-    onError: (error) => {
+    onError: () => {
       setPendingRequestId(null);
-      toast.error(error instanceof Error ? error.message : "The announcement could not be saved.");
+      toast.error(
+        translateUiText("The announcement could not be saved. Please try again.", locale),
+      );
     },
   });
   const submit = (event: FormEvent) => {
@@ -289,10 +290,10 @@ function AnnouncementEditor({
           </div>
           <div className="flex flex-wrap justify-end gap-2">
             <Button type="button" variant="outline" asChild>
-              <Link to="/communications">Cancel</Link>
+              <Link to="/communications">{t("common.cancel")}</Link>
             </Button>
             <Button type="submit" disabled={!canSubmit || mutation.isPending}>
-              {mutation.isPending ? "Saving…" : initial ? "Save draft" : "Save draft"}
+              {mutation.isPending ? t("common.saving") : t("communication.saveDraft")}
             </Button>
           </div>
         </form>
@@ -303,6 +304,7 @@ function AnnouncementEditor({
 
 export function CommunicationListPage() {
   const { activeSchool, hasPermission } = useAppContext();
+  const { t } = useAppPreferences();
   const fetch = useServerFn(listCommunicationAnnouncements);
   const [page, setPage] = useState(1);
   const query = useQuery({
@@ -325,15 +327,13 @@ export function CommunicationListPage() {
       <div className="space-y-6">
         <div className="flex flex-wrap items-start justify-between gap-3">
           <div>
-            <h1 className="text-2xl font-semibold tracking-tight">Communication Center</h1>
-            <p className="text-sm text-muted-foreground">
-              Create and publish secure school announcements.
-            </p>
+            <h1 className="text-2xl font-semibold tracking-tight">{t("communication.title")}</h1>
+            <p className="text-sm text-muted-foreground">{t("communication.description")}</p>
           </div>
           <Button asChild>
             <Link to="/communications/new">
               <Megaphone className="mr-2 h-4 w-4" />
-              New announcement
+              {t("communication.new")}
             </Link>
           </Button>
         </div>
@@ -348,10 +348,8 @@ export function CommunicationListPage() {
           <Card>
             <CardContent className="p-12 text-center">
               <BellRing className="mx-auto h-8 w-8 text-muted-foreground" />
-              <p className="mt-3 font-medium">No announcements yet</p>
-              <p className="text-sm text-muted-foreground">
-                Save a draft to start a school communication.
-              </p>
+              <p className="mt-3 font-medium">{t("communication.empty")}</p>
+              <p className="text-sm text-muted-foreground">{t("communication.emptyDescription")}</p>
             </CardContent>
           </Card>
         ) : (
@@ -363,17 +361,24 @@ export function CommunicationListPage() {
                     <div className="flex flex-wrap items-center gap-2">
                       <h2 className="font-medium">{item.title}</h2>
                       <Badge variant={item.status === "published" ? "default" : "secondary"}>
-                        {item.status}
+                        {t(
+                          item.status === "published"
+                            ? "common.status.published"
+                            : "common.status.draft",
+                        )}
                       </Badge>
                     </div>
                     <p className="mt-1 text-xs text-muted-foreground">
-                      {item.target_count} target entries · {item.recipient_count} recipients ·
-                      Created {formatDate(item.created_at)}
+                      {t("communication.meta", {
+                        targets: String(item.target_count),
+                        recipients: String(item.recipient_count),
+                        date: formatDate(item.created_at),
+                      })}
                     </p>
                   </div>
                   <Button variant="outline" asChild>
                     <Link to="/communications/$announcementId" params={{ announcementId: item.id }}>
-                      Open
+                      {t("communication.open")}
                     </Link>
                   </Button>
                 </CardContent>
@@ -388,14 +393,14 @@ export function CommunicationListPage() {
             onClick={() => setPage((current) => current - 1)}
           >
             <ChevronLeft className="mr-1 h-4 w-4" />
-            Previous
+            {t("common.previous")}
           </Button>
           <Button
             variant="outline"
             disabled={data.length < PAGE_SIZE}
             onClick={() => setPage((current) => current + 1)}
           >
-            Next
+            {t("common.next")}
             <ChevronRight className="ml-1 h-4 w-4" />
           </Button>
         </div>
@@ -406,11 +411,12 @@ export function CommunicationListPage() {
 
 export function CommunicationNewPage() {
   const navigate = useNavigate();
+  const { t } = useAppPreferences();
   return (
     <AppShell>
       <div className="mx-auto max-w-3xl space-y-6">
         <Link className="text-sm text-muted-foreground hover:text-foreground" to="/communications">
-          ← Back to Communication Center
+          ← {t("communication.back")}
         </Link>
         <AnnouncementEditor
           onDone={(id) =>
@@ -425,6 +431,7 @@ export function CommunicationNewPage() {
 export function CommunicationDetailPage() {
   const { announcementId } = useParams({ strict: false });
   const { activeSchool, hasPermission } = useAppContext();
+  const { locale, t } = useAppPreferences();
   const fetch = useServerFn(getCommunicationAnnouncement);
   const publish = useServerFn(publishCommunicationAnnouncement);
   const queryClient = useQueryClient();
@@ -445,14 +452,14 @@ export function CommunicationDetailPage() {
         },
       }),
     onSuccess: () => {
-      toast.success("Announcement published.");
+      toast.success(translateUiText("Announcement published.", locale));
       setEditing(false);
       void queryClient.invalidateQueries({ queryKey: ["communication"] });
       void queryClient.invalidateQueries({ queryKey: ["communications"] });
     },
-    onError: (error) =>
+    onError: () =>
       toast.error(
-        error instanceof Error ? error.message : "The announcement could not be published.",
+        translateUiText("The announcement could not be published. Please try again.", locale),
       ),
   });
   if (query.isPending)
@@ -477,7 +484,7 @@ export function CommunicationDetailPage() {
             to="/communications/$announcementId"
             params={{ announcementId: detail.id }}
           >
-            Cancel editing
+            {t("communication.cancelEditing")}
           </Link>
           <AnnouncementEditor
             initial={detail}
@@ -494,7 +501,7 @@ export function CommunicationDetailPage() {
     <AppShell>
       <div className="mx-auto max-w-3xl space-y-6">
         <Link className="text-sm text-muted-foreground hover:text-foreground" to="/communications">
-          ← Back to Communication Center
+          ← {t("communication.back")}
         </Link>
         <Card>
           <CardHeader>
@@ -503,12 +510,14 @@ export function CommunicationDetailPage() {
                 <CardTitle>{detail.title}</CardTitle>
                 <CardDescription>
                   {detail.status === "published"
-                    ? `Published ${formatDate(detail.published_at)}`
-                    : `Draft · Updated version ${detail.version}`}
+                    ? t("communication.publishedOn", { date: formatDate(detail.published_at) })
+                    : t("communication.draftVersion", { version: String(detail.version) })}
                 </CardDescription>
               </div>
               <Badge variant={detail.status === "published" ? "default" : "secondary"}>
-                {detail.status}
+                {t(
+                  detail.status === "published" ? "common.status.published" : "common.status.draft",
+                )}
               </Badge>
             </div>
           </CardHeader>
@@ -516,22 +525,21 @@ export function CommunicationDetailPage() {
             <p className="whitespace-pre-wrap text-sm leading-6">{detail.body}</p>
             <div className="rounded-lg border bg-muted/30 p-4 text-sm">
               <p>
-                <strong>Audience:</strong> {detail.target_count} target entries
+                <strong>{t("communication.audience")}</strong> {detail.target_count}{" "}
+                {t("communication.targetEntries")}
               </p>
               <p>
-                <strong>Resolved recipients:</strong> {detail.recipient_count}
+                <strong>{t("communication.resolvedRecipients")}</strong> {detail.recipient_count}
               </p>
               {detail.readable_recipient && (
-                <p className="mt-2 text-muted-foreground">
-                  This announcement was delivered to your authenticated inbox.
-                </p>
+                <p className="mt-2 text-muted-foreground">{t("communication.delivered")}</p>
               )}
             </div>
             {staff && detail.status === "draft" && (
               <div className="flex flex-wrap justify-end gap-2">
                 <Button variant="outline" onClick={() => setEditing(true)}>
                   <FileEdit className="mr-2 h-4 w-4" />
-                  Edit draft
+                  {t("communication.editDraft")}
                 </Button>
                 <Button
                   onClick={() =>
@@ -540,7 +548,9 @@ export function CommunicationDetailPage() {
                   disabled={publishMutation.isPending}
                 >
                   <Send className="mr-2 h-4 w-4" />
-                  {publishMutation.isPending ? "Publishing…" : "Publish"}
+                  {publishMutation.isPending
+                    ? t("communication.publishing")
+                    : t("communication.publish")}
                 </Button>
               </div>
             )}

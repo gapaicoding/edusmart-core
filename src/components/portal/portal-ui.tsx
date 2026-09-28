@@ -26,6 +26,7 @@ import {
 } from "@/components/ui/select";
 import { cn } from "@/lib/utils";
 import { useAppContext } from "@/lib/app-context";
+import { formatPreferredDate, translateUiText, useAppPreferences } from "@/lib/app-preferences";
 import {
   getPortalChildOverview,
   listPortalAttendance,
@@ -90,6 +91,7 @@ const PORTAL_TABS = [
 
 function PortalTabs() {
   const pathname = useRouterState({ select: (s) => s.location.pathname });
+  const { locale } = useAppPreferences();
   return (
     <nav className="flex flex-wrap gap-2 border-b border-border pb-2">
       {PORTAL_TABS.map((t) => {
@@ -106,7 +108,7 @@ function PortalTabs() {
             )}
           >
             <t.icon className="h-4 w-4" />
-            {t.label}
+            {translateUiText(t.label, locale)}
           </Link>
         );
       })}
@@ -123,11 +125,14 @@ function ChildHeader({
   selectedId: string | null;
   onSelect: (id: string) => void;
 }) {
+  const { locale } = useAppPreferences();
   const active = children.find((c) => c.studentId === selectedId) ?? null;
   return (
     <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
       <div className="min-w-0">
-        <p className="text-xs uppercase tracking-wide text-muted-foreground">Viewing child</p>
+        <p className="text-xs uppercase tracking-wide text-muted-foreground">
+          {translateUiText("Viewing child", locale)}
+        </p>
         <h2 className="truncate text-lg font-semibold">{active?.fullName ?? "—"}</h2>
         {active && (
           <div className="mt-1 flex flex-wrap gap-1">
@@ -136,7 +141,7 @@ function ChildHeader({
             </Badge>
             {active.isPrimary && (
               <Badge variant="outline" className="text-[10px]">
-                Primary
+                {translateUiText("Primary", locale)}
               </Badge>
             )}
           </div>
@@ -171,6 +176,11 @@ function EmptyPortal({ title, description }: { title: string; description: strin
   );
 }
 
+function PortalLoadFailure() {
+  const { t } = useAppPreferences();
+  return <>{t("common.loadErrorDescription")}</>;
+}
+
 function PortalShell({
   activeChild,
   children: content,
@@ -182,6 +192,7 @@ function PortalShell({
 }) {
   const { data, isLoading, error, refetch, selectedId, setSelectedId } = childListState;
   const { snapshot } = useAppContext();
+  const { t } = useAppPreferences();
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -194,21 +205,20 @@ function PortalShell({
     <AppShell>
       <div className="mx-auto flex max-w-4xl flex-col gap-4">
         <header>
-          <p className="text-xs uppercase tracking-wide text-muted-foreground">Parent Portal</p>
-          <h1 className="text-2xl font-semibold">Family workspace</h1>
-          <p className="text-sm text-muted-foreground">
-            Read-only view of your child's academic record. What you see here is what has been
-            published by the school.
+          <p className="text-xs uppercase tracking-wide text-muted-foreground">
+            {t("portal.parentEyebrow")}
           </p>
+          <h1 className="text-2xl font-semibold">{t("portal.parentTitle")}</h1>
+          <p className="text-sm text-muted-foreground">{t("portal.parentDescription")}</p>
         </header>
 
         {error && (
           <Alert variant="destructive">
-            <AlertTitle>We couldn't load your children</AlertTitle>
+            <AlertTitle>{t("portal.parentLoadError")}</AlertTitle>
             <AlertDescription>
-              {(error as Error).message}
+              {t("common.loadErrorDescription")}
               <button className="ml-2 underline" onClick={() => void refetch()}>
-                Try again
+                {t("common.retry")}
               </button>
             </AlertDescription>
           </Alert>
@@ -221,8 +231,8 @@ function PortalShell({
           </div>
         ) : !data || data.children.length === 0 ? (
           <EmptyPortal
-            title="No children linked to this account"
-            description="Your school hasn't linked a student to this login yet. Contact the school office to complete the guardian setup."
+            title={t("portal.parentEmptyTitle")}
+            description={t("portal.parentEmptyDescription")}
           />
         ) : (
           <>
@@ -271,7 +281,9 @@ function OverviewSection({ child }: { child: PortalChild }) {
     return (
       <Alert variant="destructive">
         <AlertTitle>We couldn't load this child's overview</AlertTitle>
-        <AlertDescription>{(error as Error).message}</AlertDescription>
+        <AlertDescription>
+          <PortalLoadFailure />
+        </AlertDescription>
       </Alert>
     );
   }
@@ -351,7 +363,9 @@ function AttendanceSection({ child }: { child: PortalChild }) {
     return (
       <Alert variant="destructive">
         <AlertTitle>We couldn't load attendance</AlertTitle>
-        <AlertDescription>{(error as Error).message}</AlertDescription>
+        <AlertDescription>
+          <PortalLoadFailure />
+        </AlertDescription>
       </Alert>
     );
   }
@@ -371,7 +385,7 @@ function AttendanceSection({ child }: { child: PortalChild }) {
         <Card key={r.recordId}>
           <CardContent className="flex items-center justify-between p-3 text-sm">
             <div>
-              <p className="font-medium">{new Date(r.sessionDate).toLocaleDateString()}</p>
+              <p className="font-medium">{formatPreferredDate(r.sessionDate)}</p>
               <p className="text-xs text-muted-foreground capitalize">Session {r.sessionStatus}</p>
             </div>
             <Badge
@@ -406,7 +420,9 @@ function ScoresSection({ child }: { child: PortalChild }) {
     return (
       <Alert variant="destructive">
         <AlertTitle>We couldn't load results</AlertTitle>
-        <AlertDescription>{(error as Error).message}</AlertDescription>
+        <AlertDescription>
+          <PortalLoadFailure />
+        </AlertDescription>
       </Alert>
     );
   }
@@ -430,7 +446,7 @@ function ScoresSection({ child }: { child: PortalChild }) {
               <p className="text-xs text-muted-foreground">
                 {r.subjectName ? `${r.subjectName} · ` : ""}
                 {r.typeName ? `${r.typeName} · ` : ""}
-                {new Date(r.assessmentDate).toLocaleDateString()}
+                {formatPreferredDate(r.assessmentDate)}
                 {r.termName ? ` · ${r.termName}` : ""}
               </p>
             </div>
@@ -484,7 +500,9 @@ function ScheduleSection({ child }: { child: PortalChild }) {
     return (
       <Alert variant="destructive">
         <AlertTitle>We couldn't load the schedule</AlertTitle>
-        <AlertDescription>{(error as Error).message}</AlertDescription>
+        <AlertDescription>
+          <PortalLoadFailure />
+        </AlertDescription>
       </Alert>
     );
   }
@@ -572,7 +590,9 @@ function PortalReportCardsSection({ child }: { child: PortalChild }) {
     return (
       <Alert variant="destructive">
         <AlertTitle>We couldn't load Report Cards</AlertTitle>
-        <AlertDescription>{(list.error as Error).message}</AlertDescription>
+        <AlertDescription>
+          <PortalLoadFailure />
+        </AlertDescription>
       </Alert>
     );
   if (list.isLoading) return <Skeleton className="h-40 w-full" />;
@@ -631,7 +651,7 @@ function PortalReportCardsSection({ child }: { child: PortalChild }) {
           <CardContent>
             <p className="text-sm text-muted-foreground">
               Official frozen Report Card snapshot published{" "}
-              {new Date(report.card.published_at!).toLocaleDateString()}.
+              {formatPreferredDate(report.card.published_at!)}.
             </p>
           </CardContent>
         </Card>
@@ -653,14 +673,10 @@ function PortalReportCardsSection({ child }: { child: PortalChild }) {
                 Download PDF
               </Button>
             ) : (
-              <p className="text-sm text-muted-foreground">PDF belum tersedia.</p>
+              <p className="text-sm text-muted-foreground">PDF not available yet.</p>
             )}
             {documentDownload.error && (
-              <p className="mt-2 text-sm text-destructive">
-                {documentDownload.error instanceof Error
-                  ? documentDownload.error.message
-                  : "Secure download failed."}
-              </p>
+              <p className="mt-2 text-sm text-destructive">Secure download failed.</p>
             )}
           </CardContent>
         </Card>
@@ -751,7 +767,7 @@ function PortalReportCardsSection({ child }: { child: PortalChild }) {
               <div className="sm:text-right">
                 <Badge>Published · Version {row.version}</Badge>
                 <p className="mt-1 text-xs text-muted-foreground">
-                  {new Date(row.publishedAt).toLocaleDateString()}
+                  {formatPreferredDate(row.publishedAt)}
                 </p>
               </div>
             </CardContent>

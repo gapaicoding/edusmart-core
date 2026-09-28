@@ -20,6 +20,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Textarea } from "@/components/ui/textarea";
 import { useAppContext } from "@/lib/app-context";
+import { translateUiText, useAppPreferences } from "@/lib/app-preferences";
 import { listStaff } from "@/lib/sis.functions";
 import {
   listMyStaffAttendance,
@@ -65,13 +66,19 @@ const safeError = (error: unknown) => {
 };
 
 function Frame({ children }: { children: ReactNode }) {
+  const { locale } = useAppPreferences();
   return (
     <AppShell>
       <div className="space-y-6">
         <div>
-          <h1 className="text-2xl font-semibold tracking-tight">Staff Attendance</h1>
+          <h1 className="text-2xl font-semibold tracking-tight">
+            {translateUiText("Staff Attendance", locale)}
+          </h1>
           <p className="text-sm text-muted-foreground">
-            School-scoped operational attendance and read-only personal history.
+            {translateUiText(
+              "School-scoped operational attendance and read-only personal history.",
+              locale,
+            )}
           </p>
         </div>
         {children}
@@ -261,7 +268,8 @@ function AttendanceForm({
 }
 
 export function StaffAttendancePage() {
-  const { activeSchool, activeOrganization, hasPermission } = useAppContext();
+  const { activeSchool, activeOrganization, hasPermission, contextLoading } = useAppContext();
+  const { locale } = useAppPreferences();
   const canManage = hasPermission("staff_attendance.manage");
   const canRead = hasPermission("staff_attendance.read");
   const canSelf = hasPermission("staff_attendance.self.read");
@@ -430,7 +438,14 @@ export function StaffAttendancePage() {
   );
   return (
     <Frame>
-      {(canManage || canRead) && canSelf ? (
+      {contextLoading ? (
+        <Card>
+          <CardContent className="space-y-3 p-6">
+            <Skeleton className="h-5 w-40" />
+            <Skeleton className="h-24 w-full" />
+          </CardContent>
+        </Card>
+      ) : (canManage || canRead) && canSelf ? (
         <Tabs defaultValue={canManage || canRead ? "manage" : "mine"}>
           <TabsList>
             <TabsTrigger value="manage">Manage attendance</TabsTrigger>
@@ -446,9 +461,12 @@ export function StaffAttendancePage() {
       ) : (
         <Card>
           <CardHeader>
-            <CardTitle>Access unavailable</CardTitle>
+            <CardTitle>{translateUiText("Access unavailable", locale)}</CardTitle>
             <CardDescription>
-              Your active account does not have Staff Attendance permission.
+              {translateUiText(
+                "Your active account does not have Staff Attendance permission.",
+                locale,
+              )}
             </CardDescription>
           </CardHeader>
         </Card>

@@ -7,15 +7,22 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Alert, AlertDescription } from "@/components/ui/alert";
+import { useAppPreferences } from "@/lib/app-preferences";
 
 export const Route = createFileRoute("/forgot-password")({
   ssr: false,
   head: () => ({
     meta: [
       { title: "Reset your password — EduSmart SchoolOS" },
-      { name: "description", content: "Request a password reset link for your EduSmart SchoolOS account." },
+      {
+        name: "description",
+        content: "Request a password reset link for your EduSmart SchoolOS account.",
+      },
       { property: "og:title", content: "Reset your password — EduSmart SchoolOS" },
-      { property: "og:description", content: "Request a password reset link for your EduSmart SchoolOS account." },
+      {
+        property: "og:description",
+        content: "Request a password reset link for your EduSmart SchoolOS account.",
+      },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary" },
       { name: "robots", content: "noindex" },
@@ -25,6 +32,7 @@ export const Route = createFileRoute("/forgot-password")({
 });
 
 function ForgotPasswordPage() {
+  const { t } = useAppPreferences();
   const [email, setEmail] = useState("");
   const [sent, setSent] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -54,20 +62,18 @@ function ForgotPasswordPage() {
     <div className="flex min-h-screen items-center justify-center bg-muted/30 px-4">
       <Card className="w-full max-w-sm">
         <CardHeader>
-          <CardTitle>Forgot password</CardTitle>
-          <CardDescription>We'll email you a reset link.</CardDescription>
+          <CardTitle>{t("auth.forgotTitle")}</CardTitle>
+          <CardDescription>{t("auth.forgotDescription")}</CardDescription>
         </CardHeader>
         <CardContent>
           {sent ? (
             <Alert>
-              <AlertDescription>
-                If an account exists for {email}, a reset link is on its way. Check your inbox and spam folder.
-              </AlertDescription>
+              <AlertDescription>{t("auth.resetSent", { email })}</AlertDescription>
             </Alert>
           ) : (
             <form className="space-y-4" onSubmit={handleSubmit}>
               <div className="space-y-2">
-                <Label htmlFor="email">Email</Label>
+                <Label htmlFor="email">{t("auth.email")}</Label>
                 <Input
                   id="email"
                   type="email"
@@ -83,14 +89,14 @@ function ForgotPasswordPage() {
                 </Alert>
               )}
               <Button type="submit" className="w-full" disabled={submitting}>
-                {submitting ? "Sending…" : "Send reset link"}
+                {submitting ? t("auth.sending") : t("auth.sendResetLink")}
               </Button>
             </form>
           )}
 
           <div className="mt-4 text-sm">
             <Link to="/auth" className="text-muted-foreground underline-offset-4 hover:underline">
-              Back to sign in
+              {t("auth.backToSignIn")}
             </Link>
           </div>
         </CardContent>

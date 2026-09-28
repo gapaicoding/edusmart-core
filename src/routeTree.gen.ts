@@ -21,6 +21,7 @@ import { Route as AuthenticatedDashboardRouteImport } from './routes/_authentica
 import { Route as AuthenticatedNotificationsRouteImport } from './routes/_authenticated/notifications'
 import { Route as AuthenticatedSelectOrganizationRouteImport } from './routes/_authenticated/select-organization'
 import { Route as AuthenticatedSelectSchoolRouteImport } from './routes/_authenticated/select-school'
+import { Route as AuthenticatedSettingsRouteImport } from './routes/_authenticated/settings'
 import { Route as AuthenticatedSisExportRouteImport } from './routes/_authenticated/sis-export'
 import { Route as PpdbCycleIdRouteImport } from './routes/ppdb/$cycleId'
 import { Route as AuthenticatedAcademicCalendarRouteImport } from './routes/_authenticated/academic/calendar'
@@ -144,6 +145,11 @@ const AuthenticatedSelectSchoolRoute =
     path: '/select-school',
     getParentRoute: () => AuthenticatedRouteRoute,
   } as any)
+const AuthenticatedSettingsRoute = AuthenticatedSettingsRouteImport.update({
+  id: '/settings',
+  path: '/settings',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
 const AuthenticatedSisExportRoute = AuthenticatedSisExportRouteImport.update({
   id: '/sis-export',
   path: '/sis-export',
@@ -507,6 +513,7 @@ export interface FileRoutesByFullPath {
   '/notifications': typeof AuthenticatedNotificationsRoute
   '/select-organization': typeof AuthenticatedSelectOrganizationRoute
   '/select-school': typeof AuthenticatedSelectSchoolRoute
+  '/settings': typeof AuthenticatedSettingsRoute
   '/sis-export': typeof AuthenticatedSisExportRoute
   '/ppdb/$cycleId': typeof PpdbCycleIdRoute
   '/academic/calendar': typeof AuthenticatedAcademicCalendarRoute
@@ -579,6 +586,7 @@ export interface FileRoutesByTo {
   '/notifications': typeof AuthenticatedNotificationsRoute
   '/select-organization': typeof AuthenticatedSelectOrganizationRoute
   '/select-school': typeof AuthenticatedSelectSchoolRoute
+  '/settings': typeof AuthenticatedSettingsRoute
   '/sis-export': typeof AuthenticatedSisExportRoute
   '/ppdb/$cycleId': typeof PpdbCycleIdRoute
   '/academic/calendar': typeof AuthenticatedAcademicCalendarRoute
@@ -653,6 +661,7 @@ export interface FileRoutesById {
   '/_authenticated/notifications': typeof AuthenticatedNotificationsRoute
   '/_authenticated/select-organization': typeof AuthenticatedSelectOrganizationRoute
   '/_authenticated/select-school': typeof AuthenticatedSelectSchoolRoute
+  '/_authenticated/settings': typeof AuthenticatedSettingsRoute
   '/_authenticated/sis-export': typeof AuthenticatedSisExportRoute
   '/ppdb/$cycleId': typeof PpdbCycleIdRoute
   '/_authenticated/academic/calendar': typeof AuthenticatedAcademicCalendarRoute
@@ -727,6 +736,7 @@ export interface FileRouteTypes {
     | '/notifications'
     | '/select-organization'
     | '/select-school'
+    | '/settings'
     | '/sis-export'
     | '/ppdb/$cycleId'
     | '/academic/calendar'
@@ -799,6 +809,7 @@ export interface FileRouteTypes {
     | '/notifications'
     | '/select-organization'
     | '/select-school'
+    | '/settings'
     | '/sis-export'
     | '/ppdb/$cycleId'
     | '/academic/calendar'
@@ -872,6 +883,7 @@ export interface FileRouteTypes {
     | '/_authenticated/notifications'
     | '/_authenticated/select-organization'
     | '/_authenticated/select-school'
+    | '/_authenticated/settings'
     | '/_authenticated/sis-export'
     | '/ppdb/$cycleId'
     | '/_authenticated/academic/calendar'
@@ -1028,6 +1040,13 @@ declare module '@tanstack/react-router' {
       path: '/select-school'
       fullPath: '/select-school'
       preLoaderRoute: typeof AuthenticatedSelectSchoolRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/settings': {
+      id: '/_authenticated/settings'
+      path: '/settings'
+      fullPath: '/settings'
+      preLoaderRoute: typeof AuthenticatedSettingsRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
     '/_authenticated/sis-export': {
@@ -1482,6 +1501,7 @@ interface AuthenticatedRouteRouteChildren {
   AuthenticatedNotificationsRoute: typeof AuthenticatedNotificationsRoute
   AuthenticatedSelectOrganizationRoute: typeof AuthenticatedSelectOrganizationRoute
   AuthenticatedSelectSchoolRoute: typeof AuthenticatedSelectSchoolRoute
+  AuthenticatedSettingsRoute: typeof AuthenticatedSettingsRoute
   AuthenticatedSisExportRoute: typeof AuthenticatedSisExportRoute
   AuthenticatedAcademicCalendarRoute: typeof AuthenticatedAcademicCalendarRoute
   AuthenticatedAcademicClassroomsRoute: typeof AuthenticatedAcademicClassroomsRoute
@@ -1546,6 +1566,7 @@ const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedNotificationsRoute: AuthenticatedNotificationsRoute,
   AuthenticatedSelectOrganizationRoute: AuthenticatedSelectOrganizationRoute,
   AuthenticatedSelectSchoolRoute: AuthenticatedSelectSchoolRoute,
+  AuthenticatedSettingsRoute: AuthenticatedSettingsRoute,
   AuthenticatedSisExportRoute: AuthenticatedSisExportRoute,
   AuthenticatedAcademicCalendarRoute: AuthenticatedAcademicCalendarRoute,
   AuthenticatedAcademicClassroomsRoute: AuthenticatedAcademicClassroomsRoute,

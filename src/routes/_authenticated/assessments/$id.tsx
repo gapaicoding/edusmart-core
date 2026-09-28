@@ -1,4 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router";
+import { AppShell } from "@/components/app-shell";
 import { AssessmentDetailPage } from "@/components/assessment/assessment-gradebook-ui";
 
 export const Route = createFileRoute("/_authenticated/assessments/$id")({
@@ -7,5 +8,9 @@ export const Route = createFileRoute("/_authenticated/assessments/$id")({
 });
 
 function AssessmentRoute() {
-  return <AssessmentDetailPage id={Route.useParams().id} />;
+  return (
+    <AppShell>
+      <AssessmentDetailPage id={Route.useParams().id} />
+    </AppShell>
+  );
 }

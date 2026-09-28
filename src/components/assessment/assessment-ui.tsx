@@ -5,6 +5,7 @@ import { useServerFn } from "@tanstack/react-start";
 import { ArrowLeft, ClipboardCheck, Pencil, Plus } from "lucide-react";
 import { toast } from "sonner";
 import { useAppContext, PermissionGate } from "@/lib/app-context";
+import { formatPreferredDate, translateUiText, useAppPreferences } from "@/lib/app-preferences";
 import {
   changeAssessmentLifecycle,
   getAssessment,
@@ -77,6 +78,7 @@ function AssessmentForm({
   scope: NonNullable<ReturnType<typeof useScope>["scope"]>;
   onSaved: () => void;
 }) {
+  const { locale } = useAppPreferences();
   const optionsFn = useServerFn(getAssessmentOptions);
   const saveFn = useServerFn(createAssessmentCommand);
   const [open, setOpen] = useState(false);
@@ -110,11 +112,14 @@ function AssessmentForm({
         },
       }),
     onSuccess: () => {
-      toast.success("Assessment draft created.");
+      toast.success(translateUiText("Assessment draft created.", locale));
       setOpen(false);
       onSaved();
     },
-    onError: (e: Error) => toast.error(e.message),
+    onError: () =>
+      toast.error(
+        translateUiText("The assessment action could not be completed. Please try again.", locale),
+      ),
   });
   return (
     <Dialog open={open} onOpenChange={setOpen}>
@@ -134,9 +139,9 @@ function AssessmentForm({
         ) : (
           <div className="grid gap-4 sm:grid-cols-2">
             <div className="sm:col-span-2">
-              <Label>Teaching assignment</Label>
+              <Label htmlFor="assessment-assignment">Teaching assignment</Label>
               <Select value={assignment} onValueChange={setAssignment}>
-                <SelectTrigger>
+                <SelectTrigger id="assessment-assignment">
                   <SelectValue placeholder="Choose class and subject" />
                 </SelectTrigger>
                 <SelectContent>
@@ -149,7 +154,7 @@ function AssessmentForm({
               </Select>
             </div>
             <div>
-              <Label>Assessment type</Label>
+              <Label htmlFor="assessment-type">Assessment type</Label>
               <Select
                 value={type}
                 onValueChange={(v) => {
@@ -158,7 +163,7 @@ function AssessmentForm({
                   setWeight(w == null ? "" : String(w));
                 }}
               >
-                <SelectTrigger>
+                <SelectTrigger id="assessment-type">
                   <SelectValue placeholder="Choose type" />
                 </SelectTrigger>
                 <SelectContent>
@@ -171,16 +176,27 @@ function AssessmentForm({
               </Select>
             </div>
             <div>
-              <Label>Date</Label>
-              <Input type="date" value={date} onChange={(e) => setDate(e.target.value)} />
+              <Label htmlFor="assessment-date">Date</Label>
+              <Input
+                id="assessment-date"
+                type="date"
+                value={date}
+                onChange={(e) => setDate(e.target.value)}
+              />
             </div>
             <div className="sm:col-span-2">
-              <Label>Title</Label>
-              <Input value={title} maxLength={160} onChange={(e) => setTitle(e.target.value)} />
+              <Label htmlFor="assessment-title">Title</Label>
+              <Input
+                id="assessment-title"
+                value={title}
+                maxLength={160}
+                onChange={(e) => setTitle(e.target.value)}
+              />
             </div>
             <div>
-              <Label>Minimum score</Label>
+              <Label htmlFor="assessment-min-score">Minimum score</Label>
               <Input
+                id="assessment-min-score"
                 type="number"
                 step="0.01"
                 value={min}
@@ -188,8 +204,9 @@ function AssessmentForm({
               />
             </div>
             <div>
-              <Label>Maximum score</Label>
+              <Label htmlFor="assessment-max-score">Maximum score</Label>
               <Input
+                id="assessment-max-score"
                 type="number"
                 step="0.01"
                 value={max}
@@ -197,8 +214,9 @@ function AssessmentForm({
               />
             </div>
             <div>
-              <Label>Weight (optional)</Label>
+              <Label htmlFor="assessment-weight">Weight (optional)</Label>
               <Input
+                id="assessment-weight"
                 type="number"
                 min="0"
                 step="0.0001"
@@ -207,8 +225,12 @@ function AssessmentForm({
               />
             </div>
             <div className="sm:col-span-2">
-              <Label>Description (optional)</Label>
-              <Textarea value={description} onChange={(e) => setDescription(e.target.value)} />
+              <Label htmlFor="assessment-description">Description (optional)</Label>
+              <Textarea
+                id="assessment-description"
+                value={description}
+                onChange={(e) => setDescription(e.target.value)}
+              />
             </div>
           </div>
         )}
@@ -229,6 +251,7 @@ function AssessmentForm({
 }
 
 export function AssessmentsPage() {
+  const { locale } = useAppPreferences();
   const { context, scope } = useScope();
   const qc = useQueryClient();
   const fn = useServerFn(listAssessmentProjection);
@@ -251,7 +274,8 @@ export function AssessmentsPage() {
         <Skeleton className="h-48" />
       </div>
     );
-  if (context.error) return <StateMessage>{context.error.message}</StateMessage>;
+  if (context.error)
+    return <StateMessage>We couldn't load assessments. Please try again.</StateMessage>;
   if (!scope)
     return (
       <StateMessage>Select a school, academic year, and term to view assessments.</StateMessage>
@@ -273,9 +297,12 @@ export function AssessmentsPage() {
     <div className="space-y-6">
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div>
-          <h1 className="text-2xl font-bold">Assessments</h1>
+          <h1 className="text-2xl font-bold">{translateUiText("Assessments", locale)}</h1>
           <p className="text-sm text-muted-foreground">
-            Create assessments and manage scoring for the selected term.
+            {translateUiText(
+              "Create assessments and manage scoring for the selected term.",
+              locale,
+            )}
           </p>
         </div>
         <PermissionGate permission="assessment.create">
@@ -288,7 +315,7 @@ export function AssessmentsPage() {
       {q.isPending ? (
         <Skeleton className="h-48" />
       ) : q.error ? (
-        <StateMessage>{(q.error as Error).message}</StateMessage>
+        <StateMessage>We couldn't load assessments. Please try again.</StateMessage>
       ) : q.data!.length === 0 ? (
         <StateMessage>No assessments in this term.</StateMessage>
       ) : (
@@ -310,7 +337,8 @@ export function AssessmentsPage() {
                   </div>
                 </CardHeader>
                 <CardContent className="text-sm text-muted-foreground">
-                  {a.assessmentDate} · Score {a.minScore}–{a.maxScore}
+                  {formatPreferredDate(a.assessmentDate)} · {translateUiText("Score", locale)}{" "}
+                  {a.minScore}–{a.maxScore}
                   {a.weight == null ? "" : ` · Weight ${a.weight}`}
                 </CardContent>
               </Card>
@@ -333,6 +361,7 @@ type DraftRow = {
   updatedAt: string | null;
 };
 export function AssessmentDetailPage({ id }: { id: string }) {
+  const { locale } = useAppPreferences();
   const { context, scope } = useScope();
   const qc = useQueryClient();
   const detailFn = useServerFn(getAssessment);
@@ -366,25 +395,36 @@ export function AssessmentDetailPage({ id }: { id: string }) {
     onSuccess: (r) => {
       const failures = r.results.filter((x) => !x.ok);
       if (failures.length)
-        toast.error(`${failures.length} score(s) were not saved. ${failures[0]?.message}`);
-      else toast.success("Scores saved.");
+        toast.error(
+          translateUiText(
+            "Some scores could not be saved. Please review the roster and try again.",
+            locale,
+          ),
+        );
+      else toast.success(translateUiText("Scores saved.", locale));
       void qc.invalidateQueries({ queryKey: ["assessment", id] });
     },
-    onError: (e: Error) => toast.error(e.message),
+    onError: () =>
+      toast.error(
+        translateUiText("The assessment action could not be completed. Please try again.", locale),
+      ),
   });
   const lifecycle = useMutation({
     mutationFn: (action: "open" | "close" | "publish" | "archive") =>
       lifeFn({ data: { ...scope!, id, action, expectedUpdatedAt: q.data!.assessment.updated_at } }),
     onSuccess: () => {
-      toast.success("Assessment status updated.");
+      toast.success(translateUiText("Assessment status updated.", locale));
       void qc.invalidateQueries({ queryKey: ["assessment", id] });
       void qc.invalidateQueries({ queryKey: ["assessments"] });
     },
-    onError: (e: Error) => toast.error(e.message),
+    onError: () =>
+      toast.error(
+        translateUiText("The assessment action could not be completed. Please try again.", locale),
+      ),
   });
   if (context.contextLoading || q.isPending) return <Skeleton className="h-72" />;
   if (!scope) return <StateMessage>Select a complete academic context.</StateMessage>;
-  if (q.error) return <StateMessage>{(q.error as Error).message}</StateMessage>;
+  if (q.error) return <StateMessage>We couldn't load assessments. Please try again.</StateMessage>;
   const a = q.data!.assessment;
   const canEdit =
     ["draft", "open", "closed"].includes(a.status) || context.hasPermission("score.update_locked");
@@ -400,7 +440,7 @@ export function AssessmentDetailPage({ id }: { id: string }) {
     <div className="space-y-5">
       <Link to="/assessments" className="inline-flex items-center text-sm text-muted-foreground">
         <ArrowLeft className="mr-1 h-4 w-4" />
-        Assessments
+        {translateUiText("Assessments", locale)}
       </Link>
       <Card>
         <CardHeader>
@@ -408,7 +448,8 @@ export function AssessmentDetailPage({ id }: { id: string }) {
             <div>
               <CardTitle>{a.title}</CardTitle>
               <CardDescription>
-                {a.assessment_date} · Score {a.min_score}–{a.max_score}
+                {formatPreferredDate(a.assessment_date)} · {translateUiText("Score", locale)}{" "}
+                {a.min_score}–{a.max_score}
               </CardDescription>
             </div>
             <Badge>{a.status}</Badge>
