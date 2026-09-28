@@ -3,6 +3,8 @@ import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import {
   communicationCreateInput,
   communicationDetailInput,
+  communicationDeliveryInput,
+  communicationDeliveryListInput,
   communicationListInput,
   communicationPublishInput,
   communicationUpdateInput,
@@ -99,5 +101,35 @@ export const getCommunicationAnnouncement = createServerFn({ method: "GET" })
       "b20_get_announcement",
       { p_announcement_id: data.announcementId, p_school_id: data.schoolId },
       "Get announcement",
+    ),
+  );
+
+export const enqueueExternalCommunicationDelivery = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((x: unknown) => communicationDeliveryInput.parse(x))
+  .handler(({ data, context }) =>
+    callCommunicationRpc(
+      context.supabase,
+      "b22_enqueue_external_delivery",
+      {
+        p_input: {
+          school_id: data.schoolId,
+          announcement_id: data.announcementId,
+          channel: data.channel,
+        },
+      },
+      "Queue external communication",
+    ),
+  );
+
+export const listExternalCommunicationDeliveries = createServerFn({ method: "GET" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((x: unknown) => communicationDeliveryListInput.parse(x))
+  .handler(({ data, context }) =>
+    callCommunicationRpc(
+      context.supabase,
+      "b22_list_delivery_jobs",
+      { p_announcement_id: data.announcementId, p_school_id: data.schoolId },
+      "Read external communication status",
     ),
   );
