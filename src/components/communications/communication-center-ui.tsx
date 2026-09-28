@@ -26,7 +26,9 @@ import { formatPreferredDate, translateUiText, useAppPreferences } from "@/lib/a
 import { listClassrooms } from "@/lib/academic.functions";
 import {
   createCommunicationAnnouncement,
+  enqueueExternalCommunicationDelivery,
   getCommunicationAnnouncement,
+  listExternalCommunicationDeliveries,
   listCommunicationAnnouncements,
   publishCommunicationAnnouncement,
   updateCommunicationAnnouncement,
@@ -59,6 +61,25 @@ type AnnouncementDetail = {
   readable_recipient: boolean;
   targets: { scope: "school" | "classroom"; classroom_id: string | null; audience: Audience }[];
 };
+type DeliveryJob = {
+  id: string;
+  channel: "whatsapp" | "email";
+  status: "queued" | "processing" | "completed" | "completed_with_errors" | "failed" | "cancelled";
+  created_at: string;
+  recipient_count: number;
+  pending_count: number;
+  sent_count: number;
+  failed_count: number;
+  skipped_count: number;
+};
+const deliveryStatusMessage = {
+  queued: "communication.deliveryStatus.queued",
+  processing: "communication.deliveryStatus.processing",
+  completed: "communication.deliveryStatus.completed",
+  completed_with_errors: "communication.deliveryStatus.completed_with_errors",
+  failed: "communication.deliveryStatus.failed",
+  cancelled: "communication.deliveryStatus.cancelled",
+} as const;
 
 function rows<T>(value: unknown): T[] {
   return Array.isArray(value) ? (value as T[]) : [];
@@ -428,6 +449,105 @@ export function CommunicationNewPage() {
   );
 }
 
+function ExternalDeliveryPanel({ announcementId }: { announcementId: string }) {
+  const { activeSchool, hasPermission } = useAppContext();
+  const { t } = useAppPreferences();
+  const queryClient = useQueryClient();
+  const fetch = useServerFn(listExternalCommunicationDeliveries);
+  const enqueue = useServerFn(enqueueExternalCommunicationDelivery);
+  const allowed = hasPermission("communication.delivery.manage");
+  const query = useQuery({
+    queryKey: ["communication-deliveries", activeSchool?.id, announcementId],
+    queryFn: () => fetch({ data: { schoolId: activeSchool!.id, announcementId } }),
+    enabled: Boolean(allowed && activeSchool?.id && announcementId),
+  });
+  const mutation = useMutation({
+    mutationFn: (channel: "whatsapp" | "email") =>
+      enqueue({ data: { schoolId: activeSchool!.id, announcementId, channel } }),
+    onSuccess: (result) => {
+      const value = result as { already_queued?: boolean };
+      toast.success(
+        t(
+          value.already_queued
+            ? "communication.deliveryAlreadyQueued"
+            : "communication.deliveryQueued",
+        ),
+      );
+      void queryClient.invalidateQueries({ queryKey: ["communication-deliveries"] });
+    },
+    onError: () => toast.error(t("communication.deliveryQueueFailed")),
+  });
+
+  if (!allowed) return null;
+  const jobs = rows<DeliveryJob>(query.data);
+  const channels = new Set(jobs.map((job) => job.channel));
+  return (
+    <Card>
+      <CardHeader>
+        <CardTitle>{t("communication.deliveryTitle")}</CardTitle>
+        <CardDescription>{t("communication.deliveryDescription")}</CardDescription>
+      </CardHeader>
+      <CardContent className="space-y-4">
+        <p className="text-sm text-muted-foreground">{t("communication.deliveryNotSent")}</p>
+        {query.isPending ? (
+          <Skeleton className="h-12 w-full" />
+        ) : query.error ? (
+          <ErrorState message="Delivery status could not be loaded. Please try again." />
+        ) : jobs.length > 0 ? (
+          <ul className="space-y-2" aria-label={t("communication.deliveryTitle")}>
+            {jobs.map((job) => (
+              <li
+                key={job.id}
+                className="flex flex-wrap items-center justify-between gap-2 rounded-md border p-3 text-sm"
+              >
+                <div className="flex flex-wrap items-center gap-2">
+                  <span className="font-medium">
+                    {job.channel === "whatsapp" ? "WhatsApp" : "Email"}
+                  </span>
+                  <Badge variant="secondary">{t(deliveryStatusMessage[job.status])}</Badge>
+                </div>
+                <span className="text-muted-foreground">
+                  {t("communication.deliveryRecipients")}: {job.recipient_count} ·{" "}
+                  {t("communication.deliveryPending")}: {job.pending_count} ·{" "}
+                  {t("communication.deliverySent")}: {job.sent_count} ·{" "}
+                  {t("communication.deliveryFailed")}: {job.failed_count} ·{" "}
+                  {t("communication.deliverySkipped")}: {job.skipped_count}
+                </span>
+              </li>
+            ))}
+          </ul>
+        ) : null}
+        <div className="flex flex-wrap gap-2">
+          <Button
+            type="button"
+            variant="outline"
+            disabled={mutation.isPending || channels.has("whatsapp")}
+            onClick={() => mutation.mutate("whatsapp")}
+          >
+            {mutation.isPending && mutation.variables === "whatsapp"
+              ? t("communication.deliveryQueueing")
+              : channels.has("whatsapp")
+                ? t("communication.deliveryAlreadyQueued")
+                : t("communication.deliveryWhatsapp")}
+          </Button>
+          <Button
+            type="button"
+            variant="outline"
+            disabled={mutation.isPending || channels.has("email")}
+            onClick={() => mutation.mutate("email")}
+          >
+            {mutation.isPending && mutation.variables === "email"
+              ? t("communication.deliveryQueueing")
+              : channels.has("email")
+                ? t("communication.deliveryAlreadyQueued")
+                : t("communication.deliveryEmail")}
+          </Button>
+        </div>
+      </CardContent>
+    </Card>
+  );
+}
+
 export function CommunicationDetailPage() {
   const { announcementId } = useParams({ strict: false });
   const { activeSchool, hasPermission } = useAppContext();
@@ -556,6 +676,7 @@ export function CommunicationDetailPage() {
             )}
           </CardContent>
         </Card>
+        {detail.status === "published" && <ExternalDeliveryPanel announcementId={detail.id} />}
       </div>
     </AppShell>
   );

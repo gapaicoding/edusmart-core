@@ -52,4 +52,11 @@ export const communicationListInput = z.object({
 });
 export const communicationDetailInput = z.object({ schoolId: uuid, announcementId: uuid });
 
+export const communicationDeliveryInput = z.object({
+  schoolId: uuid,
+  announcementId: uuid,
+  channel: z.enum(["whatsapp", "email"]),
+});
+export const communicationDeliveryListInput = z.object({ schoolId: uuid, announcementId: uuid });
+
 export type CommunicationTargetInput = z.infer<typeof communicationTargetInput>;

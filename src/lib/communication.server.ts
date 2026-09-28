@@ -15,6 +15,11 @@ const SAFE_ERRORS: Record<string, string> = {
   B20_NO_ELIGIBLE_RECIPIENTS: "No eligible recipients were found for this audience.",
   B20_STALE_VERSION: "This announcement changed in another session. Reload and try again.",
   B20_IDEMPOTENCY_CONFLICT: "This request ID was already used for another action.",
+  B22_DELIVERY_PERMISSION_DENIED: "You do not have permission to manage external delivery.",
+  B22_ANNOUNCEMENT_NOT_FOUND: "The announcement is unavailable.",
+  B22_ANNOUNCEMENT_NOT_PUBLISHED: "Only a published announcement can be queued for delivery.",
+  B22_INVALID_CHANNEL: "The selected delivery channel is not available.",
+  B22_NO_SNAPSHOT_RECIPIENTS: "No recipients are available in the published audience snapshot.",
 };
 
 export function communicationRuntimeError(error: PostgrestError, label: string): Error {
