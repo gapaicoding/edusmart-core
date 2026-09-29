@@ -39,6 +39,308 @@ export type Database = {
   }
   public: {
     Tables: {
+      b24_online_payment_intents: {
+        Row: {
+          amount_idr: number;
+          channel: string;
+          created_at: string;
+          currency: string;
+          expires_at: string;
+          id: string;
+          invoice_id: string;
+          organization_id: string;
+          provider_key: string;
+          provider_reference: string | null;
+          requested_by_profile_id: string;
+          row_version: number;
+          school_id: string;
+          settled_at: string | null;
+          status: string;
+          terminal_at: string | null;
+          updated_at: string;
+        };
+        Insert: {
+          amount_idr: number;
+          channel: string;
+          created_at?: string;
+          currency?: string;
+          expires_at: string;
+          id?: string;
+          invoice_id: string;
+          organization_id: string;
+          provider_key: string;
+          provider_reference?: string | null;
+          requested_by_profile_id: string;
+          row_version?: number;
+          school_id: string;
+          settled_at?: string | null;
+          status?: string;
+          terminal_at?: string | null;
+          updated_at?: string;
+        };
+        Update: {
+          amount_idr?: number;
+          channel?: string;
+          created_at?: string;
+          currency?: string;
+          expires_at?: string;
+          id?: string;
+          invoice_id?: string;
+          organization_id?: string;
+          provider_key?: string;
+          provider_reference?: string | null;
+          requested_by_profile_id?: string;
+          row_version?: number;
+          school_id?: string;
+          settled_at?: string | null;
+          status?: string;
+          terminal_at?: string | null;
+          updated_at?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "b24_intents_invoice_fk";
+            columns: ["invoice_id", "organization_id", "school_id"];
+            isOneToOne: false;
+            referencedRelation: "finance_invoices";
+            referencedColumns: ["id", "organization_id", "school_id"];
+          },
+          {
+            foreignKeyName: "b24_intents_school_fk";
+            columns: ["school_id", "organization_id"];
+            isOneToOne: false;
+            referencedRelation: "schools";
+            referencedColumns: ["id", "organization_id"];
+          },
+          {
+            foreignKeyName: "b24_online_payment_intents_requested_by_profile_id_fkey";
+            columns: ["requested_by_profile_id"];
+            isOneToOne: false;
+            referencedRelation: "profiles";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
+            b24_payment_intent_requests: {
+        Row: {
+          actor_profile_id: string;
+          created_at: string;
+          id: string;
+          intent_id: string | null;
+          invoice_id: string;
+          organization_id: string;
+          request_id: string;
+          school_id: string;
+          semantic_fingerprint: string;
+        };
+        Insert: {
+          actor_profile_id: string;
+          created_at?: string;
+          id?: string;
+          intent_id?: string | null;
+          invoice_id: string;
+          organization_id: string;
+          request_id: string;
+          school_id: string;
+          semantic_fingerprint: string;
+        };
+        Update: {
+          actor_profile_id?: string;
+          created_at?: string;
+          id?: string;
+          intent_id?: string | null;
+          invoice_id?: string;
+          organization_id?: string;
+          request_id?: string;
+          school_id?: string;
+          semantic_fingerprint?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "b24_intent_requests_intent_fk";
+            columns: ["intent_id", "organization_id", "school_id", "invoice_id"];
+            isOneToOne: false;
+            referencedRelation: "b24_online_payment_intents";
+            referencedColumns: ["id", "organization_id", "school_id", "invoice_id"];
+          },
+          {
+            foreignKeyName: "b24_intent_requests_invoice_fk";
+            columns: ["invoice_id", "organization_id", "school_id"];
+            isOneToOne: false;
+            referencedRelation: "finance_invoices";
+            referencedColumns: ["id", "organization_id", "school_id"];
+          },
+          {
+            foreignKeyName: "b24_intent_requests_school_fk";
+            columns: ["school_id", "organization_id"];
+            isOneToOne: false;
+            referencedRelation: "schools";
+            referencedColumns: ["id", "organization_id"];
+          },
+          {
+            foreignKeyName: "b24_payment_intent_requests_actor_profile_id_fkey";
+            columns: ["actor_profile_id"];
+            isOneToOne: false;
+            referencedRelation: "profiles";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
+            b24_payment_reconciliations: {
+        Row: {
+          amount_idr: number;
+          canonical_payment_id: string | null;
+          created_at: string;
+          currency: string;
+          exception_code: string | null;
+          id: string;
+          intent_id: string;
+          invoice_id: string;
+          organization_id: string;
+          provider_event_row_id: string;
+          provider_key: string;
+          provider_settlement_reference: string;
+          school_id: string;
+          status: string;
+        };
+        Insert: {
+          amount_idr: number;
+          canonical_payment_id?: string | null;
+          created_at?: string;
+          currency: string;
+          exception_code?: string | null;
+          id?: string;
+          intent_id: string;
+          invoice_id: string;
+          organization_id: string;
+          provider_event_row_id: string;
+          provider_key: string;
+          provider_settlement_reference: string;
+          school_id: string;
+          status: string;
+        };
+        Update: {
+          amount_idr?: number;
+          canonical_payment_id?: string | null;
+          created_at?: string;
+          currency?: string;
+          exception_code?: string | null;
+          id?: string;
+          intent_id?: string;
+          invoice_id?: string;
+          organization_id?: string;
+          provider_event_row_id?: string;
+          provider_key?: string;
+          provider_settlement_reference?: string;
+          school_id?: string;
+          status?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "b24_reconciliations_event_fk";
+            columns: ["provider_event_row_id", "organization_id", "school_id"];
+            isOneToOne: false;
+            referencedRelation: "b24_provider_events";
+            referencedColumns: ["id", "organization_id", "school_id"];
+          },
+          {
+            foreignKeyName: "b24_reconciliations_intent_fk";
+            columns: ["intent_id", "organization_id", "school_id", "invoice_id"];
+            isOneToOne: false;
+            referencedRelation: "b24_online_payment_intents";
+            referencedColumns: ["id", "organization_id", "school_id", "invoice_id"];
+          },
+          {
+            foreignKeyName: "b24_reconciliations_payment_fk";
+            columns: ["canonical_payment_id", "organization_id", "school_id"];
+            isOneToOne: false;
+            referencedRelation: "finance_payments";
+            referencedColumns: ["id", "organization_id", "school_id"];
+          },
+          {
+            foreignKeyName: "b24_reconciliations_school_fk";
+            columns: ["school_id", "organization_id"];
+            isOneToOne: false;
+            referencedRelation: "schools";
+            referencedColumns: ["id", "organization_id"];
+          },
+        ];
+      };
+            b24_provider_events: {
+        Row: {
+          amount_idr: number;
+          currency: string;
+          event_type: string;
+          fingerprint: string;
+          id: string;
+          intent_id: string;
+          occurred_at: string;
+          organization_id: string;
+          processed_at: string | null;
+          provider_event_id: string;
+          provider_key: string;
+          provider_settlement_reference: string | null;
+          received_at: string;
+          result_payload: Json;
+          result_status: string;
+          safe_failure_code: string | null;
+          school_id: string;
+        };
+        Insert: {
+          amount_idr: number;
+          currency: string;
+          event_type: string;
+          fingerprint: string;
+          id?: string;
+          intent_id: string;
+          occurred_at: string;
+          organization_id: string;
+          processed_at?: string | null;
+          provider_event_id: string;
+          provider_key: string;
+          provider_settlement_reference?: string | null;
+          received_at?: string;
+          result_payload?: Json;
+          result_status?: string;
+          safe_failure_code?: string | null;
+          school_id: string;
+        };
+        Update: {
+          amount_idr?: number;
+          currency?: string;
+          event_type?: string;
+          fingerprint?: string;
+          id?: string;
+          intent_id?: string;
+          occurred_at?: string;
+          organization_id?: string;
+          processed_at?: string | null;
+          provider_event_id?: string;
+          provider_key?: string;
+          provider_settlement_reference?: string | null;
+          received_at?: string;
+          result_payload?: Json;
+          result_status?: string;
+          safe_failure_code?: string | null;
+          school_id?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "b24_events_intent_fk";
+            columns: ["intent_id", "organization_id", "school_id"];
+            isOneToOne: false;
+            referencedRelation: "b24_online_payment_intents";
+            referencedColumns: ["id", "organization_id", "school_id"];
+          },
+          {
+            foreignKeyName: "b24_events_school_fk";
+            columns: ["school_id", "organization_id"];
+            isOneToOne: false;
+            referencedRelation: "schools";
+            referencedColumns: ["id", "organization_id"];
+          },
+        ];
+      };
       academic_calendar_events: {
         Row: {
           academic_year_id: string
@@ -5935,6 +6237,33 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      b24_create_parent_payment_intent: {
+        Args: { p_actor_id: string; p_invoice_id: string; p_request_id: string };
+        Returns: Json;
+      };
+            b24_find_intent_for_test_event: {
+        Args: { p_actor_id: string; p_intent_id: string };
+        Returns: Json;
+      };
+            b24_get_parent_payment_intent: {
+        Args: { p_actor_id: string; p_invoice_id: string };
+        Returns: Json;
+      };
+            b24_list_invoice_payment_intents: {
+        Args: { p_actor_id: string; p_invoice_id: string; p_school_id: string };
+        Returns: Json;
+      };
+            b24_parent_can_access_invoice: {
+        Args: {
+          p_actor_id: string;
+          p_invoice: Database["public"]["Tables"]["finance_invoices"]["Row"];
+        };
+        Returns: boolean;
+      };
+            b24_simulate_development_payment_event: {
+        Args: { p_actor_id: string; p_input: Json };
+        Returns: Json;
+      };
       apply_progression_batch: {
         Args: {
           p_batch_id: string
