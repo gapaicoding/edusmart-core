@@ -46,6 +46,11 @@ import {
   withdrawAdmissionApplication,
 } from "@/lib/admissions.functions";
 import { getPublicAdmissionCycle, submitPublicAdmissionApplication } from "@/lib/admissions.server";
+import {
+  AdmissionFollowupPanel,
+  AdmissionFollowupQueue,
+  AdmissionFunnel,
+} from "./admission-followup-ui";
 
 type Grade = { id: string; name: string; code?: string };
 type PublicCycle = {
@@ -590,6 +595,12 @@ function AdmissionsDashboard() {
           />
           <ApplicationQueue cycleId={selectedCycle ?? cycles[0]?.id ?? null} />
         </div>
+        {(selectedCycle ?? cycles[0]?.id) && (
+          <>
+            <AdmissionFunnel cycleId={selectedCycle ?? cycles[0]!.id} />
+            <AdmissionFollowupQueue cycleId={selectedCycle ?? cycles[0]!.id} />
+          </>
+        )}
       </PageState>
     </div>
   );
@@ -1002,6 +1013,7 @@ export function AdmissionApplicationDetail({ applicationId }: { applicationId: s
           </CardContent>
         </Card>
       </div>
+      <AdmissionFollowupPanel applicationId={applicationId} />
       <Card>
         <CardHeader>
           <CardTitle>Stage history</CardTitle>

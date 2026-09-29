@@ -16,6 +16,17 @@ const SAFE_ERRORS: Record<string, string> = {
     "This applicant may already exist in the SIS and requires review.",
   B18_ADMISSION_ALREADY_CONVERTED: "This admission application has already been converted.",
   B18_ADMISSION_VALIDATION_FAILED: "Review the admission details and try again.",
+  B23_FOLLOWUP_ACTIVE_EXISTS: "An open follow-up task already exists for this application.",
+  B23_FOLLOWUP_APPLICATION_TERMINAL: "This application cannot receive a new follow-up task.",
+  B23_FOLLOWUP_STALE_VERSION:
+    "This follow-up task changed in another session. Reload and try again.",
+  B23_FOLLOWUP_NOT_OPEN: "This follow-up task is no longer open.",
+  B23_FOLLOWUP_ASSIGNEE_INVALID: "Choose an active staff member assigned to this school.",
+  B23_FOLLOWUP_FORBIDDEN: "You do not have permission to manage this follow-up.",
+  B23_FOLLOWUP_NOT_FOUND: "This follow-up record is unavailable.",
+  B23_FOLLOWUP_REQUEST_CONFLICT: "This request was already used with different details.",
+  B23_FOLLOWUP_VALIDATION_FAILED: "Review the follow-up details and try again.",
+  B23_FOLLOWUP_NO_CHANGE: "Change the assignee or due time before saving.",
 };
 
 export function admissionsRuntimeError(error: PostgrestError, label: string): Error {
