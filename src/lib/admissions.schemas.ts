@@ -27,6 +27,33 @@ export const admissionApplicationCommandInput = z.object({
   reason: z.string().trim().max(2000).optional().nullable(),
 });
 
+export const admissionFollowupListInput = z.object({
+  cycleId: uuid,
+  filter: z.enum(["open", "overdue", "mine", "all"]).default("open"),
+  limit: z.number().int().min(1).max(100).default(50),
+  offset: z.number().int().min(0).default(0),
+});
+
+export const admissionFollowupCommandInput = z.object({
+  applicationId: uuid,
+  taskId: uuid.optional().nullable(),
+  expectedRowVersion: z.number().int().positive().optional().nullable(),
+  requestId: uuid,
+  command: z.enum(["create", "update", "complete", "cancel"]),
+  assignedProfileId: uuid.optional().nullable(),
+  dueAt: z.string().datetime({ offset: true }).optional().nullable(),
+  completionOutcome: z
+    .enum([
+      "contacted",
+      "no_response",
+      "callback_required",
+      "documents_pending",
+      "followup_not_required",
+    ])
+    .optional()
+    .nullable(),
+});
+
 export const publicAdmissionCycleInput = z.object({ cycleId: uuid });
 export const publicAdmissionSubmissionInput = z.object({
   cycleId: uuid,

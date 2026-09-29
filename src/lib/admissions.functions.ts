@@ -7,6 +7,8 @@ import {
   admissionApplicationListInput,
   admissionCommandInput,
   admissionCycleIdInput,
+  admissionFollowupCommandInput,
+  admissionFollowupListInput,
   admissionSchoolInput,
 } from "./admissions.schemas";
 import { callAdmissionsRpc } from "./admissions.server";
@@ -65,6 +67,80 @@ export const getAdmissionApplication = createServerFn({ method: "GET" })
       "b18_get_admission_application",
       { p_application_id: data.applicationId },
       "Get admission application",
+    ),
+  );
+
+export const listAdmissionFollowupAssignees = createServerFn({ method: "GET" })
+  .middleware([requireSupabaseAuth])
+  .validator((x: unknown) => z.object({ schoolId: z.string().uuid() }).parse(x))
+  .handler(({ data, context }) =>
+    call(
+      context.supabase,
+      "b23_list_followup_assignees",
+      { p_school_id: data.schoolId },
+      "List follow-up assignees",
+    ),
+  );
+
+export const getAdmissionFunnel = createServerFn({ method: "GET" })
+  .middleware([requireSupabaseAuth])
+  .validator((x: unknown) => admissionCycleIdInput.parse(x))
+  .handler(({ data, context }) =>
+    call(
+      context.supabase,
+      "b23_get_admission_funnel",
+      { p_cycle_id: data.cycleId },
+      "Get admission funnel",
+    ),
+  );
+
+export const listAdmissionFollowupTasks = createServerFn({ method: "GET" })
+  .middleware([requireSupabaseAuth])
+  .validator((x: unknown) => admissionFollowupListInput.parse(x))
+  .handler(({ data, context }) =>
+    call(
+      context.supabase,
+      "b23_list_followup_tasks",
+      {
+        p_cycle_id: data.cycleId,
+        p_filter: data.filter,
+        p_limit: data.limit,
+        p_offset: data.offset,
+      },
+      "List admission follow-up tasks",
+    ),
+  );
+
+export const getAdmissionFollowupApplication = createServerFn({ method: "GET" })
+  .middleware([requireSupabaseAuth])
+  .validator((x: unknown) => admissionApplicationIdInput.parse(x))
+  .handler(({ data, context }) =>
+    call(
+      context.supabase,
+      "b23_get_followup_application",
+      { p_application_id: data.applicationId },
+      "Get application follow-up",
+    ),
+  );
+
+export const runAdmissionFollowupCommand = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .validator((x: unknown) => admissionFollowupCommandInput.parse(x))
+  .handler(({ data, context }) =>
+    call(
+      context.supabase,
+      "b23_followup_command",
+      {
+        p_application_id: data.applicationId,
+        p_task_id: data.taskId ?? null,
+        p_expected_row_version: data.expectedRowVersion ?? null,
+        p_request_id: data.requestId,
+        p_command: data.command,
+        p_assigned_profile_id: data.assignedProfileId ?? null,
+        p_due_at: data.dueAt ?? null,
+        p_completion_outcome: data.completionOutcome ?? null,
+      },
+      "Update admission follow-up",
     ),
   );
 
