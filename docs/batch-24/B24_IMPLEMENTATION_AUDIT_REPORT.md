@@ -2,7 +2,7 @@
 
 ## Executive Result
 
-Batch 24 is **READY FOR PR**. Staff's no-intent invoice detail is the expected state: intent creation is Parent/relationship-driven, while Staff reads scoped intent status and can simulate Development events only for an existing pending intent. Finance Staff browser authorization/detail/scoped-read passes, and permitted lifecycle commands separately pass through an authenticated Finance-capable Development boundary. A fresh exact-source D: build using Bun's copyfile dependency backend passed. Final rechecks: focused B24+B19 21/0, full suite 696/0, TypeScript, changed-scope ESLint, Prettier, migration parity and validators pass; integrity counts have zero duplicate/orphan settlement effects. Final finding matrix: BLOCKER 0, HIGH 0. Feature commit and push are being completed now.
+Batch 24 is **READY FOR PR**. Staff's no-intent invoice detail is the expected state: intent creation is Parent/relationship-driven, while Staff reads scoped intent status and can simulate Development events only for an existing pending intent. Finance Staff browser authorization/detail/scoped-read passes, and permitted lifecycle commands separately pass through an authenticated Finance-capable Development boundary. A fresh exact-source D: build using Bun's copyfile dependency backend passed. Final rechecks: focused B24+B19 21/0, full suite 696/0, TypeScript, changed-scope ESLint, Prettier, migration parity and validators pass; integrity counts have zero duplicate/orphan settlement effects. Final finding matrix: BLOCKER 0, HIGH 0. Implementation commit `3f0932d7bea5b43e674bf7668f48f059fe211f63` was pushed to `feat/b24-online-payment-reconciliation`; no PR was created.
 
 ## Baseline
 
@@ -112,7 +112,7 @@ Unresolved BLOCKER: 0. Unresolved HIGH: 0.
 
 ## Release Decision
 
-**READY FOR PR.** The Staff browser gate is satisfied by the intended authorized no-intent state and scoped read; the Finance lifecycle command is independently verified at the authenticated Development boundary. The exact-source serial production build passed using a fresh copyfile install on D:. Final engineering rechecks passed. Feature commit and branch push follow. No merge, Production mutation, or real payment occurred.
+**READY FOR PR.** The Staff browser gate is satisfied by the intended authorized no-intent state and scoped read; the Finance lifecycle command is independently verified at the authenticated Development boundary. The exact-source serial production build passed using a fresh copyfile install on D:. Final engineering rechecks passed. The implementation commit was pushed to the feature branch. No PR, merge, Production mutation, or real payment occurred.
 
 ## Remediation Evidence and Mutation Accounting
 
