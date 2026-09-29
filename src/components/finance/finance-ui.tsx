@@ -37,6 +37,12 @@ import {
   updateFinanceFeeDefinition,
   voidFinanceInvoice,
 } from "@/lib/finance.functions";
+import {
+  createParentOnlinePaymentIntent,
+  getParentOnlinePaymentIntent,
+  listInvoiceOnlinePaymentIntents,
+  simulateDevelopmentPaymentEvent,
+} from "@/lib/online-payments.functions";
 
 // Runtime projections are normalized at this boundary because the RPC payloads are versioned database projections.
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -826,6 +832,212 @@ function PaymentForm({
   );
 }
 
+function onlineStatusKey(status: string) {
+  switch (status) {
+    case "pending":
+      return "payment.online.pending";
+    case "settled":
+      return "payment.online.settled";
+    case "expired":
+      return "payment.online.expired";
+    case "failed":
+      return "payment.online.failedStatus";
+    case "cancelled":
+      return "payment.online.cancelled";
+    case "review_required":
+      return "payment.online.reviewRequired";
+    default:
+      return "payment.online.unavailable";
+  }
+}
+
+function ParentOnlinePaymentPanel({
+  invoiceId,
+  documentStatus,
+  outstanding,
+}: {
+  invoiceId: string;
+  documentStatus: string;
+  outstanding: number;
+}) {
+  const { t } = useAppPreferences();
+  const getFn = useServerFn(getParentOnlinePaymentIntent);
+  const createFn = useServerFn(createParentOnlinePaymentIntent);
+  const [busy, setBusy] = useState(false);
+  const [error, setError] = useState(false);
+  const developmentMode = import.meta.env.DEV;
+  const query = useQuery({
+    queryKey: ["b24-parent-payment-intent", invoiceId],
+    queryFn: () => getFn({ data: { invoiceId } }),
+    enabled: developmentMode && Boolean(invoiceId),
+  });
+  const intent = row(query.data);
+  const status = String(intent.status ?? "");
+  const canRetry = !status || ["expired", "failed", "cancelled"].includes(status);
+  const canCreate = developmentMode && documentStatus === "issued" && outstanding > 0 && canRetry;
+
+  const createIntent = async () => {
+    setBusy(true);
+    setError(false);
+    try {
+      await createFn({ data: { invoiceId, requestId: requestId() } });
+      await query.refetch();
+    } catch {
+      setError(true);
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  return (
+    <section
+      className="w-full min-w-0 border-t pt-3"
+      aria-labelledby={`online-payment-${invoiceId}`}
+    >
+      <div className="flex flex-wrap items-center justify-between gap-3">
+        <div className="min-w-0">
+          <h3 id={`online-payment-${invoiceId}`} className="font-medium">
+            {t("payment.online.title")}
+          </h3>
+          {developmentMode ? (
+            <p className="text-xs text-muted-foreground">{t("payment.online.developmentOnly")}</p>
+          ) : null}
+          {status ? (
+            <p className="break-words text-sm" aria-live="polite">
+              {t(onlineStatusKey(status))}
+              {intent.amount_idr != null ? ` · ${idr(intent.amount_idr)}` : ""}
+            </p>
+          ) : null}
+          {intent.expires_at ? (
+            <p className="break-words text-xs text-muted-foreground">
+              {t("payment.online.expires")}:{" "}
+              {formatPreferredDate(String(intent.expires_at), {
+                dateStyle: "medium",
+                timeStyle: "short",
+              })}
+            </p>
+          ) : null}
+          {error ? (
+            <p className="text-sm text-destructive" role="alert">
+              {t("payment.online.createError")}
+            </p>
+          ) : null}
+        </div>
+        {canCreate ? (
+          <Button onClick={() => void createIntent()} disabled={busy || query.isFetching}>
+            {busy ? t("common.saving") : t("payment.online.create")}
+          </Button>
+        ) : null}
+        {!developmentMode ? (
+          <Badge variant="outline">{t("payment.online.unavailable")}</Badge>
+        ) : null}
+      </div>
+    </section>
+  );
+}
+
+function StaffOnlinePaymentPanel({
+  schoolId,
+  invoiceId,
+  onDone,
+}: {
+  schoolId: string;
+  invoiceId: string;
+  onDone: () => void;
+}) {
+  const { t } = useAppPreferences();
+  const { hasPermission } = useAppContext();
+  const listFn = useServerFn(listInvoiceOnlinePaymentIntents);
+  const eventFn = useServerFn(simulateDevelopmentPaymentEvent);
+  const [busyIntent, setBusyIntent] = useState("");
+  const [error, setError] = useState(false);
+  const developmentMode = import.meta.env.DEV;
+  const canManage = hasPermission("finance.record_payment");
+  const query = useQuery({
+    queryKey: ["b24-finance-invoice-payment-intents", schoolId, invoiceId],
+    queryFn: () => listFn({ data: { schoolId, invoiceId } }),
+    enabled: Boolean(developmentMode && canManage && schoolId && invoiceId),
+  });
+  const intents = rows(query.data);
+
+  const recordEvent = async (
+    intent: Row,
+    eventType: "pending" | "settled" | "expired" | "failed",
+  ) => {
+    const intentId = String(intent.intent_id ?? "");
+    setBusyIntent(intentId);
+    setError(false);
+    try {
+      await eventFn({
+        data: { intentId, eventType, requestId: requestId() },
+      });
+      await query.refetch();
+      onDone();
+    } catch {
+      setError(true);
+    } finally {
+      setBusyIntent("");
+    }
+  };
+
+  if (!canManage) return null;
+  return (
+    <Card>
+      <CardHeader>
+        <CardTitle>{t("payment.online.title")}</CardTitle>
+        {developmentMode ? (
+          <p className="text-sm text-muted-foreground">{t("payment.online.developmentOnly")}</p>
+        ) : null}
+      </CardHeader>
+      <CardContent className="space-y-3">
+        {error ? (
+          <p role="alert" className="text-sm text-destructive">
+            {t("payment.online.operationError")}
+          </p>
+        ) : null}
+        {intents.map((intent) => {
+          const intentId = String(intent.intent_id ?? "");
+          const status = String(intent.status ?? "");
+          return (
+            <div className="min-w-0 space-y-2 border-b pb-3" key={intentId}>
+              <div className="flex flex-wrap items-center justify-between gap-2">
+                <Badge variant="outline">{t(onlineStatusKey(status))}</Badge>
+                <span className="font-medium">{idr(intent.amount_idr)}</span>
+              </div>
+              {intent.provider_reference ? (
+                <p className="break-all text-xs text-muted-foreground">
+                  {String(intent.provider_reference)}
+                </p>
+              ) : null}
+              {intent.exception_code ? (
+                <p className="text-sm text-destructive">{t("payment.online.reviewRequired")}</p>
+              ) : null}
+              {developmentMode && status === "pending" ? (
+                <div className="flex flex-wrap gap-2">
+                  {(["pending", "settled", "expired", "failed"] as const).map((eventType) => (
+                    <Button
+                      key={eventType}
+                      size="sm"
+                      variant={eventType === "settled" ? "default" : "outline"}
+                      disabled={busyIntent === intentId}
+                      onClick={() => void recordEvent(intent, eventType)}
+                    >
+                      {t(`payment.online.event.${eventType}`)}
+                    </Button>
+                  ))}
+                </div>
+              ) : null}
+            </div>
+          );
+        })}
+        {intents.length === 0 ? (
+          <p className="text-sm text-muted-foreground">{t("payment.online.noIntent")}</p>
+        ) : null}
+      </CardContent>
+    </Card>
+  );
+}
+
 export function FinanceInvoiceDetail() {
   const { locale } = useAppPreferences();
   const schoolId = useSchool();
@@ -917,13 +1129,13 @@ export function FinanceInvoiceDetail() {
                     )}
                   </strong>
                 </p>
-                <p>
+                <div>
                   {translateUiText("Document:", locale)}{" "}
                   <Badge variant="outline">{String(invoice.document_status ?? "—")}</Badge>{" "}
                   <Badge variant="secondary">
                     {String(settlement.settlement ?? invoice.settlement_status ?? "unpaid")}
                   </Badge>
-                </p>
+                </div>
               </div>
               <div className="flex flex-wrap gap-2">
                 <PermissionGate permission="finance.issue">
@@ -957,6 +1169,7 @@ export function FinanceInvoiceDetail() {
             </CardContent>
           </Card>
           <div className="space-y-6">
+            <StaffOnlinePaymentPanel schoolId={schoolId} invoiceId={invoiceId} onDone={reload} />
             <PaymentForm invoice={invoice} schoolId={schoolId} onDone={reload} />
             <Card>
               <CardHeader>
@@ -1139,6 +1352,13 @@ export function ParentBilling() {
                       )}
                     </Badge>
                   </div>
+                  <ParentOnlinePaymentPanel
+                    invoiceId={String(item.id ?? item.invoice_id ?? "")}
+                    documentStatus={String(item.document_status ?? "")}
+                    outstanding={Number(
+                      settlement.outstanding ?? item.outstanding_amount ?? item.outstanding ?? 0,
+                    )}
+                  />
                 </div>
               );
             })}
