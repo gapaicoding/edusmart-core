@@ -1,4 +1,4 @@
-﻿export type Json =
+export type Json =
   | string
   | number
   | boolean
@@ -12,335 +12,8 @@ export type Database = {
   __InternalSupabase: {
     PostgrestVersion: "14.5"
   }
-  graphql_public: {
-    Tables: {
-      [_ in never]: never
-    }
-    Views: {
-      [_ in never]: never
-    }
-    Functions: {
-      graphql: {
-        Args: {
-          extensions?: Json
-          operationName?: string
-          query?: string
-          variables?: Json
-        }
-        Returns: Json
-      }
-    }
-    Enums: {
-      [_ in never]: never
-    }
-    CompositeTypes: {
-      [_ in never]: never
-    }
-  }
   public: {
     Tables: {
-      b24_online_payment_intents: {
-        Row: {
-          amount_idr: number;
-          channel: string;
-          created_at: string;
-          currency: string;
-          expires_at: string;
-          id: string;
-          invoice_id: string;
-          organization_id: string;
-          provider_key: string;
-          provider_reference: string | null;
-          requested_by_profile_id: string;
-          row_version: number;
-          school_id: string;
-          settled_at: string | null;
-          status: string;
-          terminal_at: string | null;
-          updated_at: string;
-        };
-        Insert: {
-          amount_idr: number;
-          channel: string;
-          created_at?: string;
-          currency?: string;
-          expires_at: string;
-          id?: string;
-          invoice_id: string;
-          organization_id: string;
-          provider_key: string;
-          provider_reference?: string | null;
-          requested_by_profile_id: string;
-          row_version?: number;
-          school_id: string;
-          settled_at?: string | null;
-          status?: string;
-          terminal_at?: string | null;
-          updated_at?: string;
-        };
-        Update: {
-          amount_idr?: number;
-          channel?: string;
-          created_at?: string;
-          currency?: string;
-          expires_at?: string;
-          id?: string;
-          invoice_id?: string;
-          organization_id?: string;
-          provider_key?: string;
-          provider_reference?: string | null;
-          requested_by_profile_id?: string;
-          row_version?: number;
-          school_id?: string;
-          settled_at?: string | null;
-          status?: string;
-          terminal_at?: string | null;
-          updated_at?: string;
-        };
-        Relationships: [
-          {
-            foreignKeyName: "b24_intents_invoice_fk";
-            columns: ["invoice_id", "organization_id", "school_id"];
-            isOneToOne: false;
-            referencedRelation: "finance_invoices";
-            referencedColumns: ["id", "organization_id", "school_id"];
-          },
-          {
-            foreignKeyName: "b24_intents_school_fk";
-            columns: ["school_id", "organization_id"];
-            isOneToOne: false;
-            referencedRelation: "schools";
-            referencedColumns: ["id", "organization_id"];
-          },
-          {
-            foreignKeyName: "b24_online_payment_intents_requested_by_profile_id_fkey";
-            columns: ["requested_by_profile_id"];
-            isOneToOne: false;
-            referencedRelation: "profiles";
-            referencedColumns: ["id"];
-          },
-        ];
-      };
-            b24_payment_intent_requests: {
-        Row: {
-          actor_profile_id: string;
-          created_at: string;
-          id: string;
-          intent_id: string | null;
-          invoice_id: string;
-          organization_id: string;
-          request_id: string;
-          school_id: string;
-          semantic_fingerprint: string;
-        };
-        Insert: {
-          actor_profile_id: string;
-          created_at?: string;
-          id?: string;
-          intent_id?: string | null;
-          invoice_id: string;
-          organization_id: string;
-          request_id: string;
-          school_id: string;
-          semantic_fingerprint: string;
-        };
-        Update: {
-          actor_profile_id?: string;
-          created_at?: string;
-          id?: string;
-          intent_id?: string | null;
-          invoice_id?: string;
-          organization_id?: string;
-          request_id?: string;
-          school_id?: string;
-          semantic_fingerprint?: string;
-        };
-        Relationships: [
-          {
-            foreignKeyName: "b24_intent_requests_intent_fk";
-            columns: ["intent_id", "organization_id", "school_id", "invoice_id"];
-            isOneToOne: false;
-            referencedRelation: "b24_online_payment_intents";
-            referencedColumns: ["id", "organization_id", "school_id", "invoice_id"];
-          },
-          {
-            foreignKeyName: "b24_intent_requests_invoice_fk";
-            columns: ["invoice_id", "organization_id", "school_id"];
-            isOneToOne: false;
-            referencedRelation: "finance_invoices";
-            referencedColumns: ["id", "organization_id", "school_id"];
-          },
-          {
-            foreignKeyName: "b24_intent_requests_school_fk";
-            columns: ["school_id", "organization_id"];
-            isOneToOne: false;
-            referencedRelation: "schools";
-            referencedColumns: ["id", "organization_id"];
-          },
-          {
-            foreignKeyName: "b24_payment_intent_requests_actor_profile_id_fkey";
-            columns: ["actor_profile_id"];
-            isOneToOne: false;
-            referencedRelation: "profiles";
-            referencedColumns: ["id"];
-          },
-        ];
-      };
-            b24_payment_reconciliations: {
-        Row: {
-          amount_idr: number;
-          canonical_payment_id: string | null;
-          created_at: string;
-          currency: string;
-          exception_code: string | null;
-          id: string;
-          intent_id: string;
-          invoice_id: string;
-          organization_id: string;
-          provider_event_row_id: string;
-          provider_key: string;
-          provider_settlement_reference: string;
-          school_id: string;
-          status: string;
-        };
-        Insert: {
-          amount_idr: number;
-          canonical_payment_id?: string | null;
-          created_at?: string;
-          currency: string;
-          exception_code?: string | null;
-          id?: string;
-          intent_id: string;
-          invoice_id: string;
-          organization_id: string;
-          provider_event_row_id: string;
-          provider_key: string;
-          provider_settlement_reference: string;
-          school_id: string;
-          status: string;
-        };
-        Update: {
-          amount_idr?: number;
-          canonical_payment_id?: string | null;
-          created_at?: string;
-          currency?: string;
-          exception_code?: string | null;
-          id?: string;
-          intent_id?: string;
-          invoice_id?: string;
-          organization_id?: string;
-          provider_event_row_id?: string;
-          provider_key?: string;
-          provider_settlement_reference?: string;
-          school_id?: string;
-          status?: string;
-        };
-        Relationships: [
-          {
-            foreignKeyName: "b24_reconciliations_event_fk";
-            columns: ["provider_event_row_id", "organization_id", "school_id"];
-            isOneToOne: false;
-            referencedRelation: "b24_provider_events";
-            referencedColumns: ["id", "organization_id", "school_id"];
-          },
-          {
-            foreignKeyName: "b24_reconciliations_intent_fk";
-            columns: ["intent_id", "organization_id", "school_id", "invoice_id"];
-            isOneToOne: false;
-            referencedRelation: "b24_online_payment_intents";
-            referencedColumns: ["id", "organization_id", "school_id", "invoice_id"];
-          },
-          {
-            foreignKeyName: "b24_reconciliations_payment_fk";
-            columns: ["canonical_payment_id", "organization_id", "school_id"];
-            isOneToOne: false;
-            referencedRelation: "finance_payments";
-            referencedColumns: ["id", "organization_id", "school_id"];
-          },
-          {
-            foreignKeyName: "b24_reconciliations_school_fk";
-            columns: ["school_id", "organization_id"];
-            isOneToOne: false;
-            referencedRelation: "schools";
-            referencedColumns: ["id", "organization_id"];
-          },
-        ];
-      };
-            b24_provider_events: {
-        Row: {
-          amount_idr: number;
-          currency: string;
-          event_type: string;
-          fingerprint: string;
-          id: string;
-          intent_id: string;
-          occurred_at: string;
-          organization_id: string;
-          processed_at: string | null;
-          provider_event_id: string;
-          provider_key: string;
-          provider_settlement_reference: string | null;
-          received_at: string;
-          result_payload: Json;
-          result_status: string;
-          safe_failure_code: string | null;
-          school_id: string;
-        };
-        Insert: {
-          amount_idr: number;
-          currency: string;
-          event_type: string;
-          fingerprint: string;
-          id?: string;
-          intent_id: string;
-          occurred_at: string;
-          organization_id: string;
-          processed_at?: string | null;
-          provider_event_id: string;
-          provider_key: string;
-          provider_settlement_reference?: string | null;
-          received_at?: string;
-          result_payload?: Json;
-          result_status?: string;
-          safe_failure_code?: string | null;
-          school_id: string;
-        };
-        Update: {
-          amount_idr?: number;
-          currency?: string;
-          event_type?: string;
-          fingerprint?: string;
-          id?: string;
-          intent_id?: string;
-          occurred_at?: string;
-          organization_id?: string;
-          processed_at?: string | null;
-          provider_event_id?: string;
-          provider_key?: string;
-          provider_settlement_reference?: string | null;
-          received_at?: string;
-          result_payload?: Json;
-          result_status?: string;
-          safe_failure_code?: string | null;
-          school_id?: string;
-        };
-        Relationships: [
-          {
-            foreignKeyName: "b24_events_intent_fk";
-            columns: ["intent_id", "organization_id", "school_id"];
-            isOneToOne: false;
-            referencedRelation: "b24_online_payment_intents";
-            referencedColumns: ["id", "organization_id", "school_id"];
-          },
-          {
-            foreignKeyName: "b24_events_school_fk";
-            columns: ["school_id", "organization_id"];
-            isOneToOne: false;
-            referencedRelation: "schools";
-            referencedColumns: ["id", "organization_id"];
-          },
-        ];
-      };
       academic_calendar_events: {
         Row: {
           academic_year_id: string
@@ -969,6 +642,227 @@ export type Database = {
           },
         ]
       }
+      admission_followup_activities: {
+        Row: {
+          actor_profile_id: string
+          application_id: string
+          assigned_profile_id: string | null
+          completion_outcome: string | null
+          due_at: string | null
+          event_type: string
+          id: string
+          occurred_at: string
+          organization_id: string
+          previous_assigned_profile_id: string | null
+          previous_due_at: string | null
+          school_id: string
+          task_id: string
+        }
+        Insert: {
+          actor_profile_id: string
+          application_id: string
+          assigned_profile_id?: string | null
+          completion_outcome?: string | null
+          due_at?: string | null
+          event_type: string
+          id?: string
+          occurred_at?: string
+          organization_id: string
+          previous_assigned_profile_id?: string | null
+          previous_due_at?: string | null
+          school_id: string
+          task_id: string
+        }
+        Update: {
+          actor_profile_id?: string
+          application_id?: string
+          assigned_profile_id?: string | null
+          completion_outcome?: string | null
+          due_at?: string | null
+          event_type?: string
+          id?: string
+          occurred_at?: string
+          organization_id?: string
+          previous_assigned_profile_id?: string | null
+          previous_due_at?: string | null
+          school_id?: string
+          task_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "admission_followup_activities_actor_profile_id_fkey"
+            columns: ["actor_profile_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "admission_followup_activities_assigned_profile_id_fkey"
+            columns: ["assigned_profile_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "admission_followup_activities_previous_assigned_profile_id_fkey"
+            columns: ["previous_assigned_profile_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "admission_followup_activities_task_fk"
+            columns: [
+              "task_id",
+              "organization_id",
+              "school_id",
+              "application_id",
+            ]
+            isOneToOne: false
+            referencedRelation: "admission_followup_tasks"
+            referencedColumns: [
+              "id",
+              "organization_id",
+              "school_id",
+              "application_id",
+            ]
+          },
+        ]
+      }
+      admission_followup_command_requests: {
+        Row: {
+          actor_profile_id: string
+          application_id: string
+          command: string
+          created_at: string
+          id: string
+          organization_id: string
+          request_id: string
+          result_payload: Json | null
+          school_id: string
+          semantic_fingerprint: string
+        }
+        Insert: {
+          actor_profile_id: string
+          application_id: string
+          command: string
+          created_at?: string
+          id?: string
+          organization_id: string
+          request_id: string
+          result_payload?: Json | null
+          school_id: string
+          semantic_fingerprint: string
+        }
+        Update: {
+          actor_profile_id?: string
+          application_id?: string
+          command?: string
+          created_at?: string
+          id?: string
+          organization_id?: string
+          request_id?: string
+          result_payload?: Json | null
+          school_id?: string
+          semantic_fingerprint?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "admission_followup_command_requests_actor_profile_id_fkey"
+            columns: ["actor_profile_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "admission_followup_command_requests_application_fk"
+            columns: ["application_id", "organization_id", "school_id"]
+            isOneToOne: false
+            referencedRelation: "admission_applications"
+            referencedColumns: ["id", "organization_id", "school_id"]
+          },
+          {
+            foreignKeyName: "admission_followup_command_requests_school_fk"
+            columns: ["school_id", "organization_id"]
+            isOneToOne: false
+            referencedRelation: "schools"
+            referencedColumns: ["id", "organization_id"]
+          },
+        ]
+      }
+      admission_followup_tasks: {
+        Row: {
+          application_id: string
+          assigned_profile_id: string
+          cancelled_at: string | null
+          completed_at: string | null
+          completion_outcome: string | null
+          created_at: string
+          created_by_profile_id: string
+          due_at: string
+          id: string
+          organization_id: string
+          row_version: number
+          school_id: string
+          status: string
+          updated_at: string
+        }
+        Insert: {
+          application_id: string
+          assigned_profile_id: string
+          cancelled_at?: string | null
+          completed_at?: string | null
+          completion_outcome?: string | null
+          created_at?: string
+          created_by_profile_id: string
+          due_at: string
+          id?: string
+          organization_id: string
+          row_version?: number
+          school_id: string
+          status?: string
+          updated_at?: string
+        }
+        Update: {
+          application_id?: string
+          assigned_profile_id?: string
+          cancelled_at?: string | null
+          completed_at?: string | null
+          completion_outcome?: string | null
+          created_at?: string
+          created_by_profile_id?: string
+          due_at?: string
+          id?: string
+          organization_id?: string
+          row_version?: number
+          school_id?: string
+          status?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "admission_followup_tasks_application_fk"
+            columns: ["application_id", "organization_id", "school_id"]
+            isOneToOne: false
+            referencedRelation: "admission_applications"
+            referencedColumns: ["id", "organization_id", "school_id"]
+          },
+          {
+            foreignKeyName: "admission_followup_tasks_assigned_profile_id_fkey"
+            columns: ["assigned_profile_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "admission_followup_tasks_created_by_profile_id_fkey"
+            columns: ["created_by_profile_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       admission_stage_history: {
         Row: {
           actor_kind: string
@@ -1579,6 +1473,318 @@ export type Database = {
           },
         ]
       }
+      b24_online_payment_intents: {
+        Row: {
+          amount_idr: number
+          channel: string
+          created_at: string
+          currency: string
+          expires_at: string
+          id: string
+          invoice_id: string
+          organization_id: string
+          provider_key: string
+          provider_reference: string | null
+          requested_by_profile_id: string
+          row_version: number
+          school_id: string
+          settled_at: string | null
+          status: string
+          terminal_at: string | null
+          updated_at: string
+        }
+        Insert: {
+          amount_idr: number
+          channel: string
+          created_at?: string
+          currency?: string
+          expires_at: string
+          id?: string
+          invoice_id: string
+          organization_id: string
+          provider_key: string
+          provider_reference?: string | null
+          requested_by_profile_id: string
+          row_version?: number
+          school_id: string
+          settled_at?: string | null
+          status?: string
+          terminal_at?: string | null
+          updated_at?: string
+        }
+        Update: {
+          amount_idr?: number
+          channel?: string
+          created_at?: string
+          currency?: string
+          expires_at?: string
+          id?: string
+          invoice_id?: string
+          organization_id?: string
+          provider_key?: string
+          provider_reference?: string | null
+          requested_by_profile_id?: string
+          row_version?: number
+          school_id?: string
+          settled_at?: string | null
+          status?: string
+          terminal_at?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "b24_intents_invoice_fk"
+            columns: ["invoice_id", "organization_id", "school_id"]
+            isOneToOne: false
+            referencedRelation: "finance_invoices"
+            referencedColumns: ["id", "organization_id", "school_id"]
+          },
+          {
+            foreignKeyName: "b24_intents_school_fk"
+            columns: ["school_id", "organization_id"]
+            isOneToOne: false
+            referencedRelation: "schools"
+            referencedColumns: ["id", "organization_id"]
+          },
+          {
+            foreignKeyName: "b24_online_payment_intents_requested_by_profile_id_fkey"
+            columns: ["requested_by_profile_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      b24_payment_intent_requests: {
+        Row: {
+          actor_profile_id: string
+          created_at: string
+          id: string
+          intent_id: string | null
+          invoice_id: string
+          organization_id: string
+          request_id: string
+          school_id: string
+          semantic_fingerprint: string
+        }
+        Insert: {
+          actor_profile_id: string
+          created_at?: string
+          id?: string
+          intent_id?: string | null
+          invoice_id: string
+          organization_id: string
+          request_id: string
+          school_id: string
+          semantic_fingerprint: string
+        }
+        Update: {
+          actor_profile_id?: string
+          created_at?: string
+          id?: string
+          intent_id?: string | null
+          invoice_id?: string
+          organization_id?: string
+          request_id?: string
+          school_id?: string
+          semantic_fingerprint?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "b24_intent_requests_intent_fk"
+            columns: ["intent_id", "organization_id", "school_id", "invoice_id"]
+            isOneToOne: false
+            referencedRelation: "b24_online_payment_intents"
+            referencedColumns: [
+              "id",
+              "organization_id",
+              "school_id",
+              "invoice_id",
+            ]
+          },
+          {
+            foreignKeyName: "b24_intent_requests_invoice_fk"
+            columns: ["invoice_id", "organization_id", "school_id"]
+            isOneToOne: false
+            referencedRelation: "finance_invoices"
+            referencedColumns: ["id", "organization_id", "school_id"]
+          },
+          {
+            foreignKeyName: "b24_intent_requests_school_fk"
+            columns: ["school_id", "organization_id"]
+            isOneToOne: false
+            referencedRelation: "schools"
+            referencedColumns: ["id", "organization_id"]
+          },
+          {
+            foreignKeyName: "b24_payment_intent_requests_actor_profile_id_fkey"
+            columns: ["actor_profile_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      b24_payment_reconciliations: {
+        Row: {
+          amount_idr: number
+          canonical_payment_id: string | null
+          created_at: string
+          currency: string
+          exception_code: string | null
+          id: string
+          intent_id: string
+          invoice_id: string
+          organization_id: string
+          provider_event_row_id: string
+          provider_key: string
+          provider_settlement_reference: string
+          school_id: string
+          status: string
+        }
+        Insert: {
+          amount_idr: number
+          canonical_payment_id?: string | null
+          created_at?: string
+          currency: string
+          exception_code?: string | null
+          id?: string
+          intent_id: string
+          invoice_id: string
+          organization_id: string
+          provider_event_row_id: string
+          provider_key: string
+          provider_settlement_reference: string
+          school_id: string
+          status: string
+        }
+        Update: {
+          amount_idr?: number
+          canonical_payment_id?: string | null
+          created_at?: string
+          currency?: string
+          exception_code?: string | null
+          id?: string
+          intent_id?: string
+          invoice_id?: string
+          organization_id?: string
+          provider_event_row_id?: string
+          provider_key?: string
+          provider_settlement_reference?: string
+          school_id?: string
+          status?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "b24_reconciliations_event_fk"
+            columns: ["provider_event_row_id", "organization_id", "school_id"]
+            isOneToOne: false
+            referencedRelation: "b24_provider_events"
+            referencedColumns: ["id", "organization_id", "school_id"]
+          },
+          {
+            foreignKeyName: "b24_reconciliations_intent_fk"
+            columns: ["intent_id", "organization_id", "school_id", "invoice_id"]
+            isOneToOne: false
+            referencedRelation: "b24_online_payment_intents"
+            referencedColumns: [
+              "id",
+              "organization_id",
+              "school_id",
+              "invoice_id",
+            ]
+          },
+          {
+            foreignKeyName: "b24_reconciliations_payment_fk"
+            columns: ["canonical_payment_id", "organization_id", "school_id"]
+            isOneToOne: false
+            referencedRelation: "finance_payments"
+            referencedColumns: ["id", "organization_id", "school_id"]
+          },
+          {
+            foreignKeyName: "b24_reconciliations_school_fk"
+            columns: ["school_id", "organization_id"]
+            isOneToOne: false
+            referencedRelation: "schools"
+            referencedColumns: ["id", "organization_id"]
+          },
+        ]
+      }
+      b24_provider_events: {
+        Row: {
+          amount_idr: number
+          currency: string
+          event_type: string
+          fingerprint: string
+          id: string
+          intent_id: string
+          occurred_at: string
+          organization_id: string
+          processed_at: string | null
+          provider_event_id: string
+          provider_key: string
+          provider_settlement_reference: string | null
+          received_at: string
+          result_payload: Json
+          result_status: string
+          safe_failure_code: string | null
+          school_id: string
+        }
+        Insert: {
+          amount_idr: number
+          currency: string
+          event_type: string
+          fingerprint: string
+          id?: string
+          intent_id: string
+          occurred_at: string
+          organization_id: string
+          processed_at?: string | null
+          provider_event_id: string
+          provider_key: string
+          provider_settlement_reference?: string | null
+          received_at?: string
+          result_payload?: Json
+          result_status?: string
+          safe_failure_code?: string | null
+          school_id: string
+        }
+        Update: {
+          amount_idr?: number
+          currency?: string
+          event_type?: string
+          fingerprint?: string
+          id?: string
+          intent_id?: string
+          occurred_at?: string
+          organization_id?: string
+          processed_at?: string | null
+          provider_event_id?: string
+          provider_key?: string
+          provider_settlement_reference?: string | null
+          received_at?: string
+          result_payload?: Json
+          result_status?: string
+          safe_failure_code?: string | null
+          school_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "b24_events_intent_fk"
+            columns: ["intent_id", "organization_id", "school_id"]
+            isOneToOne: false
+            referencedRelation: "b24_online_payment_intents"
+            referencedColumns: ["id", "organization_id", "school_id"]
+          },
+          {
+            foreignKeyName: "b24_events_school_fk"
+            columns: ["school_id", "organization_id"]
+            isOneToOne: false
+            referencedRelation: "schools"
+            referencedColumns: ["id", "organization_id"]
+          },
+        ]
+      }
       class_enrollments: {
         Row: {
           classroom_id: string
@@ -1931,6 +2137,412 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "communication_announcements"
             referencedColumns: ["id", "organization_id", "school_id"]
+          },
+        ]
+      }
+      communication_contact_preference_events: {
+        Row: {
+          changed_by_profile_id: string
+          channel: string
+          consent_state: string
+          contact_state: string
+          effective_at: string
+          id: string
+          organization_id: string
+          purpose: string
+          recipient_profile_id: string
+          school_id: string
+          source: string
+          source_reference: string | null
+        }
+        Insert: {
+          changed_by_profile_id: string
+          channel: string
+          consent_state: string
+          contact_state: string
+          effective_at: string
+          id?: string
+          organization_id: string
+          purpose: string
+          recipient_profile_id: string
+          school_id: string
+          source: string
+          source_reference?: string | null
+        }
+        Update: {
+          changed_by_profile_id?: string
+          channel?: string
+          consent_state?: string
+          contact_state?: string
+          effective_at?: string
+          id?: string
+          organization_id?: string
+          purpose?: string
+          recipient_profile_id?: string
+          school_id?: string
+          source?: string
+          source_reference?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "b25_contact_event_school_fk"
+            columns: ["school_id", "organization_id"]
+            isOneToOne: false
+            referencedRelation: "schools"
+            referencedColumns: ["id", "organization_id"]
+          },
+          {
+            foreignKeyName: "communication_contact_preference_eve_changed_by_profile_id_fkey"
+            columns: ["changed_by_profile_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "communication_contact_preference_even_recipient_profile_id_fkey"
+            columns: ["recipient_profile_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      communication_contact_preferences: {
+        Row: {
+          changed_by_profile_id: string
+          channel: string
+          consent_state: string
+          contact_state: string
+          effective_at: string
+          organization_id: string
+          purpose: string
+          recipient_profile_id: string
+          revoked_at: string | null
+          school_id: string
+          source: string
+          source_reference: string | null
+          updated_at: string
+        }
+        Insert: {
+          changed_by_profile_id: string
+          channel: string
+          consent_state: string
+          contact_state: string
+          effective_at?: string
+          organization_id: string
+          purpose: string
+          recipient_profile_id: string
+          revoked_at?: string | null
+          school_id: string
+          source: string
+          source_reference?: string | null
+          updated_at?: string
+        }
+        Update: {
+          changed_by_profile_id?: string
+          channel?: string
+          consent_state?: string
+          contact_state?: string
+          effective_at?: string
+          organization_id?: string
+          purpose?: string
+          recipient_profile_id?: string
+          revoked_at?: string | null
+          school_id?: string
+          source?: string
+          source_reference?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "b25_contact_preference_school_fk"
+            columns: ["school_id", "organization_id"]
+            isOneToOne: false
+            referencedRelation: "schools"
+            referencedColumns: ["id", "organization_id"]
+          },
+          {
+            foreignKeyName: "communication_contact_preferences_changed_by_profile_id_fkey"
+            columns: ["changed_by_profile_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "communication_contact_preferences_recipient_profile_id_fkey"
+            columns: ["recipient_profile_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      communication_delivery_attempts: {
+        Row: {
+          attempt_number: number
+          completed_at: string | null
+          delivery_recipient_id: string
+          failure_code: string | null
+          id: string
+          job_id: string
+          organization_id: string
+          outcome: string
+          provider_message_id: string | null
+          school_id: string
+          started_at: string
+        }
+        Insert: {
+          attempt_number: number
+          completed_at?: string | null
+          delivery_recipient_id: string
+          failure_code?: string | null
+          id?: string
+          job_id: string
+          organization_id: string
+          outcome: string
+          provider_message_id?: string | null
+          school_id: string
+          started_at?: string
+        }
+        Update: {
+          attempt_number?: number
+          completed_at?: string | null
+          delivery_recipient_id?: string
+          failure_code?: string | null
+          id?: string
+          job_id?: string
+          organization_id?: string
+          outcome?: string
+          provider_message_id?: string | null
+          school_id?: string
+          started_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "communication_delivery_attempts_recipient_fk"
+            columns: [
+              "delivery_recipient_id",
+              "organization_id",
+              "school_id",
+              "job_id",
+            ]
+            isOneToOne: false
+            referencedRelation: "communication_delivery_recipients"
+            referencedColumns: ["id", "organization_id", "school_id", "job_id"]
+          },
+        ]
+      }
+      communication_delivery_jobs: {
+        Row: {
+          announcement_id: string
+          channel: string
+          created_at: string
+          created_by_profile_id: string
+          id: string
+          organization_id: string
+          paused_at: string | null
+          paused_by_profile_id: string | null
+          provider_key: string
+          school_id: string
+          status: string
+          updated_at: string
+        }
+        Insert: {
+          announcement_id: string
+          channel: string
+          created_at?: string
+          created_by_profile_id: string
+          id?: string
+          organization_id: string
+          paused_at?: string | null
+          paused_by_profile_id?: string | null
+          provider_key?: string
+          school_id: string
+          status?: string
+          updated_at?: string
+        }
+        Update: {
+          announcement_id?: string
+          channel?: string
+          created_at?: string
+          created_by_profile_id?: string
+          id?: string
+          organization_id?: string
+          paused_at?: string | null
+          paused_by_profile_id?: string | null
+          provider_key?: string
+          school_id?: string
+          status?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "communication_delivery_jobs_announcement_fk"
+            columns: ["announcement_id", "organization_id", "school_id"]
+            isOneToOne: false
+            referencedRelation: "communication_announcements"
+            referencedColumns: ["id", "organization_id", "school_id"]
+          },
+          {
+            foreignKeyName: "communication_delivery_jobs_created_by_profile_id_fkey"
+            columns: ["created_by_profile_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "communication_delivery_jobs_paused_by_profile_id_fkey"
+            columns: ["paused_by_profile_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "communication_delivery_jobs_school_fk"
+            columns: ["school_id", "organization_id"]
+            isOneToOne: false
+            referencedRelation: "schools"
+            referencedColumns: ["id", "organization_id"]
+          },
+        ]
+      }
+      communication_delivery_operator_requests: {
+        Row: {
+          actor_profile_id: string
+          created_at: string
+          id: string
+          organization_id: string
+          recipient_id: string
+          request_id: string
+          response: Json | null
+          school_id: string
+        }
+        Insert: {
+          actor_profile_id: string
+          created_at?: string
+          id?: string
+          organization_id: string
+          recipient_id: string
+          request_id: string
+          response?: Json | null
+          school_id: string
+        }
+        Update: {
+          actor_profile_id?: string
+          created_at?: string
+          id?: string
+          organization_id?: string
+          recipient_id?: string
+          request_id?: string
+          response?: Json | null
+          school_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "b25_operator_request_recipient_fk"
+            columns: ["recipient_id", "organization_id", "school_id"]
+            isOneToOne: false
+            referencedRelation: "communication_delivery_recipients"
+            referencedColumns: ["id", "organization_id", "school_id"]
+          },
+          {
+            foreignKeyName: "communication_delivery_operator_requests_actor_profile_id_fkey"
+            columns: ["actor_profile_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      communication_delivery_recipients: {
+        Row: {
+          announcement_id: string
+          announcement_recipient_id: string
+          attempt_count: number
+          claim_started_at: string | null
+          claim_token: string | null
+          created_at: string
+          id: string
+          job_id: string
+          last_failure_code: string | null
+          last_failure_retryable: boolean
+          lease_expires_at: string | null
+          next_attempt_at: string | null
+          organization_id: string
+          school_id: string
+          status: string
+          updated_at: string
+        }
+        Insert: {
+          announcement_id: string
+          announcement_recipient_id: string
+          attempt_count?: number
+          claim_started_at?: string | null
+          claim_token?: string | null
+          created_at?: string
+          id?: string
+          job_id: string
+          last_failure_code?: string | null
+          last_failure_retryable?: boolean
+          lease_expires_at?: string | null
+          next_attempt_at?: string | null
+          organization_id: string
+          school_id: string
+          status?: string
+          updated_at?: string
+        }
+        Update: {
+          announcement_id?: string
+          announcement_recipient_id?: string
+          attempt_count?: number
+          claim_started_at?: string | null
+          claim_token?: string | null
+          created_at?: string
+          id?: string
+          job_id?: string
+          last_failure_code?: string | null
+          last_failure_retryable?: boolean
+          lease_expires_at?: string | null
+          next_attempt_at?: string | null
+          organization_id?: string
+          school_id?: string
+          status?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "communication_delivery_recipients_job_fk"
+            columns: [
+              "job_id",
+              "organization_id",
+              "school_id",
+              "announcement_id",
+            ]
+            isOneToOne: false
+            referencedRelation: "communication_delivery_jobs"
+            referencedColumns: [
+              "id",
+              "organization_id",
+              "school_id",
+              "announcement_id",
+            ]
+          },
+          {
+            foreignKeyName: "communication_delivery_recipients_source_fk"
+            columns: [
+              "announcement_recipient_id",
+              "organization_id",
+              "school_id",
+              "announcement_id",
+            ]
+            isOneToOne: false
+            referencedRelation: "communication_announcement_recipients"
+            referencedColumns: [
+              "id",
+              "organization_id",
+              "school_id",
+              "announcement_id",
+            ]
           },
         ]
       }
@@ -6237,33 +6849,6 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
-      b24_create_parent_payment_intent: {
-        Args: { p_actor_id: string; p_invoice_id: string; p_request_id: string };
-        Returns: Json;
-      };
-            b24_find_intent_for_test_event: {
-        Args: { p_actor_id: string; p_intent_id: string };
-        Returns: Json;
-      };
-            b24_get_parent_payment_intent: {
-        Args: { p_actor_id: string; p_invoice_id: string };
-        Returns: Json;
-      };
-            b24_list_invoice_payment_intents: {
-        Args: { p_actor_id: string; p_invoice_id: string; p_school_id: string };
-        Returns: Json;
-      };
-            b24_parent_can_access_invoice: {
-        Args: {
-          p_actor_id: string;
-          p_invoice: Database["public"]["Tables"]["finance_invoices"]["Row"];
-        };
-        Returns: boolean;
-      };
-            b24_simulate_development_payment_event: {
-        Args: { p_actor_id: string; p_input: Json };
-        Returns: Json;
-      };
       apply_progression_batch: {
         Args: {
           p_batch_id: string
@@ -7117,6 +7702,140 @@ export type Database = {
         Returns: Json
       }
       b20_update_announcement: { Args: { p_input: Json }; Returns: Json }
+      b22_enqueue_external_delivery: { Args: { p_input: Json }; Returns: Json }
+      b22_list_delivery_jobs: {
+        Args: { p_announcement_id: string; p_school_id: string }
+        Returns: Json
+      }
+      b22_require_delivery_manager: {
+        Args: { p_organization_id: string; p_school_id: string }
+        Returns: undefined
+      }
+      b23_followup_command: {
+        Args: {
+          p_application_id: string
+          p_assigned_profile_id?: string
+          p_command: string
+          p_completion_outcome?: string
+          p_due_at?: string
+          p_expected_row_version: number
+          p_request_id: string
+          p_task_id: string
+        }
+        Returns: Json
+      }
+      b23_get_admission_funnel: { Args: { p_cycle_id: string }; Returns: Json }
+      b23_get_followup_application: {
+        Args: { p_application_id: string }
+        Returns: Json
+      }
+      b23_list_followup_assignees: {
+        Args: { p_school_id: string }
+        Returns: {
+          full_name: string
+          profile_id: string
+        }[]
+      }
+      b23_list_followup_tasks: {
+        Args: {
+          p_cycle_id: string
+          p_filter?: string
+          p_limit?: number
+          p_offset?: number
+        }
+        Returns: Json
+      }
+      b24_create_parent_payment_intent: {
+        Args: { p_actor_id: string; p_invoice_id: string; p_request_id: string }
+        Returns: Json
+      }
+      b24_find_intent_for_test_event: {
+        Args: { p_actor_id: string; p_intent_id: string }
+        Returns: Json
+      }
+      b24_get_parent_payment_intent: {
+        Args: { p_actor_id: string; p_invoice_id: string }
+        Returns: Json
+      }
+      b24_list_invoice_payment_intents: {
+        Args: { p_actor_id: string; p_invoice_id: string; p_school_id: string }
+        Returns: Json
+      }
+      b24_parent_can_access_invoice: {
+        Args: {
+          p_actor_id: string
+          p_invoice: Database["public"]["Tables"]["finance_invoices"]["Row"]
+        }
+        Returns: boolean
+      }
+      b24_simulate_development_payment_event: {
+        Args: { p_actor_id: string; p_input: Json }
+        Returns: Json
+      }
+      b25_actor_can_manage_delivery: {
+        Args: {
+          p_actor: string
+          p_organization_id: string
+          p_school_id: string
+        }
+        Returns: boolean
+      }
+      b25_assert_delivery_operator: {
+        Args: { p_school_id: string }
+        Returns: boolean
+      }
+      b25_claim_delivery_batch: {
+        Args: {
+          p_actor: string
+          p_lease_seconds?: number
+          p_limit?: number
+          p_school_id: string
+        }
+        Returns: Json
+      }
+      b25_finalize_delivery_attempt: {
+        Args: {
+          p_claim_token: string
+          p_failure_code?: string
+          p_message_reference?: string
+          p_outcome: string
+          p_recipient_id: string
+        }
+        Returns: Json
+      }
+      b25_get_delivery_job_stats: {
+        Args: { p_job_id: string; p_school_id: string }
+        Returns: Json
+      }
+      b25_list_delivery_operations: {
+        Args: { p_announcement_id: string; p_school_id: string }
+        Returns: Json
+      }
+      b25_record_contact_preference: { Args: { p_input: Json }; Returns: Json }
+      b25_request_delivery_retry: {
+        Args: {
+          p_recipient_id: string
+          p_request_id: string
+          p_school_id: string
+        }
+        Returns: Json
+      }
+      b25_resolve_claimed_delivery: {
+        Args: { p_claim_token: string; p_recipient_id: string }
+        Returns: Json
+      }
+      b25_set_delivery_job_paused: {
+        Args: { p_job_id: string; p_paused: boolean; p_school_id: string }
+        Returns: Json
+      }
+      b25_skip_claimed_delivery: {
+        Args: {
+          p_claim_token: string
+          p_reason: string
+          p_recipient_id: string
+        }
+        Returns: Json
+      }
       can_access_assessment: {
         Args: { p_assessment_id: string; p_permission_code: string }
         Returns: boolean
@@ -8497,9 +9216,6 @@ export type CompositeTypes<
     : never
 
 export const Constants = {
-  graphql_public: {
-    Enums: {},
-  },
   public: {
     Enums: {},
   },

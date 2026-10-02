@@ -29,6 +29,10 @@ import {
   enqueueExternalCommunicationDelivery,
   getCommunicationAnnouncement,
   listExternalCommunicationDeliveries,
+  runExternalCommunicationDeliveryCycle,
+  setExternalCommunicationDeliveryPaused,
+  retryExternalCommunicationDelivery,
+  recordExternalContactPreference,
   listCommunicationAnnouncements,
   publishCommunicationAnnouncement,
   updateCommunicationAnnouncement,
@@ -64,21 +68,74 @@ type AnnouncementDetail = {
 type DeliveryJob = {
   id: string;
   channel: "whatsapp" | "email";
-  status: "queued" | "processing" | "completed" | "completed_with_errors" | "failed" | "cancelled";
+  status:
+    | "queued"
+    | "processing"
+    | "paused"
+    | "completed"
+    | "completed_with_errors"
+    | "failed"
+    | "cancelled";
   created_at: string;
   recipient_count: number;
   pending_count: number;
-  sent_count: number;
-  failed_count: number;
+  processing_count: number;
+  accepted_count: number;
+  retryable_count: number;
+  permanent_failure_count: number;
   skipped_count: number;
+  expired_lease_count: number;
+  oldest_pending_at: string | null;
+  paused_at: string | null;
+  recipients: {
+    id: string;
+    recipient_profile_id: string;
+    status: string;
+    attempt_count: number;
+    failure_code: string | null;
+    retryable: boolean;
+    eligibility: string;
+    masked_destination: string | null;
+  }[];
 };
 const deliveryStatusMessage = {
   queued: "communication.deliveryStatus.queued",
   processing: "communication.deliveryStatus.processing",
+  paused: "communication.deliveryStatus.paused",
   completed: "communication.deliveryStatus.completed",
   completed_with_errors: "communication.deliveryStatus.completed_with_errors",
   failed: "communication.deliveryStatus.failed",
   cancelled: "communication.deliveryStatus.cancelled",
+} as const;
+const recipientStatusMessage = {
+  pending: "communication.recipientStatus.pending",
+  processing: "communication.recipientStatus.processing",
+  sent: "communication.recipientStatus.sent",
+  delivered: "communication.recipientStatus.delivered",
+  failed: "communication.recipientStatus.failed",
+  skipped: "communication.recipientStatus.skipped",
+  cancelled: "communication.recipientStatus.cancelled",
+} as const;
+const eligibilityMessage = {
+  eligible: "communication.eligibility.eligible",
+  opted_out: "communication.eligibility.opted_out",
+  consent_required: "communication.eligibility.consent_required",
+  contact_unverified: "communication.eligibility.contact_unverified",
+  not_supported: "communication.eligibility.not_supported",
+} as const;
+const failureMessage = {
+  WORKER_LEASE_EXPIRED: "communication.failure.WORKER_LEASE_EXPIRED",
+  TEST_TEMPORARY_FAILURE: "communication.failure.TEST_TEMPORARY_FAILURE",
+  TEST_INVALID_DESTINATION: "communication.failure.TEST_INVALID_DESTINATION",
+  TEST_MISSING_DESTINATION: "communication.failure.TEST_MISSING_DESTINATION",
+  TEST_UNSUPPORTED_DESTINATION: "communication.failure.TEST_UNSUPPORTED_DESTINATION",
+  CONSENT_OR_CONTACT_INELIGIBLE: "communication.failure.CONSENT_OR_CONTACT_INELIGIBLE",
+  RECIPIENT_NOT_SUPPORTED: "communication.failure.RECIPIENT_NOT_SUPPORTED",
+  CONTACT_NOT_IN_SCHOOL: "communication.failure.CONTACT_NOT_IN_SCHOOL",
+  DESTINATION_MISSING: "communication.failure.DESTINATION_MISSING",
+  CLAIM_EXPIRED: "communication.failure.CLAIM_EXPIRED",
+  JOB_PAUSED: "communication.failure.JOB_PAUSED",
+  INELIGIBLE: "communication.failure.INELIGIBLE",
 } as const;
 
 function rows<T>(value: unknown): T[] {
@@ -455,6 +512,11 @@ function ExternalDeliveryPanel({ announcementId }: { announcementId: string }) {
   const queryClient = useQueryClient();
   const fetch = useServerFn(listExternalCommunicationDeliveries);
   const enqueue = useServerFn(enqueueExternalCommunicationDelivery);
+  const runCycle = useServerFn(runExternalCommunicationDeliveryCycle);
+  const setPaused = useServerFn(setExternalCommunicationDeliveryPaused);
+  const requestRetry = useServerFn(retryExternalCommunicationDelivery);
+  const recordPreference = useServerFn(recordExternalContactPreference);
+  const [consentEvidence, setConsentEvidence] = useState<Record<string, string>>({});
   const allowed = hasPermission("communication.delivery.manage");
   const query = useQuery({
     queryKey: ["communication-deliveries", activeSchool?.id, announcementId],
@@ -477,6 +539,43 @@ function ExternalDeliveryPanel({ announcementId }: { announcementId: string }) {
     },
     onError: () => toast.error(t("communication.deliveryQueueFailed")),
   });
+  const cycleMutation = useMutation({
+    mutationFn: () => runCycle({ data: { schoolId: activeSchool!.id, limit: 10 } }),
+    onSuccess: () => void queryClient.invalidateQueries({ queryKey: ["communication-deliveries"] }),
+    onError: () => toast.error(t("communication.operationFailed")),
+  });
+  const jobMutation = useMutation({
+    mutationFn: (job: DeliveryJob) =>
+      setPaused({
+        data: { schoolId: activeSchool!.id, jobId: job.id, paused: job.status !== "paused" },
+      }),
+    onSuccess: () => void queryClient.invalidateQueries({ queryKey: ["communication-deliveries"] }),
+    onError: () => toast.error(t("communication.operationFailed")),
+  });
+  const retryMutation = useMutation({
+    mutationFn: (recipientId: string) =>
+      requestRetry({ data: { schoolId: activeSchool!.id, recipientId, requestId: requestId() } }),
+    onSuccess: () => void queryClient.invalidateQueries({ queryKey: ["communication-deliveries"] }),
+    onError: () => toast.error(t("communication.operationFailed")),
+  });
+  const preferenceMutation = useMutation({
+    mutationFn: (input: {
+      recipientProfileId: string;
+      channel: "email" | "whatsapp";
+      consentState: "granted" | "revoked";
+      sourceReference: string;
+    }) =>
+      recordPreference({
+        data: {
+          schoolId: activeSchool!.id,
+          ...input,
+          contactState: "verified_by_school",
+          source: "school_recorded",
+        },
+      }),
+    onSuccess: () => void queryClient.invalidateQueries({ queryKey: ["communication-deliveries"] }),
+    onError: () => toast.error(t("communication.operationFailed")),
+  });
 
   if (!allowed) return null;
   const jobs = rows<DeliveryJob>(query.data);
@@ -484,11 +583,23 @@ function ExternalDeliveryPanel({ announcementId }: { announcementId: string }) {
   return (
     <Card>
       <CardHeader>
-        <CardTitle>{t("communication.deliveryTitle")}</CardTitle>
+        <h2 className="font-semibold leading-none tracking-tight">
+          {t("communication.deliveryTitle")}
+        </h2>
         <CardDescription>{t("communication.deliveryDescription")}</CardDescription>
       </CardHeader>
       <CardContent className="space-y-4">
         <p className="text-sm text-muted-foreground">{t("communication.deliveryNotSent")}</p>
+        <Button
+          type="button"
+          variant="outline"
+          disabled={cycleMutation.isPending}
+          onClick={() => cycleMutation.mutate()}
+        >
+          {cycleMutation.isPending
+            ? t("communication.workerRunning")
+            : t("communication.runWorker")}
+        </Button>
         {query.isPending ? (
           <Skeleton className="h-12 w-full" />
         ) : query.error ? (
@@ -509,10 +620,127 @@ function ExternalDeliveryPanel({ announcementId }: { announcementId: string }) {
                 <span className="text-muted-foreground">
                   {t("communication.deliveryRecipients")}: {job.recipient_count} ·{" "}
                   {t("communication.deliveryPending")}: {job.pending_count} ·{" "}
-                  {t("communication.deliverySent")}: {job.sent_count} ·{" "}
-                  {t("communication.deliveryFailed")}: {job.failed_count} ·{" "}
+                  {t("communication.processing")}: {job.processing_count} ·{" "}
+                  {t("communication.deliverySent")}: {job.accepted_count} ·{" "}
+                  {t("communication.retryable")}: {job.retryable_count} ·{" "}
+                  {t("communication.deliveryFailed")}: {job.permanent_failure_count} ·{" "}
                   {t("communication.deliverySkipped")}: {job.skipped_count}
                 </span>
+                <div className="flex flex-wrap gap-2">
+                  {job.status === "paused" || ["queued", "processing"].includes(job.status) ? (
+                    <Button
+                      type="button"
+                      size="sm"
+                      variant="outline"
+                      disabled={jobMutation.isPending}
+                      onClick={() => jobMutation.mutate(job)}
+                    >
+                      {job.status === "paused"
+                        ? t("communication.resume")
+                        : t("communication.pause")}
+                    </Button>
+                  ) : null}
+                </div>
+                {job.recipients?.map((recipient) => (
+                  <div
+                    key={recipient.id}
+                    className="w-full border-t pt-2 text-xs"
+                    aria-label={t("communication.recipientStatus")}
+                  >
+                    <span>
+                      {recipient.masked_destination ?? t("communication.destinationUnavailable")}
+                    </span>
+                    {" · "}
+                    <span>
+                      {t(
+                        eligibilityMessage[
+                          recipient.eligibility as keyof typeof eligibilityMessage
+                        ] ?? "communication.eligibility.contact_unverified",
+                      )}
+                    </span>
+                    {" · "}
+                    <span>
+                      {recipient.failure_code
+                        ? t(
+                            failureMessage[recipient.failure_code as keyof typeof failureMessage] ??
+                              "communication.failure.INELIGIBLE",
+                          )
+                        : t(
+                            recipientStatusMessage[
+                              recipient.status as keyof typeof recipientStatusMessage
+                            ] ?? "communication.recipientStatus.pending",
+                          )}
+                    </span>
+                    {recipient.retryable ? (
+                      <Button
+                        type="button"
+                        size="sm"
+                        variant="ghost"
+                        disabled={retryMutation.isPending}
+                        onClick={() => retryMutation.mutate(recipient.id)}
+                      >
+                        {t("communication.retry")}
+                      </Button>
+                    ) : null}
+                    {recipient.eligibility !== "not_supported" ? (
+                      <div className="mt-2 flex flex-wrap items-end gap-2">
+                        <div className="min-w-48">
+                          <Label htmlFor={`consent-evidence-${recipient.id}`}>
+                            {t("communication.consentEvidence")}
+                          </Label>
+                          <Input
+                            id={`consent-evidence-${recipient.id}`}
+                            value={consentEvidence[recipient.id] ?? ""}
+                            onChange={(event) =>
+                              setConsentEvidence((current) => ({
+                                ...current,
+                                [recipient.id]: event.target.value,
+                              }))
+                            }
+                            maxLength={120}
+                          />
+                        </div>
+                        <Button
+                          type="button"
+                          size="sm"
+                          variant="outline"
+                          disabled={
+                            preferenceMutation.isPending ||
+                            !(consentEvidence[recipient.id] ?? "").trim()
+                          }
+                          onClick={() =>
+                            preferenceMutation.mutate({
+                              recipientProfileId: recipient.recipient_profile_id,
+                              channel: job.channel,
+                              consentState: "granted",
+                              sourceReference: consentEvidence[recipient.id]!.trim(),
+                            })
+                          }
+                        >
+                          {t("communication.recordConsent")}
+                        </Button>
+                        <Button
+                          type="button"
+                          size="sm"
+                          variant="ghost"
+                          disabled={preferenceMutation.isPending}
+                          onClick={() =>
+                            preferenceMutation.mutate({
+                              recipientProfileId: recipient.recipient_profile_id,
+                              channel: job.channel,
+                              consentState: "revoked",
+                              sourceReference:
+                                (consentEvidence[recipient.id] ?? "").trim() ||
+                                "Guardian opt-out reported",
+                            })
+                          }
+                        >
+                          {t("communication.recordOptOut")}
+                        </Button>
+                      </div>
+                    ) : null}
+                  </div>
+                ))}
               </li>
             ))}
           </ul>

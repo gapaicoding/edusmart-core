@@ -58,5 +58,28 @@ export const communicationDeliveryInput = z.object({
   channel: z.enum(["whatsapp", "email"]),
 });
 export const communicationDeliveryListInput = z.object({ schoolId: uuid, announcementId: uuid });
+export const communicationDeliveryCycleInput = z.object({
+  schoolId: uuid,
+  limit: z.number().int().min(1).max(10).default(10),
+});
+export const communicationDeliveryJobActionInput = z.object({
+  schoolId: uuid,
+  jobId: uuid,
+  paused: z.boolean(),
+});
+export const communicationDeliveryRetryInput = z.object({
+  schoolId: uuid,
+  recipientId: uuid,
+  requestId: uuid,
+});
+export const communicationContactPreferenceInput = z.object({
+  schoolId: uuid,
+  recipientProfileId: uuid,
+  channel: z.enum(["whatsapp", "email"]),
+  consentState: z.enum(["unknown", "granted", "revoked"]),
+  contactState: z.enum(["unverified", "verified_by_school", "disabled"]),
+  source: z.enum(["school_recorded", "guardian_portal", "imported"]),
+  sourceReference: z.string().trim().min(1).max(120).optional(),
+});
 
 export type CommunicationTargetInput = z.infer<typeof communicationTargetInput>;
