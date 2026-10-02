@@ -20,6 +20,12 @@ const SAFE_ERRORS: Record<string, string> = {
   B22_ANNOUNCEMENT_NOT_PUBLISHED: "Only a published announcement can be queued for delivery.",
   B22_INVALID_CHANNEL: "The selected delivery channel is not available.",
   B22_NO_SNAPSHOT_RECIPIENTS: "No recipients are available in the published audience snapshot.",
+  B25_PERMISSION_DENIED: "You do not have permission to operate external delivery.",
+  B25_INVALID_PREFERENCE: "The contact eligibility details are invalid.",
+  B25_CONSENT_EVIDENCE_REQUIRED: "Record the approved consent source before enabling delivery.",
+  B25_CONTACT_NOT_IN_SCHOOL: "The contact is unavailable for this school.",
+  B25_JOB_NOT_PAUSABLE: "This delivery job cannot be paused in its current state.",
+  B25_RECIPIENT_UNAVAILABLE: "This delivery recipient is unavailable.",
 };
 
 export function communicationRuntimeError(error: PostgrestError, label: string): Error {
