@@ -6849,6 +6849,10 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      b26_get_pilot_readiness_facts: {
+        Args: { p_school_id: string };
+        Returns: Json;
+      };
       apply_progression_batch: {
         Args: {
           p_batch_id: string

@@ -10,6 +10,7 @@ import {
   CalendarCheck,
   CalendarClock,
   CalendarRange,
+  Activity,
   ClipboardCheck,
   ClipboardList,
   FileText,
@@ -266,6 +267,18 @@ const NAV_GROUPS: NavGroup[] = [
     items: [{ to: "/finance", label: "Finance", icon: WalletCards, permission: "finance.read" }],
   },
   {
+    label: "School Operations",
+    audience: "staff",
+    items: [
+      {
+        to: "/pilot-readiness",
+        label: "Pilot Readiness",
+        icon: Activity,
+        permission: "school.readiness.read",
+      },
+    ],
+  },
+  {
     label: "Parent Portal",
     audience: "parent",
     items: [
@@ -477,6 +490,8 @@ function Sidebar({ onNavigate }: { onNavigate?: () => void }) {
     Admissions: t("navigation.admissions"),
     "Academic Operations": t("navigation.academicOperations"),
     Finance: t("navigation.finance"),
+    "School Operations": t("navigation.schoolOperations"),
+    "Pilot Readiness": t("navigation.pilotReadiness"),
     "Parent Portal": t("navigation.parentPortal"),
     "Student Portal": t("navigation.studentPortal"),
     "Academic Years": t("navigation.academicYears"),
