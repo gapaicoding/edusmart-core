@@ -19,6 +19,7 @@ import { Route as ResetPasswordRouteImport } from './routes/reset-password'
 import { Route as AuthenticatedAccessPendingRouteImport } from './routes/_authenticated/access-pending'
 import { Route as AuthenticatedDashboardRouteImport } from './routes/_authenticated/dashboard'
 import { Route as AuthenticatedNotificationsRouteImport } from './routes/_authenticated/notifications'
+import { Route as AuthenticatedPilotReadinessRouteImport } from './routes/_authenticated/pilot-readiness'
 import { Route as AuthenticatedSelectOrganizationRouteImport } from './routes/_authenticated/select-organization'
 import { Route as AuthenticatedSelectSchoolRouteImport } from './routes/_authenticated/select-school'
 import { Route as AuthenticatedSettingsRouteImport } from './routes/_authenticated/settings'
@@ -131,6 +132,12 @@ const AuthenticatedNotificationsRoute =
   AuthenticatedNotificationsRouteImport.update({
     id: '/notifications',
     path: '/notifications',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
+const AuthenticatedPilotReadinessRoute =
+  AuthenticatedPilotReadinessRouteImport.update({
+    id: '/pilot-readiness',
+    path: '/pilot-readiness',
     getParentRoute: () => AuthenticatedRouteRoute,
   } as any)
 const AuthenticatedSelectOrganizationRoute =
@@ -511,6 +518,7 @@ export interface FileRoutesByFullPath {
   '/access-pending': typeof AuthenticatedAccessPendingRoute
   '/dashboard': typeof AuthenticatedDashboardRoute
   '/notifications': typeof AuthenticatedNotificationsRoute
+  '/pilot-readiness': typeof AuthenticatedPilotReadinessRoute
   '/select-organization': typeof AuthenticatedSelectOrganizationRoute
   '/select-school': typeof AuthenticatedSelectSchoolRoute
   '/settings': typeof AuthenticatedSettingsRoute
@@ -584,6 +592,7 @@ export interface FileRoutesByTo {
   '/access-pending': typeof AuthenticatedAccessPendingRoute
   '/dashboard': typeof AuthenticatedDashboardRoute
   '/notifications': typeof AuthenticatedNotificationsRoute
+  '/pilot-readiness': typeof AuthenticatedPilotReadinessRoute
   '/select-organization': typeof AuthenticatedSelectOrganizationRoute
   '/select-school': typeof AuthenticatedSelectSchoolRoute
   '/settings': typeof AuthenticatedSettingsRoute
@@ -659,6 +668,7 @@ export interface FileRoutesById {
   '/_authenticated/access-pending': typeof AuthenticatedAccessPendingRoute
   '/_authenticated/dashboard': typeof AuthenticatedDashboardRoute
   '/_authenticated/notifications': typeof AuthenticatedNotificationsRoute
+  '/_authenticated/pilot-readiness': typeof AuthenticatedPilotReadinessRoute
   '/_authenticated/select-organization': typeof AuthenticatedSelectOrganizationRoute
   '/_authenticated/select-school': typeof AuthenticatedSelectSchoolRoute
   '/_authenticated/settings': typeof AuthenticatedSettingsRoute
@@ -734,6 +744,7 @@ export interface FileRouteTypes {
     | '/access-pending'
     | '/dashboard'
     | '/notifications'
+    | '/pilot-readiness'
     | '/select-organization'
     | '/select-school'
     | '/settings'
@@ -807,6 +818,7 @@ export interface FileRouteTypes {
     | '/access-pending'
     | '/dashboard'
     | '/notifications'
+    | '/pilot-readiness'
     | '/select-organization'
     | '/select-school'
     | '/settings'
@@ -881,6 +893,7 @@ export interface FileRouteTypes {
     | '/_authenticated/access-pending'
     | '/_authenticated/dashboard'
     | '/_authenticated/notifications'
+    | '/_authenticated/pilot-readiness'
     | '/_authenticated/select-organization'
     | '/_authenticated/select-school'
     | '/_authenticated/settings'
@@ -1026,6 +1039,13 @@ declare module '@tanstack/react-router' {
       path: '/notifications'
       fullPath: '/notifications'
       preLoaderRoute: typeof AuthenticatedNotificationsRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/pilot-readiness': {
+      id: '/_authenticated/pilot-readiness'
+      path: '/pilot-readiness'
+      fullPath: '/pilot-readiness'
+      preLoaderRoute: typeof AuthenticatedPilotReadinessRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
     '/_authenticated/select-organization': {
@@ -1499,6 +1519,7 @@ interface AuthenticatedRouteRouteChildren {
   AuthenticatedAccessPendingRoute: typeof AuthenticatedAccessPendingRoute
   AuthenticatedDashboardRoute: typeof AuthenticatedDashboardRoute
   AuthenticatedNotificationsRoute: typeof AuthenticatedNotificationsRoute
+  AuthenticatedPilotReadinessRoute: typeof AuthenticatedPilotReadinessRoute
   AuthenticatedSelectOrganizationRoute: typeof AuthenticatedSelectOrganizationRoute
   AuthenticatedSelectSchoolRoute: typeof AuthenticatedSelectSchoolRoute
   AuthenticatedSettingsRoute: typeof AuthenticatedSettingsRoute
@@ -1564,6 +1585,7 @@ const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedAccessPendingRoute: AuthenticatedAccessPendingRoute,
   AuthenticatedDashboardRoute: AuthenticatedDashboardRoute,
   AuthenticatedNotificationsRoute: AuthenticatedNotificationsRoute,
+  AuthenticatedPilotReadinessRoute: AuthenticatedPilotReadinessRoute,
   AuthenticatedSelectOrganizationRoute: AuthenticatedSelectOrganizationRoute,
   AuthenticatedSelectSchoolRoute: AuthenticatedSelectSchoolRoute,
   AuthenticatedSettingsRoute: AuthenticatedSettingsRoute,

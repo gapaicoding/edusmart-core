@@ -92,6 +92,89 @@ const messages = {
     "navigation.studentInformation": "Data siswa",
     "navigation.admissions": "Penerimaan siswa",
     "navigation.finance": "Keuangan",
+    "navigation.schoolOperations": "Operasional sekolah",
+    "navigation.pilotReadiness": "Kesiapan pilot",
+    "pilotReadiness.title": "Kesiapan pilot sekolah",
+    "pilotReadiness.description":
+      "Ringkasan read-only untuk memeriksa kesiapan alur pilot yang disepakati. Data dihitung dari kondisi sekolah saat ini.",
+    "pilotReadiness.overall": "Ringkasan kesiapan",
+    "pilotReadiness.overallExplanation":
+      "Status ditentukan oleh pemeriksaan dengan tingkat risiko tertinggi.",
+    "pilotReadiness.domains": "Pemeriksaan per domain",
+    "pilotReadiness.refresh": "Perbarui pemeriksaan",
+    "pilotReadiness.reviewLink": "Tinjau pengaturan",
+    "pilotReadiness.count": "Jumlah: {count}",
+    "pilotReadiness.generatedAt": "Dihitung pada {date}",
+    "pilotReadiness.error":
+      "Kesiapan tidak dapat dimuat. Coba lagi atau hubungi administrator sekolah.",
+    "pilotReadiness.denied": "Anda tidak memiliki akses untuk melihat ringkasan kesiapan sekolah.",
+    "pilotReadiness.syntheticDisclaimer":
+      "Hasil teknis ini bukan persetujuan atau penerimaan pilot oleh sekolah. Konfirmasi alur dan penanggung jawab bersama pihak sekolah.",
+    "pilotReadiness.status.READY": "Siap",
+    "pilotReadiness.status.WARNING": "Perlu ditinjau",
+    "pilotReadiness.status.BLOCKER": "Penghambat",
+    "pilotReadiness.status.MANUAL_FALLBACK": "Alur manual",
+    "pilotReadiness.domain.school": "Sekolah",
+    "pilotReadiness.domain.academic_sis": "Akademik dan data siswa",
+    "pilotReadiness.domain.teaching": "Operasional guru",
+    "pilotReadiness.domain.portals": "Portal siswa dan orang tua",
+    "pilotReadiness.domain.admissions": "Penerimaan siswa",
+    "pilotReadiness.domain.finance": "Keuangan",
+    "pilotReadiness.domain.communication": "Komunikasi",
+    "pilotReadiness.check.SCHOOL_ACTIVE": "Status sekolah",
+    "pilotReadiness.check.ACADEMIC_ACCESS": "Akses konfigurasi akademik",
+    "pilotReadiness.check.ACTIVE_ACADEMIC_YEAR": "Tahun ajaran aktif",
+    "pilotReadiness.check.ACTIVE_TERM": "Periode akademik aktif",
+    "pilotReadiness.check.ACTIVE_CLASSROOMS": "Rombel aktif",
+    "pilotReadiness.check.ACTIVE_ENROLLMENTS": "Pendaftaran siswa aktif",
+    "pilotReadiness.check.CLASSROOM_ASSIGNMENT_COVERAGE": "Penempatan siswa ke rombel",
+    "pilotReadiness.check.TEACHING_ACCESS": "Akses penugasan guru",
+    "pilotReadiness.check.ACTIVE_TEACHER_ASSIGNMENTS": "Penugasan guru aktif",
+    "pilotReadiness.check.STUDENT_PORTAL_ACCESS": "Akses data siswa untuk portal",
+    "pilotReadiness.check.STUDENT_ACCOUNT_LINKS": "Akun siswa tertaut pada pendaftaran aktif",
+    "pilotReadiness.check.GUARDIAN_LINK_COVERAGE": "Hubungan wali aktif untuk siswa",
+    "pilotReadiness.check.ADMISSIONS_ACCESS": "Akses penerimaan siswa",
+    "pilotReadiness.check.OPEN_ADMISSION_CYCLE": "Gelombang penerimaan terbuka",
+    "pilotReadiness.check.OPEN_FOLLOWUPS": "Tindak lanjut terbuka",
+    "pilotReadiness.check.FINANCE_ACCESS": "Akses keuangan",
+    "pilotReadiness.check.FEE_CONFIGURATION": "Konfigurasi biaya aktif",
+    "pilotReadiness.check.BILLING_CONFIGURATION": "Konfigurasi tagihan aktif",
+    "pilotReadiness.check.ONLINE_PAYMENT_PROVIDER": "Penyedia pembayaran online",
+    "pilotReadiness.check.IN_APP_COMMUNICATION": "Komunikasi di dalam aplikasi",
+    "pilotReadiness.check.EXTERNAL_COMMUNICATION_PROVIDER": "Penyedia komunikasi eksternal",
+    "pilotReadiness.action.REVIEW_SCHOOL_SETUP": "Periksa status dan pengaturan sekolah.",
+    "pilotReadiness.action.REVIEW_ACADEMIC_ACCESS":
+      "Pastikan operator memiliki akses akademik yang diperlukan.",
+    "pilotReadiness.action.CONFIGURE_ACADEMIC_PERIOD": "Siapkan tahun ajaran untuk alur pilot.",
+    "pilotReadiness.action.REVIEW_ACADEMIC_PERIOD": "Periksa periode aktif sesuai jadwal sekolah.",
+    "pilotReadiness.action.ASSIGN_CLASSROOMS":
+      "Siapkan setidaknya satu rombel yang akan digunakan.",
+    "pilotReadiness.action.REVIEW_ENROLLMENTS": "Periksa data pendaftaran siswa untuk sekolah ini.",
+    "pilotReadiness.action.REVIEW_CLASSROOM_ASSIGNMENTS":
+      "Pastikan siswa pilot berada di rombel yang sesuai.",
+    "pilotReadiness.action.ASSIGN_STUDENTS_TO_CLASSROOMS":
+      "Tempatkan siswa pilot ke rombel melalui alur SIS yang ada.",
+    "pilotReadiness.action.REVIEW_TEACHER_ASSIGNMENTS":
+      "Periksa penugasan guru untuk kegiatan yang disepakati.",
+    "pilotReadiness.action.REVIEW_STUDENT_PORTAL_ACCESS":
+      "Periksa akun siswa melalui alur pengelolaan siswa.",
+    "pilotReadiness.action.REVIEW_GUARDIAN_LINKS":
+      "Periksa hubungan siswa dan wali melalui data wali.",
+    "pilotReadiness.action.REVIEW_ADMISSIONS_ACCESS":
+      "Pastikan operator penerimaan memiliki akses yang diperlukan.",
+    "pilotReadiness.action.REVIEW_ADMISSION_CYCLE":
+      "Periksa siklus penerimaan bila PPDB termasuk lingkup pilot.",
+    "pilotReadiness.action.REVIEW_ADMISSIONS_FOLLOWUP": "Tinjau tindak lanjut yang belum selesai.",
+    "pilotReadiness.action.REVIEW_FINANCE_ACCESS":
+      "Pastikan operator keuangan memiliki akses yang diperlukan.",
+    "pilotReadiness.action.CONFIGURE_FINANCE":
+      "Tinjau konfigurasi biaya bila penagihan termasuk lingkup pilot.",
+    "pilotReadiness.action.REVIEW_BILLING_SETUP":
+      "Periksa konfigurasi tagihan yang akan digunakan.",
+    "pilotReadiness.action.USE_MANUAL_PAYMENT_FALLBACK":
+      "Penyedia online belum tersedia. Gunakan proses pembayaran manual yang didukung.",
+    "pilotReadiness.action.USE_IN_APP_COMMUNICATION":
+      "Gunakan pengumuman dan notifikasi di dalam aplikasi; penyedia eksternal belum tersedia.",
     "navigation.parentPortal": "Portal orang tua",
     "navigation.studentPortal": "Portal siswa",
     "navigation.academicYears": "Tahun ajaran",
@@ -383,6 +466,87 @@ const messages = {
     "navigation.studentInformation": "Student Information",
     "navigation.admissions": "Admissions",
     "navigation.finance": "Finance",
+    "navigation.schoolOperations": "School Operations",
+    "navigation.pilotReadiness": "Pilot Readiness",
+    "pilotReadiness.title": "School pilot readiness",
+    "pilotReadiness.description":
+      "A read-only summary of the agreed pilot workflows, computed from the school's current state.",
+    "pilotReadiness.overall": "Readiness summary",
+    "pilotReadiness.overallExplanation": "The highest risk check determines the overall status.",
+    "pilotReadiness.domains": "Checks by domain",
+    "pilotReadiness.refresh": "Refresh checks",
+    "pilotReadiness.reviewLink": "Review setup",
+    "pilotReadiness.count": "Count: {count}",
+    "pilotReadiness.generatedAt": "Computed {date}",
+    "pilotReadiness.error":
+      "Readiness could not be loaded. Try again or contact the school administrator.",
+    "pilotReadiness.denied": "You do not have access to this school's readiness summary.",
+    "pilotReadiness.syntheticDisclaimer":
+      "This technical result does not mean the school has accepted a pilot. Confirm workflows and owners with the school.",
+    "pilotReadiness.status.READY": "Ready",
+    "pilotReadiness.status.WARNING": "Review needed",
+    "pilotReadiness.status.BLOCKER": "Blocker",
+    "pilotReadiness.status.MANUAL_FALLBACK": "Manual fallback",
+    "pilotReadiness.domain.school": "School",
+    "pilotReadiness.domain.academic_sis": "Academics and student data",
+    "pilotReadiness.domain.teaching": "Teacher operations",
+    "pilotReadiness.domain.portals": "Student and parent portals",
+    "pilotReadiness.domain.admissions": "Admissions",
+    "pilotReadiness.domain.finance": "Finance",
+    "pilotReadiness.domain.communication": "Communication",
+    "pilotReadiness.check.SCHOOL_ACTIVE": "School status",
+    "pilotReadiness.check.ACADEMIC_ACCESS": "Academic setup access",
+    "pilotReadiness.check.ACTIVE_ACADEMIC_YEAR": "Active academic year",
+    "pilotReadiness.check.ACTIVE_TERM": "Active academic period",
+    "pilotReadiness.check.ACTIVE_CLASSROOMS": "Active classrooms",
+    "pilotReadiness.check.ACTIVE_ENROLLMENTS": "Active student enrollments",
+    "pilotReadiness.check.CLASSROOM_ASSIGNMENT_COVERAGE": "Student classroom placement",
+    "pilotReadiness.check.TEACHING_ACCESS": "Teacher assignment access",
+    "pilotReadiness.check.ACTIVE_TEACHER_ASSIGNMENTS": "Active teacher assignments",
+    "pilotReadiness.check.STUDENT_PORTAL_ACCESS": "Student portal data access",
+    "pilotReadiness.check.STUDENT_ACCOUNT_LINKS": "Student accounts linked to active enrollments",
+    "pilotReadiness.check.GUARDIAN_LINK_COVERAGE": "Active guardian links for enrolled students",
+    "pilotReadiness.check.ADMISSIONS_ACCESS": "Admissions access",
+    "pilotReadiness.check.OPEN_ADMISSION_CYCLE": "Open admission cycle",
+    "pilotReadiness.check.OPEN_FOLLOWUPS": "Open follow-ups",
+    "pilotReadiness.check.FINANCE_ACCESS": "Finance access",
+    "pilotReadiness.check.FEE_CONFIGURATION": "Active fee configuration",
+    "pilotReadiness.check.BILLING_CONFIGURATION": "Active billing configuration",
+    "pilotReadiness.check.ONLINE_PAYMENT_PROVIDER": "Online payment provider",
+    "pilotReadiness.check.IN_APP_COMMUNICATION": "In-app communication",
+    "pilotReadiness.check.EXTERNAL_COMMUNICATION_PROVIDER": "External communication provider",
+    "pilotReadiness.action.REVIEW_SCHOOL_SETUP": "Review the school's status and settings.",
+    "pilotReadiness.action.REVIEW_ACADEMIC_ACCESS":
+      "Ensure the operator has the required academic access.",
+    "pilotReadiness.action.CONFIGURE_ACADEMIC_PERIOD":
+      "Set up an academic year for the pilot workflow.",
+    "pilotReadiness.action.REVIEW_ACADEMIC_PERIOD":
+      "Check that the active period matches the school calendar.",
+    "pilotReadiness.action.ASSIGN_CLASSROOMS": "Set up at least one classroom for the pilot.",
+    "pilotReadiness.action.REVIEW_ENROLLMENTS": "Review student enrollment data for this school.",
+    "pilotReadiness.action.REVIEW_CLASSROOM_ASSIGNMENTS":
+      "Ensure pilot students are placed in the right classrooms.",
+    "pilotReadiness.action.ASSIGN_STUDENTS_TO_CLASSROOMS":
+      "Place pilot students through the existing SIS workflow.",
+    "pilotReadiness.action.REVIEW_TEACHER_ASSIGNMENTS":
+      "Review teacher assignments for the agreed activities.",
+    "pilotReadiness.action.REVIEW_STUDENT_PORTAL_ACCESS":
+      "Review student accounts through the existing student workflow.",
+    "pilotReadiness.action.REVIEW_GUARDIAN_LINKS":
+      "Review student-guardian links in guardian records.",
+    "pilotReadiness.action.REVIEW_ADMISSIONS_ACCESS":
+      "Ensure the admissions operator has the required access.",
+    "pilotReadiness.action.REVIEW_ADMISSION_CYCLE":
+      "Review the admission cycle if PPDB is in pilot scope.",
+    "pilotReadiness.action.REVIEW_ADMISSIONS_FOLLOWUP": "Review follow-ups that are still open.",
+    "pilotReadiness.action.REVIEW_FINANCE_ACCESS":
+      "Ensure the finance operator has the required access.",
+    "pilotReadiness.action.CONFIGURE_FINANCE": "Review fee setup if billing is in pilot scope.",
+    "pilotReadiness.action.REVIEW_BILLING_SETUP": "Review billing configuration for the pilot.",
+    "pilotReadiness.action.USE_MANUAL_PAYMENT_FALLBACK":
+      "Online provider is unavailable. Use the supported manual payment process.",
+    "pilotReadiness.action.USE_IN_APP_COMMUNICATION":
+      "Use in-app announcements and notifications; external providers are unavailable.",
     "navigation.parentPortal": "Parent Portal",
     "navigation.studentPortal": "Student Portal",
     "navigation.academicYears": "Academic Years",
