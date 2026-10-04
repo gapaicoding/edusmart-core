@@ -25,6 +25,7 @@ import { Route as AuthenticatedSelectSchoolRouteImport } from './routes/_authent
 import { Route as AuthenticatedSettingsRouteImport } from './routes/_authenticated/settings'
 import { Route as AuthenticatedSisExportRouteImport } from './routes/_authenticated/sis-export'
 import { Route as PpdbCycleIdRouteImport } from './routes/ppdb/$cycleId'
+import { Route as VersionQrQrMpmNotifyRouteImport } from './routes/$version/qr/qr-mpm-notify'
 import { Route as AuthenticatedAcademicCalendarRouteImport } from './routes/_authenticated/academic/calendar'
 import { Route as AuthenticatedAcademicClassroomsRouteImport } from './routes/_authenticated/academic/classrooms'
 import { Route as AuthenticatedAcademicCurriculaRouteImport } from './routes/_authenticated/academic/curricula'
@@ -165,6 +166,11 @@ const AuthenticatedSisExportRoute = AuthenticatedSisExportRouteImport.update({
 const PpdbCycleIdRoute = PpdbCycleIdRouteImport.update({
   id: '/ppdb/$cycleId',
   path: '/ppdb/$cycleId',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const VersionQrQrMpmNotifyRoute = VersionQrQrMpmNotifyRouteImport.update({
+  id: '/$version/qr/qr-mpm-notify',
+  path: '/$version/qr/qr-mpm-notify',
   getParentRoute: () => rootRouteImport,
 } as any)
 const AuthenticatedAcademicCalendarRoute =
@@ -524,6 +530,7 @@ export interface FileRoutesByFullPath {
   '/settings': typeof AuthenticatedSettingsRoute
   '/sis-export': typeof AuthenticatedSisExportRoute
   '/ppdb/$cycleId': typeof PpdbCycleIdRoute
+  '/$version/qr/qr-mpm-notify': typeof VersionQrQrMpmNotifyRoute
   '/academic/calendar': typeof AuthenticatedAcademicCalendarRoute
   '/academic/classrooms': typeof AuthenticatedAcademicClassroomsRoute
   '/academic/curricula': typeof AuthenticatedAcademicCurriculaRoute
@@ -598,6 +605,7 @@ export interface FileRoutesByTo {
   '/settings': typeof AuthenticatedSettingsRoute
   '/sis-export': typeof AuthenticatedSisExportRoute
   '/ppdb/$cycleId': typeof PpdbCycleIdRoute
+  '/$version/qr/qr-mpm-notify': typeof VersionQrQrMpmNotifyRoute
   '/academic/calendar': typeof AuthenticatedAcademicCalendarRoute
   '/academic/classrooms': typeof AuthenticatedAcademicClassroomsRoute
   '/academic/curricula': typeof AuthenticatedAcademicCurriculaRoute
@@ -674,6 +682,7 @@ export interface FileRoutesById {
   '/_authenticated/settings': typeof AuthenticatedSettingsRoute
   '/_authenticated/sis-export': typeof AuthenticatedSisExportRoute
   '/ppdb/$cycleId': typeof PpdbCycleIdRoute
+  '/$version/qr/qr-mpm-notify': typeof VersionQrQrMpmNotifyRoute
   '/_authenticated/academic/calendar': typeof AuthenticatedAcademicCalendarRoute
   '/_authenticated/academic/classrooms': typeof AuthenticatedAcademicClassroomsRoute
   '/_authenticated/academic/curricula': typeof AuthenticatedAcademicCurriculaRoute
@@ -750,6 +759,7 @@ export interface FileRouteTypes {
     | '/settings'
     | '/sis-export'
     | '/ppdb/$cycleId'
+    | '/$version/qr/qr-mpm-notify'
     | '/academic/calendar'
     | '/academic/classrooms'
     | '/academic/curricula'
@@ -824,6 +834,7 @@ export interface FileRouteTypes {
     | '/settings'
     | '/sis-export'
     | '/ppdb/$cycleId'
+    | '/$version/qr/qr-mpm-notify'
     | '/academic/calendar'
     | '/academic/classrooms'
     | '/academic/curricula'
@@ -899,6 +910,7 @@ export interface FileRouteTypes {
     | '/_authenticated/settings'
     | '/_authenticated/sis-export'
     | '/ppdb/$cycleId'
+    | '/$version/qr/qr-mpm-notify'
     | '/_authenticated/academic/calendar'
     | '/_authenticated/academic/classrooms'
     | '/_authenticated/academic/curricula'
@@ -967,6 +979,7 @@ export interface RootRouteChildren {
   HealthzRoute: typeof HealthzRoute
   ResetPasswordRoute: typeof ResetPasswordRoute
   PpdbCycleIdRoute: typeof PpdbCycleIdRoute
+  VersionQrQrMpmNotifyRoute: typeof VersionQrQrMpmNotifyRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -1081,6 +1094,13 @@ declare module '@tanstack/react-router' {
       path: '/ppdb/$cycleId'
       fullPath: '/ppdb/$cycleId'
       preLoaderRoute: typeof PpdbCycleIdRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/$version/qr/qr-mpm-notify': {
+      id: '/$version/qr/qr-mpm-notify'
+      path: '/$version/qr/qr-mpm-notify'
+      fullPath: '/$version/qr/qr-mpm-notify'
+      preLoaderRoute: typeof VersionQrQrMpmNotifyRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/_authenticated/academic/calendar': {
@@ -1672,6 +1692,7 @@ const rootRouteChildren: RootRouteChildren = {
   HealthzRoute: HealthzRoute,
   ResetPasswordRoute: ResetPasswordRoute,
   PpdbCycleIdRoute: PpdbCycleIdRoute,
+  VersionQrQrMpmNotifyRoute: VersionQrQrMpmNotifyRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
