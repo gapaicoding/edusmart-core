@@ -2,6 +2,7 @@ import { Link, useParams } from "@tanstack/react-router";
 import { useServerFn } from "@tanstack/react-start";
 import { useQuery } from "@tanstack/react-query";
 import { useEffect, useState, type FormEvent, type ReactNode } from "react";
+import { QRCodeSVG } from "qrcode.react";
 import { Badge } from "@/components/ui/badge";
 import { AppShell } from "@/components/app-shell";
 import { Button } from "@/components/ui/button";
@@ -38,11 +39,15 @@ import {
   voidFinanceInvoice,
 } from "@/lib/finance.functions";
 import {
-  createParentOnlinePaymentIntent,
-  getParentOnlinePaymentIntent,
   listInvoiceOnlinePaymentIntents,
   simulateDevelopmentPaymentEvent,
 } from "@/lib/online-payments.functions";
+import {
+  createParentMidtransQris,
+  getParentMidtransQris,
+  listInvoiceMidtransQris,
+  refreshParentMidtransQris,
+} from "@/lib/midtrans-qris.functions";
 
 // Runtime projections are normalized at this boundary because the RPC payloads are versioned database projections.
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -861,19 +866,24 @@ function ParentOnlinePaymentPanel({
   outstanding: number;
 }) {
   const { t } = useAppPreferences();
-  const getFn = useServerFn(getParentOnlinePaymentIntent);
-  const createFn = useServerFn(createParentOnlinePaymentIntent);
+  const getFn = useServerFn(getParentMidtransQris);
+  const createFn = useServerFn(createParentMidtransQris);
+  const refreshFn = useServerFn(refreshParentMidtransQris);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState(false);
   const developmentMode = import.meta.env.DEV;
   const query = useQuery({
-    queryKey: ["b24-parent-payment-intent", invoiceId],
+    queryKey: ["b27-parent-midtrans-qris", invoiceId],
     queryFn: () => getFn({ data: { invoiceId } }),
     enabled: developmentMode && Boolean(invoiceId),
   });
   const intent = row(query.data);
   const status = String(intent.status ?? "");
-  const canRetry = !status || ["expired", "failed", "cancelled"].includes(status);
+  const hasExpired = Boolean(
+    intent.expires_at && Date.parse(String(intent.expires_at)) <= Date.now(),
+  );
+  const displayStatus = status === "pending" && hasExpired ? "expired" : status;
+  const canRetry = !status || hasExpired || ["expired", "failed", "cancelled"].includes(status);
   const canCreate = developmentMode && documentStatus === "issued" && outstanding > 0 && canRetry;
 
   const createIntent = async () => {
@@ -881,6 +891,21 @@ function ParentOnlinePaymentPanel({
     setError(false);
     try {
       await createFn({ data: { invoiceId, requestId: requestId() } });
+      await query.refetch();
+    } catch {
+      setError(true);
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  const refreshStatus = async () => {
+    setBusy(true);
+    setError(false);
+    try {
+      if (typeof intent.order_id === "string") {
+        await refreshFn({ data: { orderId: intent.order_id } });
+      }
       await query.refetch();
     } catch {
       setError(true);
@@ -897,14 +922,21 @@ function ParentOnlinePaymentPanel({
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div className="min-w-0">
           <h3 id={`online-payment-${invoiceId}`} className="font-medium">
-            {t("payment.online.title")}
+            {t("payment.qris.title")}
           </h3>
           {developmentMode ? (
-            <p className="text-xs text-muted-foreground">{t("payment.online.developmentOnly")}</p>
+            <div className="mt-1 flex flex-wrap items-center gap-2">
+              <Badge variant="outline">{t("payment.qris.sandbox")}</Badge>
+              <p className="text-xs text-muted-foreground">{t("payment.qris.noRealMoney")}</p>
+            </div>
           ) : null}
           {status ? (
             <p className="break-words text-sm" aria-live="polite">
-              {t(onlineStatusKey(status))}
+              {t(
+                displayStatus === "settled"
+                  ? "payment.online.settled"
+                  : onlineStatusKey(displayStatus),
+              )}
               {intent.amount_idr != null ? ` · ${idr(intent.amount_idr)}` : ""}
             </p>
           ) : null}
@@ -922,14 +954,39 @@ function ParentOnlinePaymentPanel({
               {t("payment.online.createError")}
             </p>
           ) : null}
+          {typeof intent.qr_content === "string" && status === "pending" && !hasExpired ? (
+            <div className="mt-3 grid w-fit gap-2 rounded-md border bg-background p-3">
+              <QRCodeSVG
+                value={intent.qr_content}
+                size={192}
+                level="M"
+                title={t("payment.qris.qrAccessibleName")}
+              />
+              <p className="max-w-48 break-words text-xs text-muted-foreground">
+                {t("payment.qris.scanSandbox")}
+              </p>
+            </div>
+          ) : null}
+          {developmentMode ? (
+            <p className="mt-2 text-xs text-muted-foreground">{t("payment.qris.manualFallback")}</p>
+          ) : null}
         </div>
         {canCreate ? (
           <Button onClick={() => void createIntent()} disabled={busy || query.isFetching}>
-            {busy ? t("common.saving") : t("payment.online.create")}
+            {busy ? t("common.saving") : t("payment.qris.pay")}
+          </Button>
+        ) : null}
+        {developmentMode && status && !canCreate ? (
+          <Button
+            variant="outline"
+            onClick={() => void refreshStatus()}
+            disabled={busy || query.isFetching}
+          >
+            {busy ? t("common.saving") : t("payment.qris.refresh")}
           </Button>
         ) : null}
         {!developmentMode ? (
-          <Badge variant="outline">{t("payment.online.unavailable")}</Badge>
+          <Badge variant="outline">{t("payment.qris.disabledOutsideDevelopment")}</Badge>
         ) : null}
       </div>
     </section>
@@ -948,17 +1005,27 @@ function StaffOnlinePaymentPanel({
   const { t } = useAppPreferences();
   const { hasPermission } = useAppContext();
   const listFn = useServerFn(listInvoiceOnlinePaymentIntents);
+  const listQrisFn = useServerFn(listInvoiceMidtransQris);
   const eventFn = useServerFn(simulateDevelopmentPaymentEvent);
   const [busyIntent, setBusyIntent] = useState("");
   const [error, setError] = useState(false);
   const developmentMode = import.meta.env.DEV;
+  const canRead = hasPermission("finance.read");
   const canManage = hasPermission("finance.record_payment");
   const query = useQuery({
     queryKey: ["b24-finance-invoice-payment-intents", schoolId, invoiceId],
     queryFn: () => listFn({ data: { schoolId, invoiceId } }),
     enabled: Boolean(developmentMode && canManage && schoolId && invoiceId),
   });
+  const qrisQuery = useQuery({
+    queryKey: ["b27-finance-invoice-qris", schoolId, invoiceId],
+    queryFn: () => listQrisFn({ data: { schoolId, invoiceId } }),
+    enabled: Boolean(canRead && schoolId && invoiceId),
+  });
   const intents = rows(query.data);
+  const qrisProjection = row(qrisQuery.data);
+  const qrisOrders = rows(qrisProjection.orders);
+  const providerAvailability = String(qrisProjection.providerAvailability ?? "DISABLED");
 
   const recordEvent = async (
     intent: Row,
@@ -980,7 +1047,7 @@ function StaffOnlinePaymentPanel({
     }
   };
 
-  if (!canManage) return null;
+  if (!canRead) return null;
   return (
     <Card>
       <CardHeader>
@@ -1030,6 +1097,43 @@ function StaffOnlinePaymentPanel({
             </div>
           );
         })}
+        {qrisOrders.map((order) => (
+          <div className="min-w-0 space-y-2 border-t pt-3" key={String(order.order_id)}>
+            <div className="flex flex-wrap items-center gap-2">
+              <Badge variant="outline">{t("payment.qris.sandbox")}</Badge>
+              <Badge variant="outline">{t(onlineStatusKey(String(order.status ?? "")))}</Badge>
+              <span className="font-medium">{idr(order.amount_idr)}</span>
+            </div>
+            {order.expires_at ? (
+              <p className="text-xs text-muted-foreground">
+                {t("payment.online.expires")}:{" "}
+                {formatPreferredDate(String(order.expires_at), {
+                  dateStyle: "medium",
+                  timeStyle: "short",
+                })}
+              </p>
+            ) : null}
+            {order.exception_code || order.safe_error_code ? (
+              <p className="text-sm text-muted-foreground">{t("payment.online.reviewRequired")}</p>
+            ) : null}
+          </div>
+        ))}
+        {qrisOrders.length === 0 ? (
+          <div className="space-y-1 rounded-md border p-3 text-sm" role="status">
+            <Badge variant="outline">{t("payment.qris.sandbox")}</Badge>
+            <p className="font-medium">
+              {t(
+                providerAvailability === "CONFIGURED"
+                  ? "payment.qris.configured"
+                  : providerAvailability === "DISABLED"
+                    ? "payment.qris.disabledOutsideDevelopment"
+                    : "payment.qris.notConfigured",
+              )}
+            </p>
+            <p className="text-muted-foreground">{t("payment.qris.noRealMoney")}</p>
+            <p className="text-muted-foreground">{t("payment.qris.manualFallback")}</p>
+          </div>
+        ) : null}
         {intents.length === 0 ? (
           <p className="text-sm text-muted-foreground">{t("payment.online.noIntent")}</p>
         ) : null}

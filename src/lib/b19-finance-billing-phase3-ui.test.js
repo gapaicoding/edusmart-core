@@ -30,16 +30,33 @@ describe("B19 Phase 3 Finance UI contract", () => {
     expect(ui).not.toMatch(/role\s*===|role\s*!==|role\.code/);
   });
 
-  test("preserves Finance semantics and forbids raw table access/gateway UI", () => {
+  test("preserves Finance semantics and limits gateway UI to the approved sandbox QRIS path", () => {
     const ui = read("components/finance/finance-ui.tsx");
+    const preferences = read("lib/app-preferences.tsx");
     expect(ui).not.toMatch(/\.from\(["']finance_/);
     expect(ui).not.toMatch(/\b(insert|update|delete)\s*\(/);
     expect(ui).toContain("not a gateway");
     expect(ui).toContain("Reversed");
     expect(ui).toContain("outstanding");
-    expect(ui).not.toMatch(/QRIS|Virtual Account|Midtrans|Xendit|Refund/);
+    expect(ui).toContain("Midtrans");
+    expect(ui).toContain('"payment.qris.pay"');
+    expect(preferences).toContain("Pay with QRIS (Sandbox)");
+    expect(ui).not.toMatch(/Virtual Account|Xendit|Refund/);
     expect(ui).not.toContain("command_requests");
     expect(ui).not.toContain("audit_json");
+  });
+
+  test("shows a safe sandbox availability status and manual fallback to Finance operators", () => {
+    const ui = read("components/finance/finance-ui.tsx");
+    const preferences = read("lib/app-preferences.tsx");
+    const server = read("lib/midtrans-qris.server.ts");
+    expect(ui).toContain('"payment.qris.notConfigured"');
+    expect(ui).toContain('"payment.qris.manualFallback"');
+    expect(ui).toContain('"payment.qris.noRealMoney"');
+    expect(preferences).toContain("QRIS Sandbox belum dikonfigurasi.");
+    expect(preferences).toContain("QRIS Sandbox is not configured.");
+    expect(server).toContain('"CONFIGURED" | "NOT_CONFIGURED" | "DISABLED"');
+    expect(server).not.toContain("MIDTRANS_SANDBOX_CLIENT_SECRET:");
   });
 
   test("does not introduce a Phase 3 migration", () => {
