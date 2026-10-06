@@ -66,7 +66,7 @@ begin
   where code in ('admission.read','admission.manage_cycle','admission.review','admission.decide','admission.convert');
   if v_count <> 5 then raise exception 'B18_VALIDATION_CAPABILITY_NAMESPACE'; end if;
 
-  if exists (select 1 from public.permissions where code like 'admission.%' and code not in ('admission.read','admission.manage_cycle','admission.review','admission.decide','admission.convert')) then
+  if exists (select 1 from public.permissions where code like 'admission.%' and code not in ('admission.read','admission.manage_cycle','admission.review','admission.decide','admission.convert','admission.lead.read','admission.lead.manage','admission.lead.convert')) then
     raise exception 'B18_VALIDATION_UNEXPECTED_ADMISSION_CAPABILITY';
   end if;
 

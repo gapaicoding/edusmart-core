@@ -61,7 +61,7 @@ begin
   if exists(select 1 from pg_class c cross join lateral aclexplode(coalesce(c.relacl,acldefault('r',c.relowner))) a where c.oid in ('public.admission_applications'::regclass,'public.admission_application_guardians'::regclass,'public.admission_command_requests'::regclass) and a.grantee in (0,'anon'::regrole,'authenticated'::regrole,'service_role'::regrole) and a.privilege_type in ('SELECT','INSERT','UPDATE','DELETE')) then
     raise exception 'B18_PHASE2_VALIDATION_TABLE_PRIVILEGE';
   end if;
-  if exists(select 1 from public.permissions where code like 'admission.%' and code not in ('admission.read','admission.manage_cycle','admission.review','admission.decide','admission.convert')) then
+  if exists(select 1 from public.permissions where code like 'admission.%' and code not in ('admission.read','admission.manage_cycle','admission.review','admission.decide','admission.convert','admission.lead.read','admission.lead.manage','admission.lead.convert')) then
     raise exception 'B18_PHASE2_VALIDATION_CAPABILITY_DRIFT';
   end if;
   if exists(select 1 from pg_proc where proname in ('b18_submit_admission_application','b18_list_admission_applications') and pg_get_functiondef(oid) ~* 'role_name|admissions_officer') then
