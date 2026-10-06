@@ -582,6 +582,14 @@ function AdmissionsDashboard() {
             locale,
           )}
         </p>
+        {hasPermission("admission.lead.read") && (
+          <Link
+            to="/admissions/leads"
+            className="mt-3 inline-flex rounded-md border px-3 py-2 text-sm font-medium hover:bg-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+          >
+            {locale === "id" ? "Pertanyaan pra-pendaftaran" : "Pre-application inquiries"}
+          </Link>
+        )}
       </header>
       <PageState error={cyclesQuery.error} onRetry={() => void cyclesQuery.refetch()}>
         <div className="grid gap-6 xl:grid-cols-[minmax(0,1fr)_minmax(0,1.4fr)]">

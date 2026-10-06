@@ -27,6 +27,15 @@ const SAFE_ERRORS: Record<string, string> = {
   B23_FOLLOWUP_REQUEST_CONFLICT: "This request was already used with different details.",
   B23_FOLLOWUP_VALIDATION_FAILED: "Review the follow-up details and try again.",
   B23_FOLLOWUP_NO_CHANGE: "Change the assignee or due time before saving.",
+  B28_LEAD_FORBIDDEN: "You do not have permission to manage admissions inquiries.",
+  B28_LEAD_NOT_FOUND: "This admissions inquiry is unavailable.",
+  B28_LEAD_VALIDATION_FAILED: "Review the inquiry details and try again.",
+  B28_LEAD_REQUEST_CONFLICT: "This request was already used with different details.",
+  B28_LEAD_STALE_VERSION: "This inquiry changed in another session. Reload the latest status.",
+  B28_LEAD_INVALID_STATE: "This inquiry cannot be changed from its current state.",
+  B28_LEAD_ASSIGNEE_INVALID: "Choose an active staff member assigned to this school.",
+  B28_LEAD_CYCLE_INVALID: "Choose an open admission cycle in this school.",
+  B28_LEAD_CONSENT_OR_APPLICATION_INVALID: "Complete the formal application and consent details.",
 };
 
 export function admissionsRuntimeError(error: PostgrestError, label: string): Error {

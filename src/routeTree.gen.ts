@@ -35,6 +35,7 @@ import { Route as AuthenticatedAcademicTermsRouteImport } from './routes/_authen
 import { Route as AuthenticatedAcademicYearsRouteImport } from './routes/_authenticated/academic/years'
 import { Route as AuthenticatedAdmissionsIndexRouteImport } from './routes/_authenticated/admissions/index'
 import { Route as AuthenticatedAdmissionsApplicationIdRouteImport } from './routes/_authenticated/admissions/$applicationId'
+import { Route as AuthenticatedAdmissionsLeadsRouteImport } from './routes/_authenticated/admissions/leads'
 import { Route as AuthenticatedAssessmentsIndexRouteImport } from './routes/_authenticated/assessments/index'
 import { Route as AuthenticatedAssessmentsIdRouteImport } from './routes/_authenticated/assessments/$id'
 import { Route as AuthenticatedAttendanceIndexRouteImport } from './routes/_authenticated/attendance/index'
@@ -225,6 +226,12 @@ const AuthenticatedAdmissionsApplicationIdRoute =
   AuthenticatedAdmissionsApplicationIdRouteImport.update({
     id: '/admissions/$applicationId',
     path: '/admissions/$applicationId',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
+const AuthenticatedAdmissionsLeadsRoute =
+  AuthenticatedAdmissionsLeadsRouteImport.update({
+    id: '/admissions/leads',
+    path: '/admissions/leads',
     getParentRoute: () => AuthenticatedRouteRoute,
   } as any)
 const AuthenticatedAssessmentsIndexRoute =
@@ -539,6 +546,7 @@ export interface FileRoutesByFullPath {
   '/academic/terms': typeof AuthenticatedAcademicTermsRoute
   '/academic/years': typeof AuthenticatedAcademicYearsRoute
   '/admissions/$applicationId': typeof AuthenticatedAdmissionsApplicationIdRoute
+  '/admissions/leads': typeof AuthenticatedAdmissionsLeadsRoute
   '/assessments/$id': typeof AuthenticatedAssessmentsIdRoute
   '/communications/$announcementId': typeof AuthenticatedCommunicationsAnnouncementIdRoute
   '/communications/new': typeof AuthenticatedCommunicationsNewRoute
@@ -614,6 +622,7 @@ export interface FileRoutesByTo {
   '/academic/terms': typeof AuthenticatedAcademicTermsRoute
   '/academic/years': typeof AuthenticatedAcademicYearsRoute
   '/admissions/$applicationId': typeof AuthenticatedAdmissionsApplicationIdRoute
+  '/admissions/leads': typeof AuthenticatedAdmissionsLeadsRoute
   '/assessments/$id': typeof AuthenticatedAssessmentsIdRoute
   '/communications/$announcementId': typeof AuthenticatedCommunicationsAnnouncementIdRoute
   '/communications/new': typeof AuthenticatedCommunicationsNewRoute
@@ -691,6 +700,7 @@ export interface FileRoutesById {
   '/_authenticated/academic/terms': typeof AuthenticatedAcademicTermsRoute
   '/_authenticated/academic/years': typeof AuthenticatedAcademicYearsRoute
   '/_authenticated/admissions/$applicationId': typeof AuthenticatedAdmissionsApplicationIdRoute
+  '/_authenticated/admissions/leads': typeof AuthenticatedAdmissionsLeadsRoute
   '/_authenticated/assessments/$id': typeof AuthenticatedAssessmentsIdRoute
   '/_authenticated/communications/$announcementId': typeof AuthenticatedCommunicationsAnnouncementIdRoute
   '/_authenticated/communications/new': typeof AuthenticatedCommunicationsNewRoute
@@ -768,6 +778,7 @@ export interface FileRouteTypes {
     | '/academic/terms'
     | '/academic/years'
     | '/admissions/$applicationId'
+    | '/admissions/leads'
     | '/assessments/$id'
     | '/communications/$announcementId'
     | '/communications/new'
@@ -843,6 +854,7 @@ export interface FileRouteTypes {
     | '/academic/terms'
     | '/academic/years'
     | '/admissions/$applicationId'
+    | '/admissions/leads'
     | '/assessments/$id'
     | '/communications/$announcementId'
     | '/communications/new'
@@ -919,6 +931,7 @@ export interface FileRouteTypes {
     | '/_authenticated/academic/terms'
     | '/_authenticated/academic/years'
     | '/_authenticated/admissions/$applicationId'
+    | '/_authenticated/admissions/leads'
     | '/_authenticated/assessments/$id'
     | '/_authenticated/communications/$announcementId'
     | '/_authenticated/communications/new'
@@ -1164,6 +1177,13 @@ declare module '@tanstack/react-router' {
       path: '/admissions/$applicationId'
       fullPath: '/admissions/$applicationId'
       preLoaderRoute: typeof AuthenticatedAdmissionsApplicationIdRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/admissions/leads': {
+      id: '/_authenticated/admissions/leads'
+      path: '/admissions/leads'
+      fullPath: '/admissions/leads'
+      preLoaderRoute: typeof AuthenticatedAdmissionsLeadsRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
     '/_authenticated/assessments/': {
@@ -1552,6 +1572,7 @@ interface AuthenticatedRouteRouteChildren {
   AuthenticatedAcademicTermsRoute: typeof AuthenticatedAcademicTermsRoute
   AuthenticatedAcademicYearsRoute: typeof AuthenticatedAcademicYearsRoute
   AuthenticatedAdmissionsApplicationIdRoute: typeof AuthenticatedAdmissionsApplicationIdRoute
+  AuthenticatedAdmissionsLeadsRoute: typeof AuthenticatedAdmissionsLeadsRoute
   AuthenticatedAssessmentsIdRoute: typeof AuthenticatedAssessmentsIdRoute
   AuthenticatedCommunicationsAnnouncementIdRoute: typeof AuthenticatedCommunicationsAnnouncementIdRoute
   AuthenticatedCommunicationsNewRoute: typeof AuthenticatedCommunicationsNewRoute
@@ -1619,6 +1640,7 @@ const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedAcademicYearsRoute: AuthenticatedAcademicYearsRoute,
   AuthenticatedAdmissionsApplicationIdRoute:
     AuthenticatedAdmissionsApplicationIdRoute,
+  AuthenticatedAdmissionsLeadsRoute: AuthenticatedAdmissionsLeadsRoute,
   AuthenticatedAssessmentsIdRoute: AuthenticatedAssessmentsIdRoute,
   AuthenticatedCommunicationsAnnouncementIdRoute:
     AuthenticatedCommunicationsAnnouncementIdRoute,
