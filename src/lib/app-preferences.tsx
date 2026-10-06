@@ -329,6 +329,10 @@ const messages = {
     "communication.recipientStatus.skipped": "Dilewati",
     "communication.recipientStatus.cancelled": "Dibatalkan",
     "communication.failure.WORKER_LEASE_EXPIRED": "Pemroses berhenti; lease kedaluwarsa",
+    "communication.failure.WORKER_LOST_BEFORE_SEND":
+      "Pemroses berhenti sebelum pengiriman; dijadwalkan ulang",
+    "communication.failure.DELIVERY_OUTCOME_UNKNOWN":
+      "Hasil pengiriman belum diketahui; jangan kirim ulang sebelum rekonsiliasi",
     "communication.failure.TEST_TEMPORARY_FAILURE": "Gangguan sementara simulasi",
     "communication.failure.TEST_INVALID_DESTINATION": "Tujuan simulasi tidak valid",
     "communication.failure.TEST_MISSING_DESTINATION": "Kontak tidak tersedia",
@@ -714,6 +718,10 @@ const messages = {
     "communication.recipientStatus.skipped": "Skipped",
     "communication.recipientStatus.cancelled": "Cancelled",
     "communication.failure.WORKER_LEASE_EXPIRED": "Executor stopped; lease expired",
+    "communication.failure.WORKER_LOST_BEFORE_SEND":
+      "Executor stopped before dispatch; scheduled for retry",
+    "communication.failure.DELIVERY_OUTCOME_UNKNOWN":
+      "Delivery outcome is unknown; do not resend until reconciled",
     "communication.failure.TEST_TEMPORARY_FAILURE": "Simulated temporary failure",
     "communication.failure.TEST_INVALID_DESTINATION": "Simulated invalid destination",
     "communication.failure.TEST_MISSING_DESTINATION": "Contact unavailable",

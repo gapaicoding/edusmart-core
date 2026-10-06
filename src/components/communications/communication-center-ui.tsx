@@ -125,6 +125,8 @@ const eligibilityMessage = {
 } as const;
 const failureMessage = {
   WORKER_LEASE_EXPIRED: "communication.failure.WORKER_LEASE_EXPIRED",
+  WORKER_LOST_BEFORE_SEND: "communication.failure.WORKER_LOST_BEFORE_SEND",
+  DELIVERY_OUTCOME_UNKNOWN: "communication.failure.DELIVERY_OUTCOME_UNKNOWN",
   TEST_TEMPORARY_FAILURE: "communication.failure.TEST_TEMPORARY_FAILURE",
   TEST_INVALID_DESTINATION: "communication.failure.TEST_INVALID_DESTINATION",
   TEST_MISSING_DESTINATION: "communication.failure.TEST_MISSING_DESTINATION",
